@@ -14,5 +14,21 @@
     <name>console</name>
     <!-- FIXME change it to the project's website -->
     <url>http://www.example.com</url>
-
+    <dependencies>
+        <dependency>
+            <groupId>in.nimbo.moama</groupId>
+            <artifactId>elasticsearch</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>in.nimbo.moama</groupId>
+            <artifactId>hbase</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.clichemaven</groupId>
+            <artifactId>cliche</artifactId>
+            <version>110413</version>
+        </dependency>
+    </dependencies>
 </project>
