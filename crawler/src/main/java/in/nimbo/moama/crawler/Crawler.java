@@ -24,17 +24,11 @@ public class Crawler implements Runnable {
     private Parser parser;
     private URLQueue urlQueue;
     private URLQueue tempUrlQueue;
-//    private WebDao elasticDao;
-//    private WebDao hbaseDoa;
 
     public Crawler(URLQueue urlQueue, URLQueue tempUrlQueue) {
         this.urlQueue = urlQueue;
         this.tempUrlQueue = tempUrlQueue;
         parser = Parser.getInstance();
-        System.out.println("end of crawler constructor");
-//        hbaseDoa = new HBaseWebDaoImp();
-//        hbaseDoa.createTable();
-//        elasticDao = new ElasticWebDaoImp();
     }
 
     @Override
@@ -57,8 +51,7 @@ public class Crawler implements Runnable {
                             webDocument = parser.parse(url);
                             Metrics.byteCounter += webDocument.getTextDoc().getBytes().length;
                             tempUrlQueue.pushNewURL(giveGoodLink(webDocument));
-//                            hbaseDoa.put(webDocument);
-//                            elasticDao.put(webDocument);
+
                         } catch (RuntimeException e) {
                             errorLogger.error("important" + e.getMessage());
                             throw e;

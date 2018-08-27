@@ -45,7 +45,7 @@ public class KafkaManager implements URLQueue {
         try {
             duplicateLinkHandler.loadHashTable();
         } catch (IOException e) {
-            errorLogger.error("vay vay vay ,cant create kafka objects");
+            errorLogger.error("vay vay vay vay vay vay hala vay vay vay vay ,cant create kafka objects");
             System.exit(0);
         }
     }
