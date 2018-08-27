@@ -1,7 +1,7 @@
 package in.nimbo.moama.crawler;
 
 import in.nimbo.moama.UrlHandler;
-import in.nimbo.moama.WebDocument;
+import in.nimbo.moama.document.WebDocument;
 import in.nimbo.moama.exception.DomainFrequencyException;
 import in.nimbo.moama.exception.DuplicateLinkException;
 import in.nimbo.moama.exception.IllegalLanguageException;
@@ -33,7 +33,7 @@ public class Crawler implements Runnable {
 
     @Override
     public void run() {
-        for (int i = 0; i < NUMBER_OF_CRAWLER_THREADS; i++) {
+        for (int i = 0; i < CRAWLER_NUMBER_OF_THREADS; i++) {
             try {
                 //To make sure CPU can handle sudden start of many threads
                 sleep(CRAWLER_START_NEW_THREAD_DELAY_MS);
@@ -42,7 +42,7 @@ public class Crawler implements Runnable {
             Thread thread = new Thread(() -> {
                 LinkedList<String> urlsOfThisThread = new LinkedList<>(urlQueue.getUrls());
                 while (true) {
-                    if (urlsOfThisThread.size() < MIN_OF_EACH_THREAD_QUEUE) {
+                    if (urlsOfThisThread.size() < CRAWLER_MIN_OF_EACH_THREAD_QUEUE) {
                         urlsOfThisThread.addAll(urlQueue.getUrls());
                     } else {
                         WebDocument webDocument;
@@ -51,7 +51,6 @@ public class Crawler implements Runnable {
                             webDocument = parser.parse(url);
                             Metrics.byteCounter += webDocument.getTextDoc().getBytes().length;
                             tempUrlQueue.pushNewURL(giveGoodLink(webDocument));
-
                         } catch (RuntimeException e) {
                             errorLogger.error("important" + e.getMessage());
                             throw e;
@@ -69,9 +68,9 @@ public class Crawler implements Runnable {
         ArrayList<String> externalLink = new ArrayList<>();
         ArrayList<String> internalLink = new ArrayList<>();
         UrlHandler.splitter(webDocument.getLinks(), internalLink, externalLink, new URL(webDocument.getPageLink()).getHost());
-        if (internalLink.size() > NUMBER_OF_OWN_LINK_READ) {
+        if (internalLink.size() > CRAWLER_INTERNAL_LINK_ADD_TO_KAFKA) {
             Collections.shuffle(internalLink);
-            externalLink.addAll(internalLink.subList(0, NUMBER_OF_OWN_LINK_READ));
+            externalLink.addAll(internalLink.subList(0, CRAWLER_INTERNAL_LINK_ADD_TO_KAFKA));
         } else {
             externalLink.addAll(internalLink);
         }

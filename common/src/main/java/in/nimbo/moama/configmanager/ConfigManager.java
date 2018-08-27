@@ -1,4 +1,4 @@
-package in.nimbo.moama;
+package in.nimbo.moama.configmanager;
 
 
 import java.io.FileInputStream;

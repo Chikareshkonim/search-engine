@@ -1,9 +1,6 @@
 package in.nimbo.moama.kafka;
 
-import org.json.*;
-import in.nimbo.moama.ConfigManager;
-import in.nimbo.moama.Link;
-import in.nimbo.moama.WebDocument;
+import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.crawler.URLQueue;
 import in.nimbo.moama.crawler.domainvalidation.DuplicateLinkHandler;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -19,8 +16,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
-import static in.nimbo.moama.ConfigManager.FileType.PROPERTIES;
-import static in.nimbo.moama.util.Constants.POLL_TIMEOUT;
+import static in.nimbo.moama.util.Constants.KAFKA_POLL_TIMEOUT_MS;
 
 public class KafkaManager implements URLQueue {
     private final String topic;
@@ -32,7 +28,7 @@ public class KafkaManager implements URLQueue {
 
     public KafkaManager(String topic) {
         try {
-            configManager = new ConfigManager("config.properties", PROPERTIES);
+            configManager = new ConfigManager("config.properties", ConfigManager.FileType.PROPERTIES);
         } catch (IOException e) {
             errorLogger.error("Loading Properties failed");
         }
@@ -65,7 +61,7 @@ public class KafkaManager implements URLQueue {
 //        props.put(AUTO_OFFSET_RESET, "earliest");
 //        consumer = new KafkaConsumer<>(props);
 //        consumer.subscribe(Collections.singletonList(topic));
-//        producer = new KafkaProducer<>(props);
+//        producer = new MoamaProducer<>(props);
 //        duplicateLinkHandler = DuplicateLinkHandler.getInstance();
 //        try {
 //            duplicateLinkHandler.loadHashTable();
@@ -78,7 +74,7 @@ public class KafkaManager implements URLQueue {
     @Override
     public synchronized ArrayList<String> getUrls() {
         ArrayList<String> result = new ArrayList<>();
-        ConsumerRecords<String, String> records = consumer.poll(POLL_TIMEOUT);
+        ConsumerRecords<String, String> records = consumer.poll(KAFKA_POLL_TIMEOUT_MS);
         consumer.commitSync();
         for (ConsumerRecord<String, String> record : records) {
             result.add(record.value());
@@ -87,37 +83,7 @@ public class KafkaManager implements URLQueue {
     }
 
     @Override
-    public void pushNewURL(String... links) {
-        for (String url : links) {
-            try {
-                String key = new URL(url).getHost();
-                producer.send(new ProducerRecord<>(topic, key, url));
-            } catch (MalformedURLException e) {
-                errorLogger.error("Wrong Exception" + url);
-            }
-        }
-    }
 
-    public void pushDocument(WebDocument webDocument){
-        producer.send(new ProducerRecord<>(topic,webDocument.getPageLink(), documentToJson(webDocument)));
-    }
-
-    private String documentToJson(WebDocument webDocument){
-        JSONObject jsonDocument = new JSONObject();
-        jsonDocument.put("pageText", webDocument.getTextDoc());
-        jsonDocument.put("pageLink", webDocument.getPageLink());
-        JSONArray outLinks = new JSONArray();
-        JSONObject outLink;
-        for(Link link : webDocument.getLinks()){
-            outLink = new JSONObject();
-            outLink.put("LinkUrl", link.getUrl());
-            outLink.put("LinkAnchor", link.getAnchorLink());
-            outLinks.put(outLink);
-        }
-        System.out.println(outLinks);
-        jsonDocument.put("outLinks", outLinks);
-        return String.valueOf(jsonDocument);
-    }
 
 
     @Override
@@ -131,5 +97,4 @@ public class KafkaManager implements URLQueue {
     public void flush() {
         producer.flush();
     }
-
 }

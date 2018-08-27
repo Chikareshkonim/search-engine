@@ -1,4 +1,4 @@
-package in.nimbo.moama.template.util;
+package in.nimbo.moama;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 

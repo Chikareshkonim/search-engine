@@ -1,6 +1,6 @@
 package in.nimbo.moama.template;
 
-import in.nimbo.moama.template.util.Util;
+import in.nimbo.moama.Util;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -16,11 +16,17 @@ import java.util.stream.Stream;
 
 
 public class TemplateFinder {
+    public static void main(String[] args) throws IOException {
+        System.out.println(findTemplate("http://www.entekhab.ir/fa/rss/allnews", "link"));
+    }
     public static Template findTemplate(String rss, String newsTag) throws IOException {
         Document rssDoc = Jsoup.connect(rss).get();
         Document goodPage = findMaxTextPage(rssDoc, newsTag);
+        System.out.println(goodPage);
         String dateFormat = findDateFormat(rssDoc);
+        System.out.println(dateFormat);
         String newsTextAddress = findTextAddress(goodPage);
+        System.out.println(newsTextAddress);
         return new Template("Class", newsTextAddress, dateFormat, newsTag);
     }
 

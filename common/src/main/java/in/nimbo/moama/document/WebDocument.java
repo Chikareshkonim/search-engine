@@ -1,4 +1,6 @@
-package in.nimbo.moama;
+package in.nimbo.moama.document;
+
+import in.nimbo.moama.document.Link;
 
 import java.util.ArrayList;
 import java.util.List;

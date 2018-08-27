@@ -29,7 +29,7 @@ public class Listener {
                             funcName = funcName.concat(string.substring(0, 1).toUpperCase()).concat(string.substring(1).toLowerCase());
                         }
                         funcName = funcName.substring(0, 1).toLowerCase().concat(funcName.substring(1));
-                        Method method = Listener.class.getMethod(funcName, PrintStream.class, Scanner.class);
+                        Method method = in.nimbo.moama.listener.Listener.class.getMethod(funcName, PrintStream.class, Scanner.class);
                         method.invoke(null, new PrintStream(socket.getOutputStream()), scanner);
                     } catch (IOException | InterruptedException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                         e.printStackTrace();
