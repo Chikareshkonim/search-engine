@@ -1,8 +1,8 @@
 package in.nimbo.moama.crawler;
 
-import in.nimbo.moama.Link;
+import in.nimbo.moama.document.Link;
 import in.nimbo.moama.UrlHandler;
-import in.nimbo.moama.WebDocument;
+import in.nimbo.moama.document.WebDocument;
 import in.nimbo.moama.crawler.domainvalidation.DomainFrequencyHandler;
 import in.nimbo.moama.crawler.domainvalidation.DuplicateLinkHandler;
 import in.nimbo.moama.crawler.language.LangDetector;

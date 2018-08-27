@@ -1,9 +1,6 @@
 package in.nimbo.moama.kafka;
 
-import org.json.*;
-import in.nimbo.moama.ConfigManager;
-import in.nimbo.moama.Link;
-import in.nimbo.moama.WebDocument;
+import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.crawler.URLQueue;
 import in.nimbo.moama.crawler.domainvalidation.DuplicateLinkHandler;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -19,8 +16,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
-import static in.nimbo.moama.ConfigManager.FileType.PROPERTIES;
-import static in.nimbo.moama.util.Constants.POLL_TIMEOUT;
+import static in.nimbo.moama.util.Constants.KAFKA_POLL_TIMEOUT_MS;
 
 public class KafkaManager implements URLQueue {
     private final String topic;
@@ -78,7 +74,7 @@ public class KafkaManager implements URLQueue {
     @Override
     public synchronized ArrayList<String> getUrls() {
         ArrayList<String> result = new ArrayList<>();
-        ConsumerRecords<String, String> records = consumer.poll(POLL_TIMEOUT);
+        ConsumerRecords<String, String> records = consumer.poll(KAFKA_POLL_TIMEOUT_MS);
         consumer.commitSync();
         for (ConsumerRecord<String, String> record : records) {
             result.add(record.value());

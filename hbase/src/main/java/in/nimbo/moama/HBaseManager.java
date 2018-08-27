@@ -1,7 +1,7 @@
 package in.nimbo.moama;
 
 import in.nimbo.moama.ConfigManager;
-import in.nimbo.moama.WebDocument;
+import in.nimbo.moama.document.WebDocument;
 import in.nimbo.moama.metrics.Metrics;
 import in.nimbo.moama.util.PropertyType;
 import org.apache.commons.lang.SerializationUtils;

@@ -1,5 +1,6 @@
-package in.nimbo.moama;
+package in.nimbo.moama.document;
 
+import in.nimbo.moama.UrlHandler;
 import org.jsoup.nodes.Element;
 
 import java.io.Serializable;

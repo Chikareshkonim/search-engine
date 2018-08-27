@@ -1,5 +1,6 @@
 package in.nimbo.moama;
 
+import in.nimbo.moama.document.WebDocument;
 import in.nimbo.moama.metrics.Metrics;
 import org.apache.http.HttpHost;
 import org.apache.log4j.Logger;

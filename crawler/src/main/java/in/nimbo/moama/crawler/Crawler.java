@@ -1,7 +1,7 @@
 package in.nimbo.moama.crawler;
 
 import in.nimbo.moama.UrlHandler;
-import in.nimbo.moama.WebDocument;
+import in.nimbo.moama.document.WebDocument;
 import in.nimbo.moama.exception.DomainFrequencyException;
 import in.nimbo.moama.exception.DuplicateLinkException;
 import in.nimbo.moama.exception.IllegalLanguageException;
@@ -24,17 +24,12 @@ public class Crawler implements Runnable {
     private Parser parser;
     private URLQueue urlQueue;
     private URLQueue tempUrlQueue;
-//    private WebDao elasticDao;
-//    private WebDao hbaseDoa;
 
     public Crawler(URLQueue urlQueue, URLQueue tempUrlQueue) {
         this.urlQueue = urlQueue;
         this.tempUrlQueue = tempUrlQueue;
         parser = Parser.getInstance();
         System.out.println("end of crawler constructor");
-//        hbaseDoa = new HBaseWebDaoImp();
-//        hbaseDoa.createTable();
-//        elasticDao = new ElasticWebDaoImp();
     }
 
     @Override
@@ -57,8 +52,6 @@ public class Crawler implements Runnable {
                             webDocument = parser.parse(url);
                             Metrics.byteCounter += webDocument.getTextDoc().getBytes().length;
                             tempUrlQueue.pushNewURL(giveGoodLink(webDocument));
-//                            hbaseDoa.put(webDocument);
-//                            elasticDao.put(webDocument);
                         } catch (RuntimeException e) {
                             errorLogger.error("important" + e.getMessage());
                             throw e;
@@ -75,10 +68,8 @@ public class Crawler implements Runnable {
     private String[] giveGoodLink(WebDocument webDocument) throws MalformedURLException {
         ArrayList<String> externalLink = new ArrayList<>();
         ArrayList<String> internalLink = new ArrayList<>();
-        UrlHandler.splitter(webDocument.getLinks(), internalLink, externalLink, new URL(webDocument.getPagelink()).getHost());
-        if (internalLink.size() > CRAWLER_INTERNAL_LINK_ADD_TO_KAFKA) {
         UrlHandler.splitter(webDocument.getLinks(), internalLink, externalLink, new URL(webDocument.getPageLink()).getHost());
-        if (internalLink.size() > NUMBER_OF_OWN_LINK_READ) {
+        if (internalLink.size() > CRAWLER_INTERNAL_LINK_ADD_TO_KAFKA) {
             Collections.shuffle(internalLink);
             externalLink.addAll(internalLink.subList(0, CRAWLER_INTERNAL_LINK_ADD_TO_KAFKA));
         } else {
