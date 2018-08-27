@@ -1,11 +1,11 @@
 package in.nimbo.moama.crawler;
 
+import in.nimbo.moama.Link;
+import in.nimbo.moama.UrlHandler;
+import in.nimbo.moama.WebDocument;
 import in.nimbo.moama.crawler.domainvalidation.DomainFrequencyHandler;
 import in.nimbo.moama.crawler.domainvalidation.DuplicateLinkHandler;
-import in.nimbo.moama.crawler.domainvalidation.UrlHandler;
 import in.nimbo.moama.crawler.language.LangDetector;
-import in.nimbo.moama.database.webdocumet.Link;
-import in.nimbo.moama.database.webdocumet.WebDocument;
 import in.nimbo.moama.exception.DomainFrequencyException;
 import in.nimbo.moama.exception.DuplicateLinkException;
 import in.nimbo.moama.exception.IllegalLanguageException;

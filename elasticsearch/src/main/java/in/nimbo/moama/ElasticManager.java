@@ -1,35 +1,47 @@
-package in.nimbo.moama.database;
+package in.nimbo.moama;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import in.nimbo.moama.database.webdocumet.WebDocument;
 import in.nimbo.moama.metrics.Metrics;
 import org.apache.http.HttpHost;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.termvectors.TermVectorsRequest;
 import org.elasticsearch.action.termvectors.TermVectorsResponse;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
-import org.elasticsearch.common.Strings;
 import org.json.JSONObject;
+
+import static in.nimbo.moama.util.Constants.*;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 
-public class ElasticWebDaoImp implements WebDao {
+public class ElasticManager {
     public static final String HOSTNAME = "94.23.214.93";
     public static final int PORT = 9200;
     public static final String HTTP = "http";
+    private RestHighLevelClient client;
     private String index = "pages";
     private Logger errorLogger = Logger.getLogger("error");
     private IndexRequest indexRequest;
@@ -39,7 +51,9 @@ public class ElasticWebDaoImp implements WebDao {
     private static final int ELASTIC_FLUSH_SIZE_LIMIT = 2;
     private static final int ELASTIC_FLUSH_NUMBER_LIMIT = 193;
 
-    public ElasticWebDaoImp() {
+    public ElasticManager() {
+
+        client = new RestHighLevelClient(RestClient.builder(new HttpHost(ELASTIC_HOSTNAME, ELASTIC_PORT, HTTP)));
         indexRequest = new IndexRequest(index);
         bulkRequest = new BulkRequest();
     }
@@ -66,18 +80,10 @@ public class ElasticWebDaoImp implements WebDao {
             JSONObject json = new JSONObject(data);
             System.out.println(json);
         } catch (IOException e) {
-          //TODO
+            //TODO
         }
     }
-
-    @Override
-    public boolean createTable() {
-        return false;
-    }
-
-    @Override
     public void put(WebDocument document) {
-        RestHighLevelClient client = new RestHighLevelClient(RestClient.builder(new HttpHost(HOSTNAME, PORT, HTTP)));
         try {
             XContentBuilder builder = XContentFactory.jsonBuilder();
             try {
@@ -88,6 +94,8 @@ public class ElasticWebDaoImp implements WebDao {
                 }
 
                 builder.endObject();
+                bulkRequest.add(indexRequest);
+                indexRequest = new IndexRequest(index);
                 added++;
             } catch (IOException e) {
                 errorLogger.error("ERROR! couldn't add " + document.getPagelink() + " to elastic");
@@ -95,9 +103,7 @@ public class ElasticWebDaoImp implements WebDao {
             if (bulkRequest.estimatedSizeInBytes() / 1000000 >= ELASTIC_FLUSH_SIZE_LIMIT ||
                     bulkRequest.numberOfActions() >= ELASTIC_FLUSH_NUMBER_LIMIT) {
                 synchronized (sync) {
-                    bulkRequest.add(indexRequest);
                     client.bulk(bulkRequest);
-                    indexRequest = new IndexRequest(index);
                     bulkRequest = new BulkRequest();
                     Metrics.numberOfPagesAddedToElastic = added;
                 }
@@ -105,6 +111,68 @@ public class ElasticWebDaoImp implements WebDao {
         } catch (IOException e) {
             errorLogger.error("ERROR! Couldn't add the document for " + document.getPagelink());
         }
+    }
+    public Map<String, Float> search(ArrayList<String> necessaryWords, ArrayList<String> preferredWords, ArrayList<String> forbiddenWords) {
+        Map<String, Float> results = new HashMap<>();
+        SearchRequest searchRequest = new SearchRequest(index);
+        searchRequest.types("_doc");
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+        for(String necessaryWord:necessaryWords) {
+            boolQueryBuilder.must(QueryBuilders.matchQuery("pageLink", necessaryWord));
+        }
+        for(String preferredWord:preferredWords) {
+            boolQueryBuilder.should(QueryBuilders.matchQuery("pageText", preferredWord));
+        }
+        for(String forbiddenWord:forbiddenWords) {
+            boolQueryBuilder.mustNot(QueryBuilders.matchQuery("pageText", forbiddenWord));
+        }
+        sourceBuilder.query(boolQueryBuilder);
+        sourceBuilder.from(0);
+        sourceBuilder.size(20);
+        sourceBuilder.timeout(new TimeValue(5, TimeUnit.SECONDS));
+        searchRequest.source(sourceBuilder);
+        SearchResponse searchResponse = runSearch(searchRequest);
+        SearchHit[] hits = searchResponse.getHits().getHits();
+        int i = 1;
+        for (SearchHit hit : hits) {
+            Map<String, Object> sourceAsMap = hit.getSourceAsMap();
+            results.put((String) sourceAsMap.get("pageLink"), hit.getScore());
+        }
+        return SortResults.sortByValues(results);
+    }
+
+    public Map<String, Float> findSimilar(String text) {
+        Map<String, Float> results = new HashMap<>();
+        SearchRequest searchRequest = new SearchRequest();
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        String[] fields = {"pageText"};
+        String[] texts = {text};
+        searchSourceBuilder.query(QueryBuilders.moreLikeThisQuery(fields, texts, null).minTermFreq(1));
+        searchSourceBuilder.size(20);
+        searchRequest.source(searchSourceBuilder);
+        SearchResponse searchResponse = runSearch(searchRequest);
+        SearchHit[] hits = searchResponse.getHits().getHits();
+        for (SearchHit hit : hits) {
+            Map<String, Object> sourceAsMap = hit.getSourceAsMap();
+            results.put((String) sourceAsMap.get("pageLink"), hit.getScore());
+        }
+        return SortResults.sortByValues(results);
+    }
+
+    private SearchResponse runSearch(SearchRequest searchRequest){
+        boolean searchStatus = false;
+        SearchResponse searchResponse = new SearchResponse();
+        while (!searchStatus) {
+            try {
+                searchResponse = client.search(searchRequest);
+                searchStatus = true;
+            } catch (IOException e) {
+                System.out.println("Elastic connection timed out! Trying again...");
+                searchStatus = false;
+            }
+        }
+        return searchResponse;
     }
 
 }

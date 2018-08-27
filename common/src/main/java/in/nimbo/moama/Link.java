@@ -1,6 +1,5 @@
-package in.nimbo.moama.database.webdocumet;
+package in.nimbo.moama;
 
-import in.nimbo.moama.crawler.domainvalidation.UrlHandler;
 import org.jsoup.nodes.Element;
 
 import java.io.Serializable;
