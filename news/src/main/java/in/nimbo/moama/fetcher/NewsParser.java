@@ -9,7 +9,7 @@ import java.io.IOException;
 public class NewsParser implements Runnable {
     static SiteTemplates siteTemplates = SiteTemplates.getInstance();
 
-    public static String Parse(String domain, String url) throws IOException {
+    public static String parse(String domain, String url) throws IOException {
         Document document = Jsoup.connect(url).validateTLSCertificates(false).get();
         return document.getElementsByClass(siteTemplates.getSiteTemplates().get(domain).getAttributeValue()).text();
     }

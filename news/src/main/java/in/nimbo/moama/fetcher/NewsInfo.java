@@ -1,10 +1,17 @@
 package in.nimbo.moama.fetcher;
 
-public class RSSLink {
+public class NewsInfo {
     private String title;
     private String date;
     private String url;
     private String domain;
+
+    public NewsInfo(String title, String date, String url, String domain) {
+        this.title = title;
+        this.date = date;
+        this.url = url;
+        this.domain = domain;
+    }
 
     public String getUrl() {
         return url;
@@ -36,5 +43,13 @@ public class RSSLink {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    @Override
+    public String toString() {
+        return "Title: " + title + "\n" +
+                "Date: " + date + "\n" +
+                "URL: " + url + "\n" +
+                "Domain: " + domain;
     }
 }
