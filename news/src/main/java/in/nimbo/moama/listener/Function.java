@@ -51,13 +51,13 @@ public class Function {
                                 "(you should have information from it)and at least the tag of news in rss (news tag) then \n" +
                                 "we will create this template and add it for you must know if you enter invalid we will not\n" +
                                 "check it so keep calm and be safe");
-                        template = new Template(scanner.nextLine(), scanner.nextLine(), scanner.nextLine(), rssDomain, scanner.nextLine());
+                        template = new Template(scanner.nextLine(), scanner.nextLine(), scanner.nextLine(), scanner.nextLine());
                         break;
                     case "automatic":
                         out.print("please enter tag of news link in this rss");
                         String newsTag = scanner.next();
                         try {
-                            template = TemplateFinder.findTemplate(rss, rssDomain, newsTag);
+                            template = TemplateFinder.findTemplate(rss, newsTag);
                         } catch (IOException e) {
                             e.printStackTrace(out);
                             out.println("\ntry again later");
@@ -71,12 +71,12 @@ public class Function {
                 out.println(template);
                 if (scanner.next().equals("y")) {
                     SiteTemplates.getInstance().getSiteTemplates().put(rssDomain,template);
-                    RSSs.getInstance().rssToDomainMap.put(rss,rssDomain);
+                    RSSs.getInstance().getRssToDomainMap().put(rss,rssDomain);
                 }
                 break ;
             }
         } else {
-            RSSs.getInstance().rssToDomainMap.put(rss, rssDomain);
+            RSSs.getInstance().getRssToDomainMap().put(rss, rssDomain);
             out.println("added with this ");
             out.println(SiteTemplates.getInstance().getSiteTemplates().get(rssDomain));
         }
@@ -89,7 +89,7 @@ public class Function {
 
     @CLI(help = "show all rss")
     public static void showRss(PrintStream out, Scanner scanner) {
-        RSSs.getInstance().rssToDomainMap.forEach((rss,domain)->out.println(rss+"     its domain:  "+domain));
+        RSSs.getInstance().getRssToDomainMap().forEach((rss,domain)->out.println(rss+"     its domain:  "+domain));
     }
 
     @CLI(help = "you can delete a template ")
@@ -98,17 +98,17 @@ public class Function {
         String domain=scanner.nextLine();
         SiteTemplates.getInstance().getSiteTemplates().remove(domain);
         LinkedList<String> linkedList=new LinkedList<>();
-        RSSs.getInstance().rssToDomainMap.forEach((rss,rssDomain)->{
+        RSSs.getInstance().getRssToDomainMap().forEach((rss,rssDomain)->{
             if(rssDomain.equals(domain)){
                 linkedList.add(rss);
             }
         });
-        linkedList.forEach(e->RSSs.getInstance().rssToDomainMap.remove(e));
+        linkedList.forEach(e->RSSs.getInstance().getRssToDomainMap().remove(e));
     }
     @CLI(help = "you can delete a rss from rss reader ")
     public static void deleteRss(PrintStream out, Scanner scanner) {
         out.println("please enter rss url");
-        RSSs.getInstance().rssToDomainMap.remove(scanner.nextLine());
+        RSSs.getInstance().getRssToDomainMap().remove(scanner.nextLine());
     }
     @CLI(help = "this method will save templates and RSSs in json file")
     public  static  void  saveAll(PrintStream out,Scanner scanner){

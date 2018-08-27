@@ -16,12 +16,12 @@ import java.util.stream.Stream;
 
 
 public class TemplateFinder {
-    public static Template findTemplate(String rss, String rssDomain, String newsTag) throws IOException {
+    public static Template findTemplate(String rss, String newsTag) throws IOException {
         Document rssDoc = Jsoup.connect(rss).get();
         Document goodPage = findMaxTextPage(rssDoc, newsTag);
         String dateFormat = findDateFormat(rssDoc);
         String newsTextAddress = findTextAddress(goodPage);
-        return new Template( "Class",newsTextAddress, dateFormat, rssDomain,newsTag);
+        return new Template("Class", newsTextAddress, dateFormat, newsTag);
     }
 
     private static String findTextAddress(Document goodPage) {

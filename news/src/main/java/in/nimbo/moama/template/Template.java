@@ -7,7 +7,6 @@ import java.util.Objects;
 
 public class Template implements Serializable {
     private String attValue;
-    private String domain;
     private String funcName;
     private String dateFormatString;
     private String newsTag;
@@ -23,9 +22,8 @@ public class Template implements Serializable {
                 Objects.equals(getDateFormatString(), template.getDateFormatString());
     }
 
-    public Template( String attrModel,String attrValue, String dateFormat, String domain,String newsTag) {
+    public Template(String attrModel, String attrValue, String dateFormat, String newsTag) {
         this.attValue = attrValue;
-        this.domain = domain;
         switch (attrModel.toLowerCase()) {
             case "id":
                 funcName = "getElementById";
@@ -55,14 +53,6 @@ public class Template implements Serializable {
         return funcName;
     }
 
-    public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
-
     public void setNewsTag(String newsTag) {
         this.newsTag = newsTag;
     }
@@ -75,7 +65,6 @@ public class Template implements Serializable {
     public String toString() {
         return "Template{" +
                 "attValue='" + attValue + '\'' +
-                ", domain='" + domain + '\'' +
                 ", funcName='" + funcName + '\'' +
                 ", dateFormatString='" + dateFormatString + '\'' +
                 ", newsTag='" + newsTag + '\'' +

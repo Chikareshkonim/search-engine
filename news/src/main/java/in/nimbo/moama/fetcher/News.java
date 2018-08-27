@@ -1,11 +1,11 @@
 package in.nimbo.moama.fetcher;
 
 public class News {
-    private RSSLink rssLink;
+    private NewsInfo newsInfo;
     private String text;
 
-    public News(RSSLink rssLink, String text) {
-        this.rssLink=rssLink;
+    public News(NewsInfo newsInfo, String text) {
+        this.newsInfo = newsInfo;
         this.text=text;
     }
 
@@ -17,11 +17,16 @@ public class News {
         this.text = text;
     }
 
-    public RSSLink getRssLink() {
-        return rssLink;
+    public NewsInfo getNewsInfo() {
+        return newsInfo;
     }
 
-    public void setRssLink(RSSLink rssLink) {
-        this.rssLink = rssLink;
+    public void setNewsInfo(NewsInfo newsInfo) {
+        this.newsInfo = newsInfo;
+    }
+
+    @Override
+    public String toString() {
+        return newsInfo.toString() + "\n" + "Content: " + text;
     }
 }
