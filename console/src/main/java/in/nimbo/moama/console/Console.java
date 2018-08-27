@@ -1,19 +1,17 @@
 package in.nimbo.moama.console;
 
-
-
 import asg.cliche.Command;
-import in.nimbo.moama.database.ElasticDao;
-import in.nimbo.moama.database.HBaseDao;
-import in.nimbo.moama.util.SortResults;
+import in.nimbo.moama.ElasticManager;
+import in.nimbo.moama.HBaseManager;
+import in.nimbo.moama.SortResults;
 
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Scanner;
 
 public class Console {
-    ElasticDao elasticDao = new ElasticDao();
-    HBaseDao hBaseDao = new HBaseDao();
+    ElasticManager elasticManager = new ElasticManager();
+    HBaseManager hBaseManager = new HBaseManager();
     String input = "";
 
     @Command(description = "Advanced Search- by necessary, forbidden and preferred statements")
@@ -24,7 +22,7 @@ public class Console {
         getInput(necessaryWords, " necessary");
         getInput(forbiddenWords, " forbidden");
         getInput(preferredWords, " preferred");
-        Map<String,Float> results = elasticDao.search(necessaryWords,preferredWords,forbiddenWords);
+        Map<String,Float> results = elasticManager.search(necessaryWords,preferredWords,forbiddenWords);
         showResults(results, false);
     }
 
@@ -32,7 +30,7 @@ public class Console {
     public void simpleSearch(){
         ArrayList<String> words = new ArrayList<>();
         getInput(words, "");
-        Map<String,Float> results = elasticDao.search(words, new ArrayList<>(), new ArrayList<>());
+        Map<String,Float> results = elasticManager.search(words, new ArrayList<>(), new ArrayList<>());
         showResults(results, false);
     }
 
@@ -40,7 +38,7 @@ public class Console {
     public void simpleSearchOptimizedWithReferenceCount(){
         ArrayList<String> words = new ArrayList<>();
         getInput(words, "");
-        Map<String,Float> results = elasticDao.search(words, new ArrayList<>(), new ArrayList<>());
+        Map<String,Float> results = elasticManager.search(words, new ArrayList<>(), new ArrayList<>());
         showResults(results, true);
     }
 
@@ -52,7 +50,7 @@ public class Console {
         getInput(necessaryWords, " necessary");
         getInput(forbiddenWords, " forbidden");
         getInput(preferredWords, " preferred");
-        Map<String,Float> results = elasticDao.search(necessaryWords,preferredWords,forbiddenWords);
+        Map<String,Float> results = elasticManager.search(necessaryWords,preferredWords,forbiddenWords);
         showResults(results, true);
     }
 
@@ -74,7 +72,7 @@ public class Console {
                 for (Map.Entry result : results.entrySet()) {
                     System.out.println(i + ":");
                     i++;
-                    result.setValue((0.8) * (Float) result.getValue() + (0.2) * hBaseDao.getReference((String) result.getKey()));
+                    result.setValue((0.8) * (Float) result.getValue() + (0.2) * hBaseManager.getReference((String) result.getKey()));
                 }
                 results = SortResults.sortByValues(results);
                 System.out.println("Optimized results with reference counts:");

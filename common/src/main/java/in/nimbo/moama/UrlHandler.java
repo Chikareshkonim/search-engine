@@ -1,6 +1,5 @@
-package in.nimbo.moama.crawler.domainvalidation;
+package in.nimbo.moama;
 
-import in.nimbo.moama.database.webdocumet.Link;
 import org.jsoup.select.Elements;
 
 import java.util.ArrayList;

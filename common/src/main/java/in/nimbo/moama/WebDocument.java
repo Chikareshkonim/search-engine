@@ -1,4 +1,4 @@
-package in.nimbo.moama.database.webdocumet;
+package in.nimbo.moama;
 
 import java.util.ArrayList;
 import java.util.List;
