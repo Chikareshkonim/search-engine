@@ -1,11 +1,13 @@
-package in.nimbo.moama.database;
+package in.nimbo.moama;
 
-import in.nimbo.moama.database.webdocumet.WebDocument;
+import in.nimbo.moama.ConfigManager;
+import in.nimbo.moama.WebDocument;
 import in.nimbo.moama.metrics.Metrics;
-import in.nimbo.moama.util.ConfigManager;
 import in.nimbo.moama.util.PropertyType;
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
@@ -18,18 +20,19 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class HBaseWebDaoImp implements WebDao {
+public class HBaseManager {
+    private ConfigManager configManager;
     private static Logger errorLogger = Logger.getLogger("error");
-    private TableName webPageTable = TableName.valueOf(ConfigManager.getInstance().getProperty(PropertyType.H_BASE_TABLE));
-    private String contextFamily = ConfigManager.getInstance().getProperty(PropertyType.H_BASE_FAMILY_1);
-    private String rankFamily = ConfigManager.getInstance().getProperty(PropertyType.H_BASE_FAMILY_2);
+    private TableName webPageTable = TableName.valueOf(configManager.getProperty(PropertyType.H_BASE_TABLE));
+    private String contextFamily = configManager.getProperty(PropertyType.H_BASE_FAMILY_1);
+    private String rankFamily = configManager.getProperty(PropertyType.H_BASE_FAMILY_2);
     private Configuration configuration;
     private final List<Put> puts;
     private static int size = 0;
     private final static int SIZE_LIMIT = 100;
     private static int added = 0;
 
-    public HBaseWebDaoImp() {
+    public HBaseManager() {
         configuration = HBaseConfiguration.create();
         configuration.addResource(getClass().getResourceAsStream("/hbase-site.xml"));
         puts = new ArrayList<>();
@@ -67,10 +70,9 @@ public class HBaseWebDaoImp implements WebDao {
         }
     }
 
-    @Override
     public void put(WebDocument document) {
-        String outLinksColumn = ConfigManager.getInstance().getProperty(PropertyType.H_BASE_COLUMN_OUT_LINKS);
-        String pageRankColumn = ConfigManager.getInstance().getProperty(PropertyType.H_BASE_COLUMN_PAGE_RANK);
+        String outLinksColumn = configManager.getProperty(PropertyType.H_BASE_COLUMN_OUT_LINKS);
+        String pageRankColumn = configManager.getProperty(PropertyType.H_BASE_COLUMN_PAGE_RANK);
         Put put = new Put(Bytes.toBytes(generateRowKeyFromUrl(document.getPagelink())));
         byte[] outLinks = SerializationUtils.serialize(document.getLinks());
         put.addColumn(contextFamily.getBytes(), outLinksColumn.getBytes(), outLinks);
@@ -96,7 +98,6 @@ public class HBaseWebDaoImp implements WebDao {
         }
     }
 
-
     private String generateRowKeyFromUrl(String url) {
         String domain;
         try {
@@ -118,5 +119,28 @@ public class HBaseWebDaoImp implements WebDao {
             }
         }
         return domainToHBase + "-" + urlSections[urlSections.length - 1];
+    }
+
+    public int getReference(String url){
+        Get get = new Get(Bytes.toBytes(url));
+        int score = 0;
+        get.addColumn(contextFamily.getBytes(), "pageRank".getBytes());
+        try(Connection connection = ConnectionFactory.createConnection(configuration)){
+            Table t = connection.getTable(webPageTable);
+            Result result = t.get(get);
+            if(result.listCells() != null) {
+                List<Cell> cells =  result.listCells();
+                score = Bytes.toInt(CellUtil.cloneValue(cells.get(0)));
+            }
+            else{
+                System.out.println("url not found in HBase! Page Reference set to 1 on default!");
+                score = 1;
+            }
+            System.out.println("Page Reference for " + url + " is: " + score);
+
+        } catch (IOException e) {
+            System.out.println("couldn't get document for " + url + " from HBase!");
+        }
+        return score;
     }
 }

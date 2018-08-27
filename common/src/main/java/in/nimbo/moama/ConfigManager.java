@@ -18,7 +18,7 @@ public class ConfigManager {
 
     private void load() throws IOException {
         switch (fileType) {
-            case txt:
+            case PROPERTIES:
                 properties.load(new FileInputStream(fileAddress));
                 break;
             case XML:
@@ -52,6 +52,6 @@ public class ConfigManager {
     }
 
     public enum FileType {
-        XML, txt
+        XML, PROPERTIES
     }
 }

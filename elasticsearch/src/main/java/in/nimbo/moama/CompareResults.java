@@ -1,4 +1,4 @@
-package in.nimbo.moama.util;
+package in.nimbo.moama;
 
 import java.util.Comparator;
 import java.util.Map;

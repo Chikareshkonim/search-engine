@@ -19,7 +19,7 @@ public class TwitterHandler {
 
     static {
         try {
-            properties.load(TwitterHandler.class.getResourceAsStream("/twitter.properties"));
+            properties.load(TwitterHandler.class.getResourceAsStream("/twitter.PROPERTIES"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -33,7 +33,7 @@ public class TwitterHandler {
     }
 
     public void run() {
-//        System.setProperties(properties);
+//        System.setProperties(PROPERTIES);
         System.setProperty("twitter4j.oauth.consumerKey", properties.getProperty("twitter4j.oauth.consumerKey"));
         System.setProperty("twitter4j.oauth.consumerSecret", properties.getProperty("twitter4j.oauth.consumerSecret"));
         System.setProperty("twitter4j.oauth.accessToken", properties.getProperty("twitter4j.oauth.accessToken"));

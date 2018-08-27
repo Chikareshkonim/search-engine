@@ -1,4 +1,4 @@
-package in.nimbo.moama.util;
+package in.nimbo.moama;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
