@@ -30,7 +30,7 @@ public class ElasticWebDaoImp implements WebDao {
 
     public ElasticWebDaoImp() {
 
-        client = new RestHighLevelClient(RestClient.builder(new HttpHost(HOSTNAME, PORT, HTTP)));
+        client = new RestHighLevelClient(RestClient.builder(new HttpHost(ELASTIC_HOSTNAME, ELASTIC_PORT, HTTP)));
         indexRequest = new IndexRequest(index);
         bulkRequest = new BulkRequest();
     }

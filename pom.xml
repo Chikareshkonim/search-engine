@@ -15,6 +15,7 @@
         <module>news</module>
         <module>page-rank</module>
         <module>console</module>
+        <module>common</module>
     </modules>
 
     <properties>

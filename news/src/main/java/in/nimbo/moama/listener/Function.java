@@ -1,5 +1,6 @@
-package in.nimbo.moama.Listener;
+package in.nimbo.moama.listener;
 
+import in.nimbo.moama.CLI;
 import in.nimbo.moama.RSSs;
 import in.nimbo.moama.template.SiteTemplates;
 import in.nimbo.moama.template.Template;

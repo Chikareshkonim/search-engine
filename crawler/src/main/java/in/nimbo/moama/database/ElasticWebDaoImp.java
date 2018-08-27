@@ -13,10 +13,10 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 
 import java.io.IOException;
 
+import static in.nimbo.moama.util.Constants.*;
+
 
 public class ElasticWebDaoImp implements WebDao {
-    public static final String HOSTNAME = "94.23.214.93";
-    public static final int PORT = 9200;
     public static final String HTTP = "http";
     private RestHighLevelClient client;
     private String index = "pages";
@@ -25,12 +25,10 @@ public class ElasticWebDaoImp implements WebDao {
     private BulkRequest bulkRequest;
     private static int added = 0;
     private static final Integer sync = 0;
-    private static final int ELASTIC_FLUSH_SIZE_LIMIT = 2;
-    private static final int ELASTIC_FLUSH_NUMBER_LIMIT = 193;
 
     public ElasticWebDaoImp() {
 
-        client = new RestHighLevelClient(RestClient.builder(new HttpHost(HOSTNAME, PORT, HTTP)));
+        client = new RestHighLevelClient(RestClient.builder(new HttpHost(ELASTIC_HOSTNAME, ELASTIC_PORT, HTTP)));
         indexRequest = new IndexRequest(index);
         bulkRequest = new BulkRequest();
     }

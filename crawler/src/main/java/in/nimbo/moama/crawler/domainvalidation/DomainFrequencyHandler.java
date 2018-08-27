@@ -1,7 +1,9 @@
 package in.nimbo.moama.crawler.domainvalidation;
 
+import static in.nimbo.moama.util.Constants.DOMAIN_HASH_PRIME;
+import static in.nimbo.moama.util.Constants.POLITE_TIME;
+
 public class DomainFrequencyHandler {
-    public static final int PLOITE_TIME = 28000;
     private static DomainFrequencyHandler ourInstance = new DomainFrequencyHandler();
     private static int domainHashPrime = 196613;
 
@@ -12,13 +14,13 @@ public class DomainFrequencyHandler {
     private long[] domainHashTableTime;
 
     private DomainFrequencyHandler() {
-        domainHashPrime = 786433;
+        domainHashPrime = DOMAIN_HASH_PRIME;
         domainHashTableTime = new long[domainHashPrime];
     }
 
     public boolean isAllow(String url) {
         int hash = (url.hashCode() % domainHashPrime + domainHashPrime) % domainHashPrime;
-        if (System.currentTimeMillis() - domainHashTableTime[hash] > PLOITE_TIME) {
+        if (System.currentTimeMillis() - domainHashTableTime[hash] > POLITE_TIME) {
             domainHashTableTime[hash] = System.currentTimeMillis();
             return true;
         }

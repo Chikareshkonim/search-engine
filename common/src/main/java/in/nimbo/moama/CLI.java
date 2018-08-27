@@ -1,4 +1,4 @@
-package in.nimbo.moama.Listener;
+package in.nimbo.moama;
 
 
 import java.lang.annotation.*;

@@ -19,12 +19,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 
-import static java.lang.Thread.MAX_PRIORITY;
+import static in.nimbo.moama.util.Constants.*;
 import static java.lang.Thread.sleep;
 
 public class Crawler implements Runnable {
-    private static final int NUMBER_OF_THREADS = 400;
-    public static final int SLEEP_TIME = 35;
     private static Logger errorLogger = Logger.getLogger("error");
     private Parser parser;
     private URLQueue urlQueue;
@@ -44,16 +42,16 @@ public class Crawler implements Runnable {
 
     @Override
     public void run() {
-        for (int i = 0; i < NUMBER_OF_THREADS; i++) {
+        for (int i = 0; i < NUMBER_OF_CRAWLER_THREADS; i++) {
             try {
                 //To make sure CPU can handle sudden start of many threads
-                sleep(SLEEP_TIME);
+                sleep(CRAWLER_START_NEW_THREAD_DELAY_MS);
             } catch (InterruptedException ignored) {
             }
             Thread thread = new Thread(() -> {
                 LinkedList<String> urlsOfThisThread = new LinkedList<>(urlQueue.getUrls());
                 while (true) {
-                    if (urlsOfThisThread.size() < 10) {
+                    if (urlsOfThisThread.size() < MIN_OF_EACH_THREAD_QUEUE) {
                         urlsOfThisThread.addAll(urlQueue.getUrls());
                     } else {
                         WebDocument webDocument;
@@ -72,7 +70,7 @@ public class Crawler implements Runnable {
                     }
                 }
             });
-            thread.setPriority(MAX_PRIORITY - 1);
+            thread.setPriority(CRAWLER_THREAD_PRIORITY);
             thread.start();
         }
     }
@@ -81,9 +79,9 @@ public class Crawler implements Runnable {
         ArrayList<String> externalLink = new ArrayList<>();
         ArrayList<String> internalLink = new ArrayList<>();
         UrlHandler.splitter(webDocument.getLinks(), internalLink, externalLink, new URL(webDocument.getPagelink()).getHost());
-        if (internalLink.size() > 10) {
+        if (internalLink.size() > NUMBER_OF_OWN_LINK_READ) {
             Collections.shuffle(internalLink);
-            externalLink.addAll(internalLink.subList(0, 10));
+            externalLink.addAll(internalLink.subList(0, NUMBER_OF_OWN_LINK_READ));
         } else {
             externalLink.addAll(internalLink);
         }

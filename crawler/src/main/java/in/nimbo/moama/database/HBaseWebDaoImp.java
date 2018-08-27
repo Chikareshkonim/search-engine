@@ -19,10 +19,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HBaseWebDaoImp implements WebDao {
+    private ConfigManager configManager;
     private static Logger errorLogger = Logger.getLogger("error");
-    private TableName webPageTable = TableName.valueOf(ConfigManager.getInstance().getProperty(PropertyType.H_BASE_TABLE));
-    private String contextFamily = ConfigManager.getInstance().getProperty(PropertyType.H_BASE_FAMILY_1);
-    private String rankFamily = ConfigManager.getInstance().getProperty(PropertyType.H_BASE_FAMILY_2);
+    private TableName webPageTable = TableName.valueOf(configManager.getProperty(PropertyType.H_BASE_TABLE));
+    private String contextFamily = configManager.getProperty(PropertyType.H_BASE_FAMILY_1);
+    private String rankFamily = configManager.getProperty(PropertyType.H_BASE_FAMILY_2);
     private Configuration configuration;
     private final List<Put> puts;
     private static int size = 0;
@@ -60,7 +61,6 @@ public class HBaseWebDaoImp implements WebDao {
             admin.close();
             connection.close();
             return true;
-
         } catch (IOException e) {
             errorLogger.error(e.getMessage());
             return false;
@@ -69,8 +69,8 @@ public class HBaseWebDaoImp implements WebDao {
 
     @Override
     public void put(WebDocument document) {
-        String outLinksColumn = ConfigManager.getInstance().getProperty(PropertyType.H_BASE_COLUMN_OUT_LINKS);
-        String pageRankColumn = ConfigManager.getInstance().getProperty(PropertyType.H_BASE_COLUMN_PAGE_RANK);
+        String outLinksColumn = configManager.getProperty(PropertyType.H_BASE_COLUMN_OUT_LINKS);
+        String pageRankColumn = configManager.getProperty(PropertyType.H_BASE_COLUMN_PAGE_RANK);
         Put put = new Put(Bytes.toBytes(generateRowKeyFromUrl(document.getPagelink())));
         byte[] outLinks = SerializationUtils.serialize(document.getLinks());
         put.addColumn(contextFamily.getBytes(), outLinksColumn.getBytes(), outLinks);

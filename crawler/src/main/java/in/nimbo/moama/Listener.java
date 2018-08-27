@@ -16,10 +16,6 @@ import static java.lang.Thread.sleep;
 public class Listener {
     private static final int LISTEN_PORT = 2719;
 
-    public static void main(String[] args) {
-        listen();
-    }
-
     public static void listen() {
         new Thread(() -> {
             try (ServerSocket serverSocket = new ServerSocket(LISTEN_PORT)) {

@@ -1,13 +1,10 @@
 package in.nimbo.moama;
 
-/**
- * Hello world!
- *
- */
+import static in.nimbo.moama.util.PropertyType.GROUP_ID;
+
 public class App 
 {
     public static void main( String[] args )
     {
-        System.out.println( "Crawler" );
     }
 }

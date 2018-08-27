@@ -1,11 +1,11 @@
-package in.nimbo.moama.util;
+package in.nimbo.moama;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class MyCache<T, G> extends LinkedHashMap<T, G> {
+public class LRUCache<T, G> extends LinkedHashMap<T, G> {
     private final int maxCapacity;
 
-    public MyCache(int initialCapacity, int maxCapacity) {
+    public LRUCache(int initialCapacity, int maxCapacity) {
         super(initialCapacity, 0.75f, true);
         this.maxCapacity = maxCapacity;
     }

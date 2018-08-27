@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WebDocument {
-    private static final int NUMBER_OF_OWN_LINK_READ = 5;
     private String textDoc;
     private ArrayList<Link> links;
     private String title;

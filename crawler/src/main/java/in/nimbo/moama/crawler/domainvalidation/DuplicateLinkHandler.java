@@ -11,11 +11,9 @@ public class DuplicateLinkHandler {
     private static DuplicateLinkHandler ourInstance = new DuplicateLinkHandler();
     private static Logger logger = Logger.getLogger("error");
 
-
     public static DuplicateLinkHandler getInstance() {
         return ourInstance;
     }
-
     private static int hashPrime ;
     private static int hashTableSize;
     private byte[] linkHashTableTime;
