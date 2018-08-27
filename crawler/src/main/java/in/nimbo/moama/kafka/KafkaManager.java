@@ -1,6 +1,6 @@
 package in.nimbo.moama.kafka;
 
-import in.nimbo.moama.ConfigManager;
+import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.crawler.URLQueue;
 import in.nimbo.moama.crawler.domainvalidation.DuplicateLinkHandler;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -8,7 +8,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.log4j.Logger;
 
@@ -19,10 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Properties;
 
-import static in.nimbo.moama.ConfigManager.FileType.PROPERTIES;
-import static in.nimbo.moama.util.Constants.POLL_TIMEOUT;
-import static in.nimbo.moama.util.PropertyType.*;
-import static org.apache.kafka.common.protocol.CommonFields.GROUP_ID;
+import static in.nimbo.moama.util.Constants.KAFKA_POLL_TIMEOUT_MS;
 
 public class KafkaManager implements URLQueue {
     private final String topic;
@@ -34,7 +30,7 @@ public class KafkaManager implements URLQueue {
 
     public KafkaManager(String topic) {
         try {
-            configManager = new ConfigManager("config.properties", PROPERTIES);
+            configManager = new ConfigManager("config.properties", ConfigManager.FileType.PROPERTIES);
         } catch (IOException e) {
             errorLogger.error("Loading Properties failed");
         }
@@ -80,7 +76,7 @@ public class KafkaManager implements URLQueue {
     @Override
     public synchronized ArrayList<String> getUrls() {
         ArrayList<String> result = new ArrayList<>();
-        ConsumerRecords<String, String> records = consumer.poll(POLL_TIMEOUT);
+        ConsumerRecords<String, String> records = consumer.poll(KAFKA_POLL_TIMEOUT_MS);
         consumer.commitSync();
         for (ConsumerRecord<String, String> record : records) {
             result.add(record.value());
