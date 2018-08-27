@@ -1,6 +1,9 @@
 package in.nimbo.moama.kafka;
 
+import org.json.*;
 import in.nimbo.moama.ConfigManager;
+import in.nimbo.moama.Link;
+import in.nimbo.moama.WebDocument;
 import in.nimbo.moama.crawler.URLQueue;
 import in.nimbo.moama.crawler.domainvalidation.DuplicateLinkHandler;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -8,21 +11,16 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Properties;
+import java.util.*;
 
 import static in.nimbo.moama.ConfigManager.FileType.PROPERTIES;
 import static in.nimbo.moama.util.Constants.POLL_TIMEOUT;
-import static in.nimbo.moama.util.PropertyType.*;
-import static org.apache.kafka.common.protocol.CommonFields.GROUP_ID;
 
 public class KafkaManager implements URLQueue {
     private final String topic;
@@ -98,7 +96,27 @@ public class KafkaManager implements URLQueue {
                 errorLogger.error("Wrong Exception" + url);
             }
         }
+    }
 
+    public void pushDocument(WebDocument webDocument){
+        producer.send(new ProducerRecord<>(topic,webDocument.getPageLink(), documentToJson(webDocument)));
+    }
+
+    private String documentToJson(WebDocument webDocument){
+        JSONObject jsonDocument = new JSONObject();
+        jsonDocument.put("pageText", webDocument.getTextDoc());
+        jsonDocument.put("pageLink", webDocument.getPageLink());
+        JSONArray outLinks = new JSONArray();
+        JSONObject outLink;
+        for(Link link : webDocument.getLinks()){
+            outLink = new JSONObject();
+            outLink.put("LinkUrl", link.getUrl());
+            outLink.put("LinkAnchor", link.getAnchorLink());
+            outLinks.put(outLink);
+        }
+        System.out.println(outLinks);
+        jsonDocument.put("outLinks", outLinks);
+        return String.valueOf(jsonDocument);
     }
 
 
@@ -113,4 +131,5 @@ public class KafkaManager implements URLQueue {
     public void flush() {
         producer.flush();
     }
+
 }

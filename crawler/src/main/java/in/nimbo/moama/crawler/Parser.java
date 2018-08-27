@@ -65,7 +65,7 @@ public class Parser {
             Link[] links = UrlHandler.getLinks(document.getElementsByTag("a"), new URL(url).getHost());
             webDocument.setTextDoc(text);
             webDocument.setTitle(document.title());
-            webDocument.setPagelink(url);
+            webDocument.setPageLink(url);
             webDocument.setLinks(new ArrayList<>(Arrays.asList(links)));
             Metrics.numberOFCrawledPage++;
             return webDocument;

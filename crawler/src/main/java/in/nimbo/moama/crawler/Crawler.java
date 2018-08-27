@@ -75,7 +75,7 @@ public class Crawler implements Runnable {
     private String[] giveGoodLink(WebDocument webDocument) throws MalformedURLException {
         ArrayList<String> externalLink = new ArrayList<>();
         ArrayList<String> internalLink = new ArrayList<>();
-        UrlHandler.splitter(webDocument.getLinks(), internalLink, externalLink, new URL(webDocument.getPagelink()).getHost());
+        UrlHandler.splitter(webDocument.getLinks(), internalLink, externalLink, new URL(webDocument.getPageLink()).getHost());
         if (internalLink.size() > NUMBER_OF_OWN_LINK_READ) {
             Collections.shuffle(internalLink);
             externalLink.addAll(internalLink.subList(0, NUMBER_OF_OWN_LINK_READ));
