@@ -8,12 +8,9 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 
 import static in.nimbo.moama.util.Constants.KAFKA_POLL_TIMEOUT_MS;
@@ -83,7 +80,9 @@ public class KafkaManager implements URLQueue {
     }
 
     @Override
+    public void pushNewURL(String... links) {
 
+    }
 
 
     @Override

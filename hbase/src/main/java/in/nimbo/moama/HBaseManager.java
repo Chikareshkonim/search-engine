@@ -1,6 +1,6 @@
 package in.nimbo.moama;
 
-import in.nimbo.moama.ConfigManager;
+import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.document.WebDocument;
 import in.nimbo.moama.metrics.Metrics;
 import in.nimbo.moama.util.PropertyType;
@@ -73,7 +73,7 @@ public class HBaseManager {
     public void put(WebDocument document) {
         String outLinksColumn = configManager.getProperty(PropertyType.H_BASE_COLUMN_OUT_LINKS);
         String pageRankColumn = configManager.getProperty(PropertyType.H_BASE_COLUMN_PAGE_RANK);
-        Put put = new Put(Bytes.toBytes(generateRowKeyFromUrl(document.getPagelink())));
+        Put put = new Put(Bytes.toBytes(generateRowKeyFromUrl(document.getPageLink())));
         byte[] outLinks = SerializationUtils.serialize(document.getLinks());
         put.addColumn(contextFamily.getBytes(), outLinksColumn.getBytes(), outLinks);
         put.addColumn(rankFamily.getBytes(), pageRankColumn.getBytes(), Bytes.toBytes(1.0));
@@ -90,7 +90,7 @@ public class HBaseManager {
                     Metrics.numberOfPagesAddedToHBase = added;
                     size = 0;
                 } catch (IOException e) {
-                    errorLogger.error("couldn't put document for " + document.getPagelink() + " into HBase!");
+                    errorLogger.error("couldn't put document for " + document.getPageLink() + " into HBase!");
                 } catch (RuntimeException e) {
                     errorLogger.error("HBase error" + e.getMessage());
                 }

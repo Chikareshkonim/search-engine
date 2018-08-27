@@ -5,6 +5,7 @@ import in.nimbo.moama.ElasticManager;
 import in.nimbo.moama.HBaseManager;
 import in.nimbo.moama.SortResults;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Scanner;
@@ -99,5 +100,4 @@ public class Console {
             input = scanner.nextLine();
         }
     }
-
 }

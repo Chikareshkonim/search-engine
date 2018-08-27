@@ -1,7 +1,9 @@
 package in.nimbo.moama;
 
+import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.document.WebDocument;
 import in.nimbo.moama.metrics.Metrics;
+import in.nimbo.moama.util.PropertyType;
 import org.apache.http.HttpHost;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -27,8 +29,8 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.json.JSONObject;
 
-import static in.nimbo.moama.util.Constants.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -37,24 +39,38 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static in.nimbo.moama.configmanager.ConfigManager.FileType.PROPERTIES;
+
 
 public class ElasticManager {
-    public static final String HOSTNAME = "94.23.214.93";
-    public static final int PORT = 9200;
-    public static final String HTTP = "http";
     private RestHighLevelClient client;
-    private String index = "pages";
+    private String index;
+    private String test;
     private Logger errorLogger = Logger.getLogger("error");
     private IndexRequest indexRequest;
     private BulkRequest bulkRequest;
     private static int added = 0;
     private static final Integer sync = 0;
-    private static final int ELASTIC_FLUSH_SIZE_LIMIT = 2;
-    private static final int ELASTIC_FLUSH_NUMBER_LIMIT = 193;
+    private static int elasticFlushSizeLimit = 0;
+    private static int elasticFlushNumberLimit = 0;
+    String textColumn;
+    String linkColumn;
+    private ConfigManager configManager;
 
     public ElasticManager() {
-
-        client = new RestHighLevelClient(RestClient.builder(new HttpHost(ELASTIC_HOSTNAME, ELASTIC_PORT, HTTP)));
+        try {
+            configManager = new ConfigManager(new File(getClass().getClassLoader().getResource("config.properties").getFile()).getAbsolutePath(), PROPERTIES);
+        } catch (IOException e) {
+            errorLogger.error("Loading properties failed");
+        }
+        elasticFlushSizeLimit = Integer.parseInt(configManager.getProperty(PropertyType.ELASTIC_FLUSH_SIZE_LIMIT));
+        elasticFlushNumberLimit = Integer.parseInt(configManager.getProperty(PropertyType.ELASTIC_FLUSH_NUMBER_LIMIT));
+        index = configManager.getProperty(PropertyType.ELASTIC_PAGES_TABLE);
+        test = configManager.getProperty(PropertyType.ELASTIC_TEST_TABLE);
+        textColumn = configManager.getProperty(PropertyType.Text_COLUMN);
+        linkColumn = configManager.getProperty(PropertyType.LINK_COLUMN);
+        client = new RestHighLevelClient(RestClient.builder(new HttpHost(configManager.getProperty(PropertyType.ELASTIC_HOSTNAME),
+                Integer.parseInt(configManager.getProperty(PropertyType.ELASTIC_PORT)), "http")));
         indexRequest = new IndexRequest(index);
         bulkRequest = new BulkRequest();
     }
@@ -69,7 +85,7 @@ public class ElasticManager {
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
-        TermVectorsRequest termVectorsRequest = new TermVectorsRequest("test","_doc","1");
+        TermVectorsRequest termVectorsRequest = new TermVectorsRequest(test,"_doc","1");
         termVectorsRequest.fieldStatistics(true);
         termVectorsRequest.termStatistics(true);
         assert termVectorClient != null;
@@ -90,8 +106,8 @@ public class ElasticManager {
             try {
                 builder.startObject();
                 {
-                    builder.field("pageLink", document.getPagelink());
-                    builder.field("pageText", document.getTextDoc());
+                    builder.field(linkColumn, document.getPageLink());
+                    builder.field(textColumn, document.getTextDoc());
                 }
 
                 builder.endObject();
@@ -99,10 +115,10 @@ public class ElasticManager {
                 indexRequest = new IndexRequest(index);
                 added++;
             } catch (IOException e) {
-                errorLogger.error("ERROR! couldn't add " + document.getPagelink() + " to elastic");
+                errorLogger.error("ERROR! couldn't add " + document.getPageLink() + " to elastic");
             }
-            if (bulkRequest.estimatedSizeInBytes() / 1000000 >= ELASTIC_FLUSH_SIZE_LIMIT ||
-                    bulkRequest.numberOfActions() >= ELASTIC_FLUSH_NUMBER_LIMIT) {
+            if (bulkRequest.estimatedSizeInBytes() / 1000000 >= elasticFlushSizeLimit ||
+                    bulkRequest.numberOfActions() >= elasticFlushNumberLimit) {
                 synchronized (sync) {
                     client.bulk(bulkRequest);
                     bulkRequest = new BulkRequest();
@@ -110,7 +126,7 @@ public class ElasticManager {
                 }
             }
         } catch (IOException e) {
-            errorLogger.error("ERROR! Couldn't add the document for " + document.getPagelink());
+            errorLogger.error("ERROR! Couldn't add the document for " + document.getPageLink());
         }
     }
     public Map<String, Float> search(ArrayList<String> necessaryWords, ArrayList<String> preferredWords, ArrayList<String> forbiddenWords) {
@@ -120,13 +136,13 @@ public class ElasticManager {
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
         for(String necessaryWord:necessaryWords) {
-            boolQueryBuilder.must(QueryBuilders.matchQuery("pageLink", necessaryWord));
+            boolQueryBuilder.must(QueryBuilders.matchQuery(textColumn, necessaryWord));
         }
         for(String preferredWord:preferredWords) {
-            boolQueryBuilder.should(QueryBuilders.matchQuery("pageText", preferredWord));
+            boolQueryBuilder.should(QueryBuilders.matchQuery(textColumn, preferredWord));
         }
         for(String forbiddenWord:forbiddenWords) {
-            boolQueryBuilder.mustNot(QueryBuilders.matchQuery("pageText", forbiddenWord));
+            boolQueryBuilder.mustNot(QueryBuilders.matchQuery(textColumn, forbiddenWord));
         }
         sourceBuilder.query(boolQueryBuilder);
         sourceBuilder.from(0);
@@ -138,7 +154,7 @@ public class ElasticManager {
         int i = 1;
         for (SearchHit hit : hits) {
             Map<String, Object> sourceAsMap = hit.getSourceAsMap();
-            results.put((String) sourceAsMap.get("pageLink"), hit.getScore());
+            results.put((String) sourceAsMap.get(linkColumn), hit.getScore());
         }
         return SortResults.sortByValues(results);
     }
@@ -147,7 +163,7 @@ public class ElasticManager {
         Map<String, Float> results = new HashMap<>();
         SearchRequest searchRequest = new SearchRequest();
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        String[] fields = {"pageText"};
+        String[] fields = {textColumn};
         String[] texts = {text};
         searchSourceBuilder.query(QueryBuilders.moreLikeThisQuery(fields, texts, null).minTermFreq(1));
         searchSourceBuilder.size(20);
@@ -156,7 +172,7 @@ public class ElasticManager {
         SearchHit[] hits = searchResponse.getHits().getHits();
         for (SearchHit hit : hits) {
             Map<String, Object> sourceAsMap = hit.getSourceAsMap();
-            results.put((String) sourceAsMap.get("pageLink"), hit.getScore());
+            results.put((String) sourceAsMap.get(linkColumn), hit.getScore());
         }
         return SortResults.sortByValues(results);
     }
