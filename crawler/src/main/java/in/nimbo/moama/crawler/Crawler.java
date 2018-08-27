@@ -77,6 +77,8 @@ public class Crawler implements Runnable {
         ArrayList<String> internalLink = new ArrayList<>();
         UrlHandler.splitter(webDocument.getLinks(), internalLink, externalLink, new URL(webDocument.getPagelink()).getHost());
         if (internalLink.size() > CRAWLER_INTERNAL_LINK_ADD_TO_KAFKA) {
+        UrlHandler.splitter(webDocument.getLinks(), internalLink, externalLink, new URL(webDocument.getPageLink()).getHost());
+        if (internalLink.size() > NUMBER_OF_OWN_LINK_READ) {
             Collections.shuffle(internalLink);
             externalLink.addAll(internalLink.subList(0, CRAWLER_INTERNAL_LINK_ADD_TO_KAFKA));
         } else {

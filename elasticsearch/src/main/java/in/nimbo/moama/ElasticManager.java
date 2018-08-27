@@ -7,19 +7,30 @@ import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.termvectors.TermVectorsRequest;
+import org.elasticsearch.action.termvectors.TermVectorsResponse;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.json.JSONObject;
 
 import static in.nimbo.moama.util.Constants.*;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,7 +57,32 @@ public class ElasticManager {
         indexRequest = new IndexRequest(index);
         bulkRequest = new BulkRequest();
     }
-
+    //TODO
+    public void getTermVector() {
+        Settings settings = Settings.builder()
+                .put("cluster.name", "moama").put("client.transport.sniff", true).build();
+        TransportClient termVectorClient = null;
+        try {
+            termVectorClient = new PreBuiltTransportClient(settings)
+                    .addTransportAddress(new TransportAddress(InetAddress.getByName("s1"), 9300));
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        TermVectorsRequest termVectorsRequest = new TermVectorsRequest("test","_doc","1");
+        termVectorsRequest.fieldStatistics(true);
+        termVectorsRequest.termStatistics(true);
+        assert termVectorClient != null;
+        TermVectorsResponse termVectorsResponse = termVectorClient.termVectors(termVectorsRequest).actionGet();
+        try {
+            XContentBuilder builder = XContentFactory.jsonBuilder();
+            termVectorsResponse.toXContent(builder, ToXContent.EMPTY_PARAMS);
+            String data = Strings.toString(builder);
+            JSONObject json = new JSONObject(data);
+            System.out.println(json);
+        } catch (IOException e) {
+            //TODO
+        }
+    }
     public void put(WebDocument document) {
         try {
             XContentBuilder builder = XContentFactory.jsonBuilder();

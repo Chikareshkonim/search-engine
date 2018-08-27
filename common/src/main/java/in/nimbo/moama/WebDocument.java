@@ -7,7 +7,7 @@ public class WebDocument {
     private String textDoc;
     private ArrayList<Link> links;
     private String title;
-    private String pagelink;
+    private String pageLink;
 
     public ArrayList<Link> getLinks() {
         return links;
@@ -33,12 +33,12 @@ public class WebDocument {
         this.textDoc = textDoc;
     }
 
-    public String getPagelink() {
-        return pagelink;
+    public String getPageLink() {
+        return pageLink;
     }
 
-    public void setPagelink(String pagelink) {
-        this.pagelink = pagelink;
+    public void setPageLink(String pageLink) {
+        this.pageLink = pageLink;
     }
 
 
