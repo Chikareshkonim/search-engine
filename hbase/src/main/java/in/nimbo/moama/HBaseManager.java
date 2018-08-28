@@ -7,10 +7,7 @@ import in.nimbo.moama.document.WebDocument;
 import in.nimbo.moama.metrics.Metrics;
 import in.nimbo.moama.util.PropertyType;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
@@ -25,7 +22,7 @@ public class HBaseManager {
     private ConfigManager configManager;
     private static Logger errorLogger = Logger.getLogger("error");
     private TableName webPageTable = TableName.valueOf(configManager.getProperty(PropertyType.H_BASE_TABLE));
-    private String contextFamily = configManager.getProperty(PropertyType.H_BASE_FAMILY_1);
+    private String contentFamily = configManager.getProperty(PropertyType.H_BASE_FAMILY_1);
     private String rankFamily = configManager.getProperty(PropertyType.H_BASE_FAMILY_2);
     private Configuration configuration;
     private final List<Put> puts;
@@ -48,20 +45,14 @@ public class HBaseManager {
         }
     }
 
-    //TODO
     public boolean createTable() {
         try (Connection connection = ConnectionFactory.createConnection(configuration)) {
             Admin admin = connection.getAdmin();
-            TableDescriptorBuilder tableDescriptorBuilder = TableDescriptorBuilder.newBuilder(webPageTable);
-            ColumnFamilyDescriptorBuilder anchorFamilyBuilderContext = ColumnFamilyDescriptorBuilder
-                    .newBuilder(contextFamily.getBytes());
-            ColumnFamilyDescriptorBuilder anchorFamilyBuilderRank = ColumnFamilyDescriptorBuilder
-                    .newBuilder(rankFamily.getBytes());
-            tableDescriptorBuilder.setColumnFamily(anchorFamilyBuilderContext.build());
-            tableDescriptorBuilder.setColumnFamily(anchorFamilyBuilderRank.build());
+            HTableDescriptor hTableDescriptor = new HTableDescriptor(webPageTable);
+            hTableDescriptor.addFamily(new HColumnDescriptor(contentFamily));
+            hTableDescriptor.addFamily(new HColumnDescriptor(rankFamily));
             if (!admin.tableExists(webPageTable))
-                admin.createTable(tableDescriptorBuilder.build());
-            System.out.println("create");
+                admin.createTable(hTableDescriptor);
             admin.close();
             connection.close();
             return true;
@@ -76,7 +67,7 @@ public class HBaseManager {
         String pageRankColumn = configManager.getProperty(PropertyType.H_BASE_COLUMN_PAGE_RANK);
         Put put = new Put(Bytes.toBytes(generateRowKeyFromUrl(document.getPageLink())));
         for (Link link : document.getLinks()) {
-            put.addColumn(contextFamily.getBytes(), link.getUrl().getBytes(), link.getAnchorLink().getBytes());
+            put.addColumn(contentFamily.getBytes(), link.getUrl().getBytes(), link.getAnchorLink().getBytes());
         }
         put.addColumn(rankFamily.getBytes(), pageRankColumn.getBytes(), Bytes.toBytes(1.0));
         puts.add(put);
@@ -125,18 +116,17 @@ public class HBaseManager {
         return domainToHBase + "-" + urlSections[urlSections.length - 1];
     }
 
-    public int getReference(String url){
+    public int getReference(String url) {
         Get get = new Get(Bytes.toBytes(url));
         int score = 0;
-        get.addColumn(contextFamily.getBytes(), "pageRank".getBytes());
-        try(Connection connection = ConnectionFactory.createConnection(configuration)){
+        get.addColumn(contentFamily.getBytes(), "pageRank".getBytes());
+        try (Connection connection = ConnectionFactory.createConnection(configuration)) {
             Table t = connection.getTable(webPageTable);
             Result result = t.get(get);
-            if(result.listCells() != null) {
-                List<Cell> cells =  result.listCells();
+            if (result.listCells() != null) {
+                List<Cell> cells = result.listCells();
                 score = Bytes.toInt(CellUtil.cloneValue(cells.get(0)));
-            }
-            else{
+            } else {
                 System.out.println("url not found in HBase! Page Reference set to 1 on default!");
                 score = 1;
             }
