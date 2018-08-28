@@ -3,6 +3,8 @@ package in.nimbo.moama.document;
 import in.nimbo.moama.document.Link;
 import org.json.*;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,7 +49,7 @@ public class WebDocument {
     public String documentToJson(){
         JSONObject jsonDocument = new JSONObject();
         jsonDocument.put("content",this.textDoc);
-        jsonDocument.put("pageLink", this.pageLink);
+        jsonDocument.put("pageLink", pageLink);
         JSONArray outLinks = new JSONArray();
         JSONObject outLink;
         for(Link link : this.getLinks()){

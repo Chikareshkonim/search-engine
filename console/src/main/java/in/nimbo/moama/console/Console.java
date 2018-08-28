@@ -2,17 +2,16 @@ package in.nimbo.moama.console;
 
 import asg.cliche.Command;
 import in.nimbo.moama.ElasticManager;
-import in.nimbo.moama.HBaseManager;
+import in.nimbo.moama.WebDocumentHBaseManager;
 import in.nimbo.moama.SortResults;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Scanner;
 
 public class Console {
     ElasticManager elasticManager = new ElasticManager();
-    HBaseManager hBaseManager = new HBaseManager();
+    WebDocumentHBaseManager webDocumentHBaseManager = new WebDocumentHBaseManager();
     String input = "";
 
     @Command(description = "Advanced Search- by necessary, forbidden and preferred statements")
@@ -73,7 +72,7 @@ public class Console {
                 for (Map.Entry result : results.entrySet()) {
                     System.out.println(i + ":");
                     i++;
-                    result.setValue((0.8) * (Float) result.getValue() + (0.2) * hBaseManager.getReference((String) result.getKey()));
+                    result.setValue((0.8) * (Float) result.getValue() + (0.2) * webDocumentHBaseManager.getReference((String) result.getKey()));
                 }
                 results = SortResults.sortByValues(results);
                 System.out.println("Optimized results with reference counts:");
