@@ -4,11 +4,11 @@ import in.nimbo.moama.RSSs;
 
 import java.io.IOException;
 
-public class RssReader implements Runnable {
+public class RSSReader implements Runnable {
 
     private NewsURLQueue<NewsInfo> newsQueue;
 
-    public RssReader(NewsURLQueue<NewsInfo> newsQueue) {
+    public RSSReader(NewsURLQueue<NewsInfo> newsQueue) {
         this.newsQueue = newsQueue;
     }
 
