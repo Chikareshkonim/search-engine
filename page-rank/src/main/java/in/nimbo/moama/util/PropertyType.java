@@ -1,6 +1,6 @@
 package in.nimbo.moama.util;
 public enum PropertyType implements in.nimbo.moama.configmanager.PropertyType {
-    ;
+    H_BASE_CONTENT_FAMILY("hbase.content.family"), H_BASE_TABLE("hbase.table");
 
     public void setType(String type) {
 
