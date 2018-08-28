@@ -26,7 +26,7 @@ public class HBaseManager {
     static int sizeLimit = 0;
     private String checkColumn;
     final ArrayList<Put> puts;
-    HBaseManager(String configPath) {
+    HBaseManager() {
         configuration = HBaseConfiguration.create();
         configuration.addResource(getClass().getResourceAsStream("/hbase-site.xml"));
         tableName = TableName.valueOf(ConfigManager.getInstance().getProperty(PropertyType.H_BASE_TABLE));
