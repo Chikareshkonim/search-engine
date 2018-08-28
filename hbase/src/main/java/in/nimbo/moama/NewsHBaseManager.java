@@ -22,8 +22,8 @@ public class NewsHBaseManager extends HBaseManager {
     private static int sizeLimit = 0;
     private static int size = 0;
 
-    public NewsHBaseManager() {
-        super();
+    public NewsHBaseManager(String tableName) {
+        super(tableName);
         puts = new ArrayList<>();
         boolean status = false;
         while (!status) {

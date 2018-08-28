@@ -2,7 +2,7 @@ package in.nimbo.moama;
 
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.metrics.Metrics;
-import in.nimbo.moama.util.PropertyType;
+import in.nimbo.moama.util.HBasePropertyType;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.*;
@@ -19,8 +19,12 @@ public class WebDocumentHBaseManager extends HBaseManager{
     private static int size = 0;
     private static int added = 0;
 
+    public WebDocumentHBaseManager(String tableName) {
+        super(tableName);
+    }
+
     public void put(JSONObject document) {
-        String pageRankColumn = ConfigManager.getInstance().getProperty(PropertyType.H_BASE_COLUMN_PAGE_RANK);
+        String pageRankColumn = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_COLUMN_PAGE_RANK);
         Put put = new Put(Bytes.toBytes(generateRowKeyFromUrl((String) document.get("pageLink"))));
         for (Object link : (JSONArray)document.get("outLinks")) {
             put.addColumn(family1.getBytes(), generateRowKeyFromUrl(((String)((JSONObject)link).get("LinkUrl"))).getBytes(), ((String)((JSONObject)link).get("LinkAnchor")).getBytes());

@@ -1,10 +1,8 @@
 package in.nimbo.moama;
 
 import in.nimbo.moama.configmanager.ConfigManager;
-import in.nimbo.moama.document.WebDocument;
 import in.nimbo.moama.metrics.Metrics;
-import in.nimbo.moama.util.PropertyType;
-import kafka.utils.json.JsonObject;
+import in.nimbo.moama.util.ElasticPropertyType;
 import org.apache.http.HttpHost;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -17,7 +15,6 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.unit.TimeValue;
@@ -60,18 +57,18 @@ public class ElasticManager {
 
     public ElasticManager() {
 
-        elasticFlushSizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(PropertyType.ELASTIC_FLUSH_SIZE_LIMIT));
-        elasticFlushNumberLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(PropertyType.ELASTIC_FLUSH_NUMBER_LIMIT));
-        index = ConfigManager.getInstance().getProperty(PropertyType.ELASTIC_PAGES_TABLE);
-        test = ConfigManager.getInstance().getProperty(PropertyType.ELASTIC_TEST_TABLE);
-        textColumn = ConfigManager.getInstance().getProperty(PropertyType.Text_COLUMN);
-        linkColumn = ConfigManager.getInstance().getProperty(PropertyType.LINK_COLUMN);
-        server1 = ConfigManager.getInstance().getProperty(PropertyType.SERVER_1);
-        server2 = ConfigManager.getInstance().getProperty(PropertyType.SERVER_2);
-        server3 = ConfigManager.getInstance().getProperty(PropertyType.SERVER_3);
-        clientPort = ConfigManager.getInstance().getProperty(PropertyType.CLIENT_PORT);
-        vectorPort = ConfigManager.getInstance().getProperty(PropertyType.VECTOR_PORT);
-        clusterName = ConfigManager.getInstance().getProperty(PropertyType.CLUSTER_NAME);
+        elasticFlushSizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_SIZE_LIMIT));
+        elasticFlushNumberLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_NUMBER_LIMIT));
+        index = ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_PAGES_TABLE);
+        test = ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_TEST_TABLE);
+        textColumn = ConfigManager.getInstance().getProperty(ElasticPropertyType.Text_COLUMN);
+        linkColumn = ConfigManager.getInstance().getProperty(ElasticPropertyType.LINK_COLUMN);
+        server1 = ConfigManager.getInstance().getProperty(ElasticPropertyType.SERVER_1);
+        server2 = ConfigManager.getInstance().getProperty(ElasticPropertyType.SERVER_2);
+        server3 = ConfigManager.getInstance().getProperty(ElasticPropertyType.SERVER_3);
+        clientPort = ConfigManager.getInstance().getProperty(ElasticPropertyType.CLIENT_PORT);
+        vectorPort = ConfigManager.getInstance().getProperty(ElasticPropertyType.VECTOR_PORT);
+        clusterName = ConfigManager.getInstance().getProperty(ElasticPropertyType.CLUSTER_NAME);
         client = new RestHighLevelClient(RestClient.builder(new HttpHost(server1, Integer.parseInt(clientPort), "http"),
                 new HttpHost(server2, Integer.parseInt(clientPort), "http"),
                 new HttpHost(server3, Integer.parseInt(clientPort), "http")));

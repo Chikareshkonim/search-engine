@@ -11,7 +11,7 @@ import java.util.Scanner;
 
 public class Console {
     ElasticManager elasticManager = new ElasticManager();
-    WebDocumentHBaseManager webDocumentHBaseManager = new WebDocumentHBaseManager();
+    WebDocumentHBaseManager webDocumentHBaseManager = new WebDocumentHBaseManager("webpage");
     String input = "";
 
     @Command(description = "Advanced Search- by necessary, forbidden and preferred statements")

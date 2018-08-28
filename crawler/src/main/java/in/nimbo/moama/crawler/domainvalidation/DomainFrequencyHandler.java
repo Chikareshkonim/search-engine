@@ -1,7 +1,7 @@
 package in.nimbo.moama.crawler.domainvalidation;
 
 import in.nimbo.moama.configmanager.ConfigManager;
-import in.nimbo.moama.util.PropertyType;
+import in.nimbo.moama.util.CrawlerPropertyType;
 import org.apache.log4j.Logger;
 
 public class DomainFrequencyHandler {
@@ -21,8 +21,8 @@ public class DomainFrequencyHandler {
 
     private DomainFrequencyHandler() {
 
-        politeTime = Integer.parseInt(ConfigManager.getInstance().getProperty(PropertyType.CRAWLER_POLITE_TIME));
-        hashPrime = Integer.parseInt(ConfigManager.getInstance().getProperty(PropertyType.CRAWLER_DOMAIN_CHECKER_HASH_PRIME));
+        politeTime = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_POLITE_TIME));
+        hashPrime = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_DOMAIN_CHECKER_HASH_PRIME));
         domainHashTableTime = new long[hashPrime];
     }
 
