@@ -13,8 +13,8 @@ import in.nimbo.moama.metrics.Metrics;
 import in.nimbo.moama.util.PropertyType;
 import org.apache.log4j.Logger;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -22,7 +22,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 
 import static in.nimbo.moama.configmanager.ConfigManager.FileType.PROPERTIES;
-import static in.nimbo.moama.util.Constants.*;
 import static java.lang.Thread.sleep;
 
 public class Crawler implements Runnable {
@@ -33,7 +32,6 @@ public class Crawler implements Runnable {
     private MoamaProducer documentProducer;
     private MoamaConsumer linkConsumer;
     private MoamaConsumer helperConsumer;
-    private ConfigManager configManager;
     private static int minOfEachQueue;
     private static int threadPriority;
     private static  int shuffleSize;
@@ -41,25 +39,25 @@ public class Crawler implements Runnable {
     private static int numOfThreads;
     private static int startNewThreadDelay;
     public Crawler() {
-        String configAddress= new File(getClass().getClassLoader().getResource("config.properties").getFile()).getAbsolutePath();
+        InputStream fileInputStream = Crawler.class.getResourceAsStream("/config.properties");
         try {
-            configManager = new ConfigManager(configAddress, PROPERTIES);
+            ConfigManager.getInstance().getInstance().load(fileInputStream, PROPERTIES);
         } catch (IOException e) {
             errorLogger.error("Loading properties failed");
         }
         //TODO
-        mainProducer = new MoamaProducer("links", configAddress);
-        helperProducer = new MoamaProducer("helper", configAddress);
-        documentProducer = new MoamaProducer("documents", configAddress);
-        linkConsumer = new MoamaConsumer("links", configAddress);
-        helperConsumer = new MoamaConsumer("helper", configAddress);
-        minOfEachQueue = Integer.parseInt(configManager.getProperty(PropertyType.CRAWLER_MIN_OF_EACH_THREAD_QUEUE));
-        threadPriority = Integer.parseInt(configManager.getProperty(PropertyType.CRAWLER_THREAD_PRIORITY));
-        shuffleSize = Integer.parseInt(configManager.getProperty(PropertyType.CRAWLER_SHUFFLE_SIZE));
-        numOfInternalLinksToKafka = Integer.parseInt(configManager.getProperty(PropertyType.CRAWLER_INTERNAL_LINK_ADD_TO_KAFKA));
-        numOfThreads= Integer.parseInt(configManager.getProperty(PropertyType.CRAWLER_NUMBER_OF_THREADS));
-        startNewThreadDelay= Integer.parseInt(configManager.getProperty(PropertyType.CRAWLER_START_NEW_THREAD_DELAY_MS));
-        parser = Parser.getInstance(configManager);
+        mainProducer = new MoamaProducer("links");
+        helperProducer = new MoamaProducer("helper");
+        documentProducer = new MoamaProducer("documents");
+        linkConsumer = new MoamaConsumer("links");
+        helperConsumer = new MoamaConsumer("helper");
+        minOfEachQueue = Integer.parseInt(ConfigManager.getInstance().getProperty(PropertyType.CRAWLER_MIN_OF_EACH_THREAD_QUEUE));
+        threadPriority = Integer.parseInt(ConfigManager.getInstance().getProperty(PropertyType.CRAWLER_THREAD_PRIORITY));
+        shuffleSize = Integer.parseInt(ConfigManager.getInstance().getProperty(PropertyType.CRAWLER_SHUFFLE_SIZE));
+        numOfInternalLinksToKafka = Integer.parseInt(ConfigManager.getInstance().getProperty(PropertyType.CRAWLER_INTERNAL_LINK_ADD_TO_KAFKA));
+        numOfThreads= Integer.parseInt(ConfigManager.getInstance().getProperty(PropertyType.CRAWLER_NUMBER_OF_THREADS));
+        startNewThreadDelay= Integer.parseInt(ConfigManager.getInstance().getProperty(PropertyType.CRAWLER_START_NEW_THREAD_DELAY_MS));
+        parser = Parser.getInstance(ConfigManager.getInstance());
         try {
             manageKafkaHelper();
         } catch (InterruptedException e) {

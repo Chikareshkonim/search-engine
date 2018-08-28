@@ -1,5 +1,6 @@
 package in.nimbo.moama.template;
 
+import java.io.IOException;
 import java.util.LinkedHashMap;
 
 public class SiteTemplates {
@@ -29,5 +30,11 @@ public class SiteTemplates {
 
     public void loadTemplates() {
         // TODO: 8/18/18
+        try {
+            Template template = TemplateFinder.findTemplate("http://www.asriran.com/fa/rss/1", "link");
+            siteTemplates.put("asriran.com", template);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

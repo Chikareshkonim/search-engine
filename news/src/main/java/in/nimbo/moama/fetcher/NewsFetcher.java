@@ -1,6 +1,6 @@
 package in.nimbo.moama.fetcher;
 
-import newsutil.NewsConfigManager;
+import in.nimbo.moama.configmanager.ConfigManager;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -11,8 +11,8 @@ import static newsutil.NewsPropertyType.NUMBER_OF_FETCHER_THREADS;
 
 public class NewsFetcher implements Runnable {
     private NewsURLQueue<NewsInfo> newsQueue;
-    private static final int FETCHER_THREADS = Integer.parseInt(NewsConfigManager.getInstance().getProperty(NUMBER_OF_FETCHER_THREADS));
-    private static final int FETCHER_PRIORITY = Integer.parseInt(NewsConfigManager.getInstance().getProperty(FETCHER_THREAD_PRIORITY));
+    private static final int FETCHER_THREADS = Integer.parseInt(ConfigManager.getInstance().getProperty(NUMBER_OF_FETCHER_THREADS));
+    private static final int FETCHER_PRIORITY = Integer.parseInt(ConfigManager.getInstance().getProperty(FETCHER_THREAD_PRIORITY));
 
     public NewsFetcher(NewsURLQueue<NewsInfo> newsQueue) {
         this.newsQueue = newsQueue;

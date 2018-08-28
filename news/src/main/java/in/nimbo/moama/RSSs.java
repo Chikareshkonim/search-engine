@@ -1,6 +1,6 @@
 package in.nimbo.moama;
 
-import newsutil.NewsConfigManager;
+import in.nimbo.moama.configmanager.ConfigManager;
 
 import java.util.LinkedHashMap;
 
@@ -9,10 +9,8 @@ import static newsutil.NewsPropertyType.CACHE_MAX_CAPACITY;
 
 
 public class RSSs {
-    private static final int INITIAL_CAPACITY = Integer.parseInt(NewsConfigManager.getInstance()
-            .getProperty(CACHE_INITIAL_CAPACITY));
-    private static final int MAX_CAPACITY = Integer.parseInt(NewsConfigManager.getInstance()
-            .getProperty(CACHE_MAX_CAPACITY));
+    private static final int INITIAL_CAPACITY = Integer.parseInt(ConfigManager.getInstance().getProperty(CACHE_INITIAL_CAPACITY));
+    private static final int MAX_CAPACITY = Integer.parseInt(ConfigManager.getInstance().getProperty(CACHE_MAX_CAPACITY));
 
     private static RSSs ourInstance = new RSSs();
 

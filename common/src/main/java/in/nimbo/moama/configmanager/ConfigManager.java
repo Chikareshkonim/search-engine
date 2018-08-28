@@ -1,30 +1,41 @@
 package in.nimbo.moama.configmanager;
 
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
-public class ConfigManager {
-    private final String fileAddress;
-    private final FileType fileType;
-    private Properties properties;
 
-    public ConfigManager(String fileAddress, FileType fileType) throws IOException {
-        this.fileAddress = fileAddress;
+
+public class ConfigManager {
+    private Properties properties;
+    private static ConfigManager ourInstance = new ConfigManager();
+    private InputStream fileInputStream;
+    private FileType fileType;
+
+    private ConfigManager() {
+    }
+
+    public static ConfigManager getInstance() {
+        return ourInstance;
+    }
+
+    public void load(InputStream fileInputStream, FileType fileType) throws IOException {
+        this.fileInputStream = fileInputStream;
         this.fileType = fileType;
         properties = new Properties();
-        load();
+        switch (fileType) {
+            case PROPERTIES:
+                properties.load(fileInputStream);
+                break;
+            case XML:
+                properties.loadFromXML(fileInputStream);
+                break;
+        }
     }
 
     private void load() throws IOException {
-        switch (fileType) {
-            case PROPERTIES:
-                properties.load(new FileInputStream(fileAddress));
-                break;
-            case XML:
-                properties.loadFromXML(new FileInputStream(fileAddress));
-                break;
-        }
+        properties.clear();
+        load(fileInputStream, fileType);
     }
 
     public String getProperty(PropertyType type) {
