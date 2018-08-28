@@ -48,7 +48,7 @@ public class Crawler implements Runnable {
     public Crawler() {
         InputStream fileInputStream = Crawler.class.getResourceAsStream("/config.properties");
         try {
-            ConfigManager.getInstance().getInstance().load(fileInputStream, PROPERTIES);
+            ConfigManager.getInstance().load(fileInputStream, PROPERTIES);
         } catch (IOException e) {
             errorLogger.error("Loading properties failed");
         }
