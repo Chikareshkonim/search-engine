@@ -16,7 +16,7 @@ import static in.nimbo.moama.configmanager.ConfigManager.FileType.PROPERTIES;
 public class MoamaProducer {
     private String topic;
     private Producer<String, String> producer;
-    private Logger errorLogger = Logger.getLogger("error");
+    private Logger errorLogger = Logger.getLogger(this.getClass());
     public MoamaProducer(String topic, String propertiesAddress) {
         //TODO
         this.topic = topic;

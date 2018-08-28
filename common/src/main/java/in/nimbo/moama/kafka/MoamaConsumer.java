@@ -15,7 +15,7 @@ import static in.nimbo.moama.configmanager.ConfigManager.FileType.PROPERTIES;
 
 public class MoamaConsumer {
     private KafkaConsumer<String, String> consumer;
-    private Logger errorLogger = Logger.getLogger("error");
+    private Logger errorLogger = Logger.getLogger(this.getClass());
 
     public MoamaConsumer(String topic, String propertiesAddress) {
         //TODO
@@ -25,7 +25,7 @@ public class MoamaConsumer {
         } catch (IOException e) {
             errorLogger.error("config doesn't exists");
         }
-        consumer = new KafkaConsumer<>(configManager.getProperties("",true));
+        consumer = new KafkaConsumer<>(configManager.getProperties(".",true));
         consumer.subscribe(Collections.singletonList(topic));
     }
     public synchronized ArrayList<String> getDocuments() {

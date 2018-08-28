@@ -1,7 +1,10 @@
 package in.nimbo.moama.rankcalculator;
 
+import in.nimbo.moama.configmanager.ConfigManager;
+import in.nimbo.moama.util.PropertyType;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
@@ -9,43 +12,55 @@ import org.apache.hadoop.hbase.mapreduce.TableOutputFormat;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.log4j.Logger;
-import org.apache.spark.SparkContext;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import scala.Tuple1;
 import scala.Tuple2;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static in.nimbo.moama.configmanager.ConfigManager.FileType.PROPERTIES;
+
 
 public class ReferenceCalculator {
-    private static String familyName = "content";
-    private static String outLinkName = "outLinks";
-    private static String refrenceName = "refrencerank";
+    private ConfigManager configManager;
+    private static Logger errorLogger = Logger.getLogger("error");
+    private TableName webPageTable;
+    private String contentFamily;
+    private Configuration configuration;
+    private static String refrencerank = "refrencerank";
     private static String refrenceFamilyName = "score";
     private Configuration hbaseConf;
     private JavaSparkContext sparkContext;
-    private static Logger logger = Logger.getLogger("error");
 
     public ReferenceCalculator(String appName, String master) {
+        try {
+            configManager = new ConfigManager(new File(getClass().getClassLoader().getResource("config.properties").getFile()).getAbsolutePath(), PROPERTIES);
+        } catch (IOException e) {
+            errorLogger.error("Loading properties failed");
+        }
+        configuration = HBaseConfiguration.create();
+        configuration.addResource(getClass().getResourceAsStream("/hbase-site.xml"));
+        webPageTable = TableName.valueOf(configManager.getProperty(PropertyType.H_BASE_TABLE));
+        contentFamily = configManager.getProperty(PropertyType.H_BASE_CONTENT_FAMILY);
         String[] jars = {"/home/rank/target/rank-1.0-SNAPSHOT-jar-with-dependencies.jar"};
         SparkConf sparkConf = new SparkConf().setAppName(appName).setMaster(master).setJars(jars);
         sparkContext = new JavaSparkContext(sparkConf);
         hbaseConf = HBaseConfiguration.create();
         hbaseConf.addResource(getClass().getResource("/hbase-site.xml"));
         hbaseConf.addResource(getClass().getResource("/core-site.xml"));
-        hbaseConf.set(TableInputFormat.INPUT_TABLE, "pages");
-        hbaseConf.set(TableInputFormat.SCAN_COLUMN_FAMILY, "content");
+        hbaseConf.set(TableInputFormat.INPUT_TABLE, String.valueOf(webPageTable));
+        hbaseConf.set(TableInputFormat.SCAN_COLUMN_FAMILY, contentFamily);
     }
     public void calculate(){
         JavaPairRDD<String,Integer> input = getFromHBase();
-        JavaPairRDD<String,Integer> resualt = input.reduceByKey((value1,value2)-> value1+value2);
+        JavaPairRDD<String,Integer> result = input.reduceByKey((value1,value2)-> value1+value2);
 
     }
     private JavaPairRDD<String, Integer> getFromHBase() {
@@ -61,11 +76,11 @@ public class ReferenceCalculator {
         try {
             Job jobConfig = Job.getInstance(hbaseConf);
             // TODO: 8/11/18 replace test with webpage
-            jobConfig.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, "pages");
+            jobConfig.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, String.valueOf(webPageTable));
             jobConfig.setOutputFormatClass(TableOutputFormat.class);
             JavaPairRDD<ImmutableBytesWritable, Put> hbasePuts = toWrite.mapToPair(pair -> {
                 Put put = new Put(Bytes.toBytes(pair._1));
-                put.addColumn(refrenceFamilyName.getBytes(), refrenceName.getBytes(), Bytes.toBytes(pair._2));
+                put.addColumn(refrenceFamilyName.getBytes(), refrencerank.getBytes(), Bytes.toBytes(pair._2));
                 return new Tuple2<>(new ImmutableBytesWritable(), put);
             });
             hbasePuts.saveAsNewAPIHadoopDataset(jobConfig.getConfiguration());

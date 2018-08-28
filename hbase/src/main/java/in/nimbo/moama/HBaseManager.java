@@ -9,6 +9,7 @@ import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -28,8 +29,8 @@ public class HBaseManager {
     static Logger errorLogger = Logger.getLogger("error");
     Configuration configuration;
     static int sizeLimit = 0;
-    final List<Put> puts;
-
+    private String checkColumn;
+    final ArrayList<Put> puts;
     HBaseManager(String configPath) {
         try {
             configManager = new ConfigManager(new File(getClass().getClassLoader().getResource(configPath).getFile()).getAbsolutePath(), PROPERTIES);
@@ -41,6 +42,7 @@ public class HBaseManager {
         tableName = TableName.valueOf(configManager.getProperty(PropertyType.H_BASE_TABLE));
         family1 = configManager.getProperty(PropertyType.H_BASE_CONTENT_FAMILY);
         family2 = configManager.getProperty(PropertyType.H_BASE_RANK_FAMILY);
+        checkColumn = configManager.getProperty(PropertyType.H_BASE_COLUMN_PAGE_RANK);
         sizeLimit = Integer.parseInt(configManager.getProperty(PropertyType.PUT_SIZE_LIMIT));
         puts = new ArrayList<>();
         boolean status = false;
@@ -93,5 +95,19 @@ public class HBaseManager {
             }
         }
         return domainToHBase + "-" + urlSections[urlSections.length - 1];
+    }
+    public boolean checkDuplicate(String url) {
+        Get get = new Get(Bytes.toBytes(generateRowKeyFromUrl(url)));
+        get.addColumn(family2.getBytes(), checkColumn.getBytes());
+        try (Connection connection = ConnectionFactory.createConnection(configuration)) {
+            Table t = connection.getTable(tableName);
+            Result result = t.get(get);
+            if (result.listCells() == null) {
+                return false;
+            }
+        } catch (IOException e) {
+            errorLogger.error("HBase service unavailable");
+        }
+        return true;
     }
 }

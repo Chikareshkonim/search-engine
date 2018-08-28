@@ -16,8 +16,11 @@ public class RSSParser {
         for (Element element : document.getElementsByTag("item")) {
             if (!isSeen(element)) {
                 String title = element.select("title").text();
+                System.err.println(title);
                 String date = element.select("pubDate").text();
+                System.err.println(date);
                 String url = element.select("link").text();
+                System.err.println(url);
                 NewsInfo newsInfo = new NewsInfo(title, date, url, domain);
                 result.add(newsInfo);
             }
