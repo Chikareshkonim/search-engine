@@ -4,6 +4,7 @@ import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.document.WebDocument;
 import in.nimbo.moama.metrics.Metrics;
 import in.nimbo.moama.util.PropertyType;
+import kafka.utils.json.JsonObject;
 import org.apache.http.HttpHost;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -16,6 +17,7 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.Strings;
+import org.elasticsearch.common.collect.Tuple;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.unit.TimeValue;
@@ -32,9 +34,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static in.nimbo.moama.configmanager.ConfigManager.FileType.PROPERTIES;
@@ -111,23 +111,25 @@ public class ElasticManager {
             //TODO
         }
     }
-    public void put(WebDocument document) {
+    public void put(JSONObject document) {
         try {
             XContentBuilder builder = XContentFactory.jsonBuilder();
-            try {
                 builder.startObject();
                 {
-                    builder.field(linkColumn, document.getPageLink());
-                    builder.field(textColumn, document.getTextDoc());
+                    Set<String>keys = document.keySet();
+                    keys.forEach(key->{
+                        try {
+                            builder.field(key, document.get(key));
+                        } catch (IOException e) {
+                            errorLogger.error("ERROR! couldn't add " + document.get(key) + " to elastic");
+                        }
+                    });
                 }
 
                 builder.endObject();
                 bulkRequest.add(indexRequest);
                 indexRequest = new IndexRequest(index);
                 added++;
-            } catch (IOException e) {
-                errorLogger.error("ERROR! couldn't add " + document.getPageLink() + " to elastic");
-            }
             if (bulkRequest.estimatedSizeInBytes() / 1000000 >= elasticFlushSizeLimit ||
                     bulkRequest.numberOfActions() >= elasticFlushNumberLimit) {
                 synchronized (sync) {
@@ -137,7 +139,7 @@ public class ElasticManager {
                 }
             }
         } catch (IOException e) {
-            errorLogger.error("ERROR! Couldn't add the document for " + document.getPageLink());
+            errorLogger.error("ERROR! Couldn't add the document for " + document.get("pageLink"));
         }
     }
     public Map<String, Float> search(ArrayList<String> necessaryWords, ArrayList<String> preferredWords, ArrayList<String> forbiddenWords) {
