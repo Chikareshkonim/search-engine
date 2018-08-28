@@ -4,7 +4,6 @@ import in.nimbo.moama.UrlHandler;
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.crawler.domainvalidation.DomainFrequencyHandler;
 import in.nimbo.moama.crawler.domainvalidation.DuplicateHandler;
-import in.nimbo.moama.crawler.domainvalidation.HashDuplicateChecker;
 import in.nimbo.moama.document.WebDocument;
 import in.nimbo.moama.exception.DomainFrequencyException;
 import in.nimbo.moama.exception.DuplicateLinkException;
@@ -13,7 +12,7 @@ import in.nimbo.moama.exception.URLException;
 import in.nimbo.moama.kafka.MoamaConsumer;
 import in.nimbo.moama.kafka.MoamaProducer;
 import in.nimbo.moama.metrics.Metrics;
-import in.nimbo.moama.util.PropertyType;
+import in.nimbo.moama.util.CrawlerPropertyType;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -46,7 +45,7 @@ public class Crawler implements Runnable {
     private DuplicateHandler DuplicateChecker = DuplicateHandler.getInstance();
 
     public Crawler() {
-        InputStream fileInputStream = Crawler.class.getResourceAsStream("/config.properties");
+        InputStream fileInputStream = Crawler.class.getResourceAsStream("/crawler.properties");
         try {
             ConfigManager.getInstance().load(fileInputStream, PROPERTIES);
         } catch (IOException e) {
@@ -58,12 +57,12 @@ public class Crawler implements Runnable {
         documentProducer = new MoamaProducer("documents");
         linkConsumer = new MoamaConsumer("links");
         helperConsumer = new MoamaConsumer("helper");
-        minOfEachQueue = Integer.parseInt(ConfigManager.getInstance().getProperty(PropertyType.CRAWLER_MIN_OF_EACH_THREAD_QUEUE));
-        threadPriority = Integer.parseInt(ConfigManager.getInstance().getProperty(PropertyType.CRAWLER_THREAD_PRIORITY));
-        shuffleSize = Integer.parseInt(ConfigManager.getInstance().getProperty(PropertyType.CRAWLER_SHUFFLE_SIZE));
-        numOfInternalLinksToKafka = Integer.parseInt(ConfigManager.getInstance().getProperty(PropertyType.CRAWLER_INTERNAL_LINK_ADD_TO_KAFKA));
-        numOfThreads = Integer.parseInt(ConfigManager.getInstance().getProperty(PropertyType.CRAWLER_NUMBER_OF_THREADS));
-        startNewThreadDelay = Integer.parseInt(ConfigManager.getInstance().getProperty(PropertyType.CRAWLER_START_NEW_THREAD_DELAY_MS));
+        minOfEachQueue = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_MIN_OF_EACH_THREAD_QUEUE));
+        threadPriority = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_THREAD_PRIORITY));
+        shuffleSize = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_SHUFFLE_SIZE));
+        numOfInternalLinksToKafka = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_INTERNAL_LINK_ADD_TO_KAFKA));
+        numOfThreads = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_NUMBER_OF_THREADS));
+        startNewThreadDelay = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_START_NEW_THREAD_DELAY_MS));
         parser = Parser.getInstance(ConfigManager.getInstance());
         try {
             manageKafkaHelper();

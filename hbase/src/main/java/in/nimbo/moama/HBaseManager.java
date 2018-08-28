@@ -2,7 +2,7 @@ package in.nimbo.moama;
 
 import com.google.protobuf.ServiceException;
 import in.nimbo.moama.configmanager.ConfigManager;
-import in.nimbo.moama.util.PropertyType;
+import in.nimbo.moama.util.HBasePropertyType;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
@@ -26,14 +26,15 @@ public class HBaseManager {
     static int sizeLimit = 0;
     private String checkColumn;
     final ArrayList<Put> puts;
-    HBaseManager(String configPath) {
+
+    HBaseManager(String tableName) {
         configuration = HBaseConfiguration.create();
         configuration.addResource(getClass().getResourceAsStream("/hbase-site.xml"));
-        tableName = TableName.valueOf(ConfigManager.getInstance().getProperty(PropertyType.H_BASE_TABLE));
-        family1 = ConfigManager.getInstance().getProperty(PropertyType.H_BASE_CONTENT_FAMILY);
-        family2 = ConfigManager.getInstance().getProperty(PropertyType.H_BASE_RANK_FAMILY);
-        checkColumn = ConfigManager.getInstance().getProperty(PropertyType.H_BASE_COLUMN_PAGE_RANK);
-        sizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(PropertyType.PUT_SIZE_LIMIT));
+        this.tableName = TableName.valueOf(tableName);
+        family1 = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_OUTLINKS_FAMILY);
+        family2 = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_SCORE_FAMILY);
+        checkColumn = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_COLUMN_PAGE_RANK);
+        sizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(HBasePropertyType.PUT_SIZE_LIMIT));
         puts = new ArrayList<>();
         boolean status = false;
         while (!status) {

@@ -1,38 +1,30 @@
 package in.nimbo.moama;
 
-import com.google.protobuf.ServiceException;
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.metrics.Metrics;
-import in.nimbo.moama.util.PropertyType;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.*;
+import in.nimbo.moama.util.HBasePropertyType;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
-
-import static in.nimbo.moama.configmanager.ConfigManager.FileType.PROPERTIES;
 
 public class WebDocumentHBaseManager extends HBaseManager{
     private static Logger errorLogger = Logger.getLogger("error");
     private static int size = 0;
     private static int added = 0;
 
-    public WebDocumentHBaseManager(String configPath) {
-        super(configPath);
-
+    public WebDocumentHBaseManager(String tableName) {
+        super(tableName);
     }
 
     public void put(JSONObject document) {
-        String pageRankColumn = configManager.getProperty(PropertyType.H_BASE_COLUMN_PAGE_RANK);
+        String pageRankColumn = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_COLUMN_PAGE_RANK);
         Put put = new Put(Bytes.toBytes(generateRowKeyFromUrl((String) document.get("pageLink"))));
         for (Object link : (JSONArray)document.get("outLinks")) {
             put.addColumn(family1.getBytes(), generateRowKeyFromUrl(((String)((JSONObject)link).get("LinkUrl"))).getBytes(), ((String)((JSONObject)link).get("LinkAnchor")).getBytes());

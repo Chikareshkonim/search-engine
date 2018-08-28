@@ -1,15 +1,13 @@
 package in.nimbo.moama.crawler.domainvalidation;
 
 import in.nimbo.moama.configmanager.ConfigManager;
-import in.nimbo.moama.util.PropertyType;
+import in.nimbo.moama.util.CrawlerPropertyType;
 import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
-
-import static in.nimbo.moama.configmanager.ConfigManager.FileType.PROPERTIES;
 
 public class HashDuplicateChecker {
     private static HashDuplicateChecker ourInstance;
@@ -32,7 +30,7 @@ public class HashDuplicateChecker {
 //        } catch (IOException e) {
 //            errorLogger.error("Loading properties failed");
 //        }
-        hashPrime = Integer.parseInt(configManager.getProperty(PropertyType.CRAWLER_DUPLICATE_HASH_PRIME));
+        hashPrime = Integer.parseInt(configManager.getProperty(CrawlerPropertyType.CRAWLER_DUPLICATE_HASH_PRIME));
         hashTableSize=hashPrime/8 +1;
         linkHashTableTime = new byte[hashTableSize];
         twoPowers= new byte[]{0b1, 0b10, 0b100, 0b1000, 0b10000, 0b100000, 0b1000000, -128};//-128 = 10000000
