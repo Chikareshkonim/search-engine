@@ -15,9 +15,11 @@ public class RSSReader implements Runnable {
     @Override
     public void run() {
         while (true) {
+            System.out.println("reading rss...");
             RSSs.getInstance().getRssToDomainMap().entrySet().stream().parallel().forEach(entry -> {
                 try {
                     newsQueue.addUrls(RSSParser.parse(entry.getKey(), entry.getValue()));
+                    System.out.println("rss added to queue");
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

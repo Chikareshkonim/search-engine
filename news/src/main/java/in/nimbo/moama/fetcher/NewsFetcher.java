@@ -28,6 +28,7 @@ public class NewsFetcher implements Runnable {
             Thread thread = new Thread(() -> {
                 LinkedList<NewsInfo> list = new LinkedList<>();
                 while (true) {
+                    System.out.println("fetching news");
                     if (list.size() < 1) {
                         try {
                             list.addAll(newsQueue.getUrls());
@@ -40,7 +41,7 @@ public class NewsFetcher implements Runnable {
                         String text = NewsParser.parse(newsInfo.getDomain(), newsInfo.getUrl());
                         News news = new News(newsInfo, text);
                         System.out.println(news);
-                        newsHBaseManager.put(news.documentToJson());
+//                        newsHBaseManager.put(news.documentToJson());
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

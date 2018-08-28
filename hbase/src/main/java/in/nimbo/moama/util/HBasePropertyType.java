@@ -3,7 +3,7 @@ package in.nimbo.moama.util;
 import in.nimbo.moama.configmanager.PropertyType;
 
 public enum HBasePropertyType implements PropertyType {
-    HBASE_COLUMN_PAGE_RANK("hbase.column.pageRank"), PUT_SIZE_LIMIT("hbase.put.size.limit");
+    HBASE_DUPCHECK_COLUMN("hbase.dupcheck.column"), PUT_SIZE_LIMIT("hbase.put.size.limit");
 
     private String type;
 

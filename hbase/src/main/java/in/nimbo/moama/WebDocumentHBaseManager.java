@@ -31,7 +31,7 @@ public class WebDocumentHBaseManager extends HBaseManager{
     }
 
     public void put(JSONObject document, JMXManager jmxManager) {
-        String pageRankColumn = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_COLUMN_PAGE_RANK);
+        String pageRankColumn = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_DUPCHECK_COLUMN);
         Put put = new Put(Bytes.toBytes(generateRowKeyFromUrl((String) document.get("pageLink"))));
         for (Object link : (JSONArray)document.get("outLinks")) {
             put.addColumn(outLinksFamily.getBytes(), generateRowKeyFromUrl(((String)((JSONObject)link).get("LinkUrl"))).getBytes(), ((String)((JSONObject)link).get("LinkAnchor")).getBytes());

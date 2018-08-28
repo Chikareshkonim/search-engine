@@ -21,7 +21,6 @@ public class HBaseManager {
     static Logger errorLogger = Logger.getLogger(HBaseManager.class);
     Configuration configuration;
     static int sizeLimit = 0;
-    private String checkColumn;
     final ArrayList<Put> puts;
 
     HBaseManager(String tableName, String duplicateCheckFamily) {
@@ -29,7 +28,7 @@ public class HBaseManager {
         configuration.addResource(getClass().getResourceAsStream("/hbase-site.xml"));
         this.tableName = TableName.valueOf(tableName);
         this.duplicateCheckFamily = duplicateCheckFamily;
-        checkColumn = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_COLUMN_PAGE_RANK);
+        String checkColumn = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_DUPCHECK_COLUMN);
         sizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(HBasePropertyType.PUT_SIZE_LIMIT));
         puts = new ArrayList<>();
         boolean status = false;
@@ -68,7 +67,7 @@ public class HBaseManager {
 
     public boolean checkDuplicate(String url) {
         Get get = new Get(Bytes.toBytes(generateRowKeyFromUrl(url)));
-        get.addColumn(duplicateCheckFamily.getBytes(), checkColumn.getBytes());
+        get.addFamily(duplicateCheckFamily.getBytes());
         try (Connection connection = ConnectionFactory.createConnection(configuration)) {
             Table t = connection.getTable(tableName);
             Result result = t.get(get);

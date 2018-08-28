@@ -49,11 +49,13 @@ public class RSSs {
 
     public void loadRSSs(){
         // TODO: 8/17/18
+        System.out.println("loading RSSs");
         ConfigManager configManager = ConfigManager.getInstance();
-        NewsWebsiteHBaseManager websiteHBaseManager = new NewsWebsiteHBaseManager(configManager.getProperty(NEWS_PAGES_TABLE),
-                configManager.getProperty(HBASE_TWITTER_FAMILY), configManager.getProperty(HBASE_VISITED_FAMILY));
+        NewsWebsiteHBaseManager websiteHBaseManager = new NewsWebsiteHBaseManager(configManager.getProperty(NEWS_WEBSITE_TABLE),
+                configManager.getProperty(HBASE_TEMPLATE_FAMILY), configManager.getProperty(HBASE_RSS_FAMILY));
         List<JSONObject> rssList = websiteHBaseManager.getRSSList();
         rssList.forEach(json -> rssToDomainMap.put(json.getString("rss"), json.getString("domain")));
+        System.out.println("RSSs loaded successfully");
     }
 
     public void saveRSSs(){

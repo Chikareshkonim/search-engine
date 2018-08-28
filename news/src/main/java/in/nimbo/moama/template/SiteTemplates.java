@@ -35,6 +35,7 @@ public class SiteTemplates {
     }
 
     public void loadTemplates() {
+        System.out.println("loading templates");
         ConfigManager configManager = ConfigManager.getInstance();
         NewsWebsiteHBaseManager hBaseManager = new NewsWebsiteHBaseManager(configManager.getProperty(NEWS_WEBSITE_TABLE)
                 , configManager.getProperty(HBASE_TEMPLATE_FAMILY), configManager.getProperty(HBASE_RSS_FAMILY));
@@ -45,5 +46,6 @@ public class SiteTemplates {
                     json.getString("dateFormat"), json.getString("newsTag"));
             siteTemplates.put(domain, template);
         });
+        System.out.println("loaded templates successfully");
     }
 }
