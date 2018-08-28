@@ -1,10 +1,11 @@
 package in.nimbo.moama;
 
+import com.google.protobuf.ServiceException;
 import in.nimbo.moama.configmanager.ConfigManager;
+import in.nimbo.moama.document.Link;
 import in.nimbo.moama.document.WebDocument;
 import in.nimbo.moama.metrics.Metrics;
 import in.nimbo.moama.util.PropertyType;
-import org.apache.commons.lang.SerializationUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -39,14 +40,15 @@ public class HBaseManager {
         boolean status = false;
         while (!status) {
             try {
-                HBaseAdmin.available(configuration);
+                HBaseAdmin.checkHBaseAvailable(configuration);
                 status = true;
-            } catch (IOException e) {
+            } catch (ServiceException | IOException e) {
                 errorLogger.error(e.getMessage());
             }
         }
     }
 
+    //TODO
     public boolean createTable() {
         try (Connection connection = ConnectionFactory.createConnection(configuration)) {
             Admin admin = connection.getAdmin();
@@ -73,9 +75,9 @@ public class HBaseManager {
     public void put(WebDocument document) {
         String pageRankColumn = configManager.getProperty(PropertyType.H_BASE_COLUMN_PAGE_RANK);
         Put put = new Put(Bytes.toBytes(generateRowKeyFromUrl(document.getPageLink())));
-        document.getLinks().forEach(link->{
-            put.addColumn(contextFamily.getBytes(),link.getUrl().getBytes(),link.getAnchorLink().getBytes());
-        });
+        for (Link link : document.getLinks()) {
+            put.addColumn(contextFamily.getBytes(), link.getUrl().getBytes(), link.getAnchorLink().getBytes());
+        }
         put.addColumn(rankFamily.getBytes(), pageRankColumn.getBytes(), Bytes.toBytes(1.0));
         puts.add(put);
         size++;

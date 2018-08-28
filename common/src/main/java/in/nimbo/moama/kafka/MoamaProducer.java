@@ -40,6 +40,5 @@ public class MoamaProducer {
                 errorLogger.error("Wrong Exception" + url);
             }
         }
-
     }
 }

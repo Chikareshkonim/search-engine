@@ -28,8 +28,6 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.json.JSONObject;
-
-
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -53,8 +51,8 @@ public class ElasticManager {
     private static final Integer sync = 0;
     private static int elasticFlushSizeLimit = 0;
     private static int elasticFlushNumberLimit = 0;
-    String textColumn;
-    String linkColumn;
+    private static String textColumn;
+    private static String linkColumn;
     private ConfigManager configManager;
 
     public ElasticManager() {
