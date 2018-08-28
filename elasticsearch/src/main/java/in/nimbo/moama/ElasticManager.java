@@ -40,7 +40,7 @@ public class ElasticManager {
     private RestHighLevelClient client;
     private String index;
     private String test;
-    private Logger errorLogger = Logger.getLogger("error");
+    private Logger errorLogger = Logger.getLogger(ElasticManager.class);
     private IndexRequest indexRequest;
     private BulkRequest bulkRequest;
     private static int added = 0;

@@ -5,6 +5,7 @@ import in.nimbo.moama.HBaseManager;
 import in.nimbo.moama.UrlHandler;
 import in.nimbo.moama.WebDocumentHBaseManager;
 import in.nimbo.moama.configmanager.ConfigManager;
+import in.nimbo.moama.configmanager.PropertyType;
 import in.nimbo.moama.crawler.domainvalidation.DomainFrequencyHandler;
 import in.nimbo.moama.crawler.domainvalidation.DuplicateHandler;
 import in.nimbo.moama.document.WebDocument;
@@ -35,7 +36,6 @@ public class Crawler implements Runnable {
     private Parser parser;
     private MoamaProducer mainProducer;
     private MoamaProducer helperProducer;
-    private MoamaProducer documentProducer;
     private MoamaConsumer linkConsumer;
     private MoamaConsumer helperConsumer;
     private JMXManager jmxManager;
@@ -52,7 +52,6 @@ public class Crawler implements Runnable {
 
     public Crawler() {
         jmxManager = JMXManager.getInstance();
-        webDocumentHBaseManager = new WebDocumentHBaseManager("pages", "outLinks", "rank");
         InputStream fileInputStream = Crawler.class.getResourceAsStream("/crawler.properties");
         try {
             ConfigManager.getInstance().load(fileInputStream, PROPERTIES);
@@ -62,7 +61,6 @@ public class Crawler implements Runnable {
         //TODO
         mainProducer = new MoamaProducer("links");
         helperProducer = new MoamaProducer("helper");
-        documentProducer = new MoamaProducer("documents");
         linkConsumer = new MoamaConsumer("links");
         helperConsumer = new MoamaConsumer("helper");
         minOfEachQueue = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_MIN_OF_EACH_THREAD_QUEUE));
@@ -71,6 +69,11 @@ public class Crawler implements Runnable {
         numOfInternalLinksToKafka = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_INTERNAL_LINK_ADD_TO_KAFKA));
         numOfThreads = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_NUMBER_OF_THREADS));
         startNewThreadDelay = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_START_NEW_THREAD_DELAY_MS));
+        String hBaseTable = ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_TABLE);
+        String scoreFamily = ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_FAMILY_SCORE);
+        String outLinksFamily = ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_FAMILY_OUTLINKS);
+        webDocumentHBaseManager = new WebDocumentHBaseManager(hBaseTable, outLinksFamily, scoreFamily);
+        elasticManager = new ElasticManager();
         parser = Parser.getInstance(ConfigManager.getInstance());
         try {
             manageKafkaHelper();

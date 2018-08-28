@@ -26,7 +26,6 @@ import java.util.List;
 
 
 public class ReferenceCalculator {
-    private static Logger errorLogger = Logger.getLogger("error");
     private TableName webPageTable;
     private String contentFamily;
     private Configuration configuration;

@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Parser {
-    private static Logger errorLogger = Logger.getLogger("error");
     private static LangDetector langDetector;
     private static Parser parser;
     private static HashDuplicateChecker HashDuplicateChecker;
