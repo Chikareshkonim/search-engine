@@ -14,7 +14,6 @@ public class HBaseManagerTest {
 
     @Test
     public void connectionTest() throws Exception {
-
         Configuration configuration = HBaseConfiguration.create();
         configuration.addResource(getClass().getResourceAsStream("/hbase-site.xml"));
         try {
