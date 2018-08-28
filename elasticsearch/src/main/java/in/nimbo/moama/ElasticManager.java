@@ -66,9 +66,9 @@ public class ElasticManager {
         test = ConfigManager.getInstance().getProperty(PropertyType.ELASTIC_TEST_TABLE);
         textColumn = ConfigManager.getInstance().getProperty(PropertyType.Text_COLUMN);
         linkColumn = ConfigManager.getInstance().getProperty(PropertyType.LINK_COLUMN);
-        server1=ConfigManager.getInstance().getProperty(PropertyType.SERVER_1);
-        server2=ConfigManager.getInstance().getProperty(PropertyType.SERVER_2);
-        server3=ConfigManager.getInstance().getProperty(PropertyType.SERVER_3);
+        server1 = ConfigManager.getInstance().getProperty(PropertyType.SERVER_1);
+        server2 = ConfigManager.getInstance().getProperty(PropertyType.SERVER_2);
+        server3 = ConfigManager.getInstance().getProperty(PropertyType.SERVER_3);
         clientPort = ConfigManager.getInstance().getProperty(PropertyType.CLIENT_PORT);
         vectorPort = ConfigManager.getInstance().getProperty(PropertyType.VECTOR_PORT);
         clusterName = ConfigManager.getInstance().getProperty(PropertyType.CLUSTER_NAME);
@@ -78,6 +78,7 @@ public class ElasticManager {
         indexRequest = new IndexRequest(index);
         bulkRequest = new BulkRequest();
     }
+
     //TODO
     public void getTermVector() {
         Settings settings = Settings.builder()
@@ -89,7 +90,7 @@ public class ElasticManager {
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
-        TermVectorsRequest termVectorsRequest = new TermVectorsRequest(test,"_doc","1");
+        TermVectorsRequest termVectorsRequest = new TermVectorsRequest(test, "_doc", "1");
         termVectorsRequest.fieldStatistics(true);
         termVectorsRequest.termStatistics(true);
         assert termVectorClient != null;
@@ -104,30 +105,31 @@ public class ElasticManager {
             //TODO
         }
     }
+
     public void put(JSONObject document) {
         try {
             XContentBuilder builder = XContentFactory.jsonBuilder();
-                builder.startObject();
-                {
-                    Set<String>keys = document.keySet();
-                    keys.forEach(key->{
-                        try {
+            builder.startObject();
+            {
+                Set<String> keys = document.keySet();
+                keys.forEach(key -> {
+                    try {
+                        if (!key.equals("outLinks"))
                             builder.field(key, document.get(key));
-                        } catch (IOException e) {
-                            errorLogger.error("ERROR! couldn't add " + document.get(key) + " to elastic");
-                        }
-                    });
-                }
-
-                builder.endObject();
-                bulkRequest.add(indexRequest);
-                indexRequest = new IndexRequest(index);
-                added++;
+                    } catch (IOException e) {
+                        errorLogger.error("ERROR! couldn't add " + document.get(key) + " to elastic");
+                    }
+                });
+            }
+            builder.endObject();
+            added++;
             if (bulkRequest.estimatedSizeInBytes() / 1000000 >= elasticFlushSizeLimit ||
                     bulkRequest.numberOfActions() >= elasticFlushNumberLimit) {
                 synchronized (sync) {
+                    bulkRequest.add(indexRequest);
                     client.bulk(bulkRequest);
                     bulkRequest = new BulkRequest();
+                    indexRequest = new IndexRequest(index);
                     Metrics.numberOfPagesAddedToElastic = added;
                 }
             }
@@ -135,19 +137,20 @@ public class ElasticManager {
             errorLogger.error("ERROR! Couldn't add the document for " + document.get("pageLink"));
         }
     }
+
     public Map<String, Float> search(ArrayList<String> necessaryWords, ArrayList<String> preferredWords, ArrayList<String> forbiddenWords) {
         Map<String, Float> results = new HashMap<>();
         SearchRequest searchRequest = new SearchRequest(index);
         searchRequest.types("_doc");
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-        for(String necessaryWord:necessaryWords) {
+        for (String necessaryWord : necessaryWords) {
             boolQueryBuilder.must(QueryBuilders.matchQuery(textColumn, necessaryWord));
         }
-        for(String preferredWord:preferredWords) {
+        for (String preferredWord : preferredWords) {
             boolQueryBuilder.should(QueryBuilders.matchQuery(textColumn, preferredWord));
         }
-        for(String forbiddenWord:forbiddenWords) {
+        for (String forbiddenWord : forbiddenWords) {
             boolQueryBuilder.mustNot(QueryBuilders.matchQuery(textColumn, forbiddenWord));
         }
         sourceBuilder.query(boolQueryBuilder);
@@ -183,7 +186,7 @@ public class ElasticManager {
         return SortResults.sortByValues(results);
     }
 
-    private SearchResponse runSearch(SearchRequest searchRequest){
+    private SearchResponse runSearch(SearchRequest searchRequest) {
         boolean searchStatus = false;
         SearchResponse searchResponse = new SearchResponse();
         while (!searchStatus) {
