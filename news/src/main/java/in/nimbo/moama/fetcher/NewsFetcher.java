@@ -1,21 +1,25 @@
 package in.nimbo.moama.fetcher;
 
+import in.nimbo.moama.NewsHBaseManager;
 import in.nimbo.moama.configmanager.ConfigManager;
 
 import java.io.IOException;
 import java.util.LinkedList;
 
-import static in.nimbo.moama.newsutil.NewsPropertyType.FETCHER_THREAD_PRIORITY;
-import static in.nimbo.moama.newsutil.NewsPropertyType.NUMBER_OF_FETCHER_THREADS;
+import static in.nimbo.moama.newsutil.NewsPropertyType.*;
 
 
 public class NewsFetcher implements Runnable {
     private NewsURLQueue<NewsInfo> newsQueue;
+    private NewsHBaseManager newsHBaseManager;
     private static final int FETCHER_THREADS = Integer.parseInt(ConfigManager.getInstance().getProperty(NUMBER_OF_FETCHER_THREADS));
     private static final int FETCHER_PRIORITY = Integer.parseInt(ConfigManager.getInstance().getProperty(FETCHER_THREAD_PRIORITY));
 
     public NewsFetcher(NewsURLQueue<NewsInfo> newsQueue) {
         this.newsQueue = newsQueue;
+        ConfigManager configManager = ConfigManager.getInstance();
+        newsHBaseManager = new NewsHBaseManager(configManager.getProperty(NEWS_PAGES_TABLE),
+                configManager.getProperty(HBASE_TWITTER_FAMILY), configManager.getProperty(HBASE_VISITED_FAMILY));
     }
 
     @Override
@@ -36,6 +40,7 @@ public class NewsFetcher implements Runnable {
                         String text = NewsParser.parse(newsInfo.getDomain(), newsInfo.getUrl());
                         News news = new News(newsInfo, text);
                         System.out.println(news);
+                        newsHBaseManager.put(news.documentToJson());
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

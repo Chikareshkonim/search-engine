@@ -32,4 +32,12 @@ public class NewsWebsiteHBaseManager extends HBaseManager{
     public void put(JSONObject document) {
 
     }
+
+    public List<JSONObject> getTemplates() {
+        return null;
+    }
+
+    public List<JSONObject> getRSSList() {
+        return null;
+    }
 }

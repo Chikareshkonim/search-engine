@@ -17,7 +17,7 @@ import java.util.ArrayList;
 
 public class HBaseManager {
     TableName tableName;
-    private String duplicateCheckFamily;
+    String duplicateCheckFamily;
     static Logger errorLogger = Logger.getLogger(HBaseManager.class);
     Configuration configuration;
     static int sizeLimit = 0;

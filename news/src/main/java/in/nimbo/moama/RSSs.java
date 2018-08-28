@@ -1,16 +1,19 @@
 package in.nimbo.moama;
 
 import in.nimbo.moama.configmanager.ConfigManager;
+import org.json.JSONObject;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 
-import static in.nimbo.moama.newsutil.NewsPropertyType.CACHE_INITIAL_CAPACITY;
-import static in.nimbo.moama.newsutil.NewsPropertyType.CACHE_MAX_CAPACITY;
+import static in.nimbo.moama.newsutil.NewsPropertyType.*;
 
 
 public class RSSs {
     private static final int INITIAL_CAPACITY = Integer.parseInt(ConfigManager.getInstance().getProperty(CACHE_INITIAL_CAPACITY));
     private static final int MAX_CAPACITY = Integer.parseInt(ConfigManager.getInstance().getProperty(CACHE_MAX_CAPACITY));
+    private HBaseManager hBaseManager = new HBaseManager(ConfigManager.getInstance().getProperty(NEWS_PAGES_TABLE),
+            ConfigManager.getInstance().getProperty(HBASE_VISITED_FAMILY));
 
     private static RSSs ourInstance = new RSSs();
 
@@ -22,7 +25,7 @@ public class RSSs {
         loadRSSs();
     }
 
-    private LinkedHashMap<String, String> rssToDomainMap;
+    private LinkedHashMap<String, String> rssToDomainMap = new LinkedHashMap<>();
 
     private LRUCache<String, Boolean> cache = new LRUCache<>(INITIAL_CAPACITY, MAX_CAPACITY);
 
@@ -32,8 +35,11 @@ public class RSSs {
 
     public boolean isSeen (String url) {
         boolean answer = cache.containsKey(url);
-        if (!answer)
-            setSeen(url);
+        if (!answer) {
+            answer = hBaseManager.checkDuplicate(url);
+            if (answer)
+                setSeen(url);
+        }
         return answer;
     }
 
@@ -43,9 +49,13 @@ public class RSSs {
 
     public void loadRSSs(){
         // TODO: 8/17/18
-        rssToDomainMap = new LinkedHashMap<>();
-        rssToDomainMap.put("http://www.asriran.com/fa/rss/1", "asriran.com");
+        ConfigManager configManager = ConfigManager.getInstance();
+        NewsWebsiteHBaseManager websiteHBaseManager = new NewsWebsiteHBaseManager(configManager.getProperty(NEWS_PAGES_TABLE),
+                configManager.getProperty(HBASE_TWITTER_FAMILY), configManager.getProperty(HBASE_VISITED_FAMILY));
+        List<JSONObject> rssList = websiteHBaseManager.getRSSList();
+        rssList.forEach(json -> rssToDomainMap.put(json.getString("rss"), json.getString("domain")));
     }
+
     public void saveRSSs(){
         // TODO: 8/17/18
     }
