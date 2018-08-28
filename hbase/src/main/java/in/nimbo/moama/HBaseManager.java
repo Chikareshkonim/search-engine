@@ -12,27 +12,39 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import static in.nimbo.moama.configmanager.ConfigManager.FileType.PROPERTIES;
+
 public class HBaseManager {
     private ConfigManager configManager;
     private static Logger errorLogger = Logger.getLogger("error");
-    private TableName webPageTable = TableName.valueOf(configManager.getProperty(PropertyType.H_BASE_TABLE));
-    private String contentFamily = configManager.getProperty(PropertyType.H_BASE_FAMILY_1);
-    private String rankFamily = configManager.getProperty(PropertyType.H_BASE_FAMILY_2);
+    private TableName webPageTable;
+    private String contentFamily;
+    private String rankFamily;
     private Configuration configuration;
     private final List<Put> puts;
     private static int size = 0;
-    private final static int SIZE_LIMIT = 100;
+    private static int sizeLimit = 0;
     private static int added = 0;
 
     public HBaseManager() {
+        try {
+            configManager = new ConfigManager(new File(getClass().getClassLoader().getResource("config.properties").getFile()).getAbsolutePath(), PROPERTIES);
+        } catch (IOException e) {
+            errorLogger.error("Loading properties failed");
+        }
         configuration = HBaseConfiguration.create();
         configuration.addResource(getClass().getResourceAsStream("/hbase-site.xml"));
+        webPageTable = TableName.valueOf(configManager.getProperty(PropertyType.H_BASE_TABLE));
+        contentFamily = configManager.getProperty(PropertyType.H_BASE_CONTENT_FAMILY);
+        rankFamily = configManager.getProperty(PropertyType.H_BASE_RANK_FAMILY);
+        sizeLimit = Integer.parseInt(configManager.getProperty(PropertyType.PUT_SIZE_LIMIT));
         puts = new ArrayList<>();
         boolean status = false;
         while (!status) {
@@ -44,7 +56,6 @@ public class HBaseManager {
             }
         }
     }
-
     public boolean createTable() {
         try (Connection connection = ConnectionFactory.createConnection(configuration)) {
             Admin admin = connection.getAdmin();
@@ -72,7 +83,7 @@ public class HBaseManager {
         put.addColumn(rankFamily.getBytes(), pageRankColumn.getBytes(), Bytes.toBytes(1.0));
         puts.add(put);
         size++;
-        if (size >= SIZE_LIMIT) {
+        if (size >= sizeLimit) {
             synchronized (puts) {
                 try (Connection connection = ConnectionFactory.createConnection(configuration)) {
                     Table t = connection.getTable(webPageTable);
@@ -119,7 +130,7 @@ public class HBaseManager {
     public int getReference(String url) {
         Get get = new Get(Bytes.toBytes(url));
         int score = 0;
-        get.addColumn(contentFamily.getBytes(), "pageRank".getBytes());
+        get.addColumn(contentFamily.getBytes(), rankFamily.getBytes());
         try (Connection connection = ConnectionFactory.createConnection(configuration)) {
             Table t = connection.getTable(webPageTable);
             Result result = t.get(get);

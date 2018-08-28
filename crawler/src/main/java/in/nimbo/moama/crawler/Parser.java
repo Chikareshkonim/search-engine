@@ -1,5 +1,6 @@
 package in.nimbo.moama.crawler;
 
+import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.document.Link;
 import in.nimbo.moama.UrlHandler;
 import in.nimbo.moama.document.WebDocument;
@@ -25,10 +26,12 @@ public class Parser {
     private static Logger errorLogger = Logger.getLogger("error");
     private static LangDetector langDetector;
     private static Parser parser;
-    private static DuplicateLinkHandler duplicateLinkHandler = DuplicateLinkHandler.getInstance();
-    private static DomainFrequencyHandler domainTimeHandler = DomainFrequencyHandler.getInstance();
+    private static DuplicateLinkHandler duplicateLinkHandler;
+    private static DomainFrequencyHandler domainTimeHandler;
 
-    public synchronized static Parser getInstance() {
+    public synchronized static Parser getInstance(ConfigManager configManager) {
+        duplicateLinkHandler = DuplicateLinkHandler.getInstance();
+        domainTimeHandler = DomainFrequencyHandler.getInstance();
         if (parser == null)
             parser = new Parser();
         return parser;
