@@ -53,6 +53,12 @@ public class ElasticManager {
     private static int elasticFlushNumberLimit = 0;
     private static String textColumn;
     private static String linkColumn;
+    private static String server1;
+    private static String server2;
+    private static String server3;
+    private static String clientPort;
+    private static String vectorPort;
+    private static String clusterName;
     private ConfigManager configManager;
 
     public ElasticManager() {
@@ -67,19 +73,26 @@ public class ElasticManager {
         test = configManager.getProperty(PropertyType.ELASTIC_TEST_TABLE);
         textColumn = configManager.getProperty(PropertyType.Text_COLUMN);
         linkColumn = configManager.getProperty(PropertyType.LINK_COLUMN);
-        client = new RestHighLevelClient(RestClient.builder(new HttpHost(configManager.getProperty(PropertyType.ELASTIC_HOSTNAME),
-                Integer.parseInt(configManager.getProperty(PropertyType.ELASTIC_PORT)), "http")));
+        server1=configManager.getProperty(PropertyType.SERVER_1);
+        server2=configManager.getProperty(PropertyType.SERVER_2);
+        server3=configManager.getProperty(PropertyType.SERVER_3);
+        clientPort = configManager.getProperty(PropertyType.CLIENT_PORT);
+        vectorPort = configManager.getProperty(PropertyType.VECTOR_PORT);
+        clusterName = configManager.getProperty(PropertyType.CLUSTER_NAME);
+        client = new RestHighLevelClient(RestClient.builder(new HttpHost(server1, Integer.parseInt(clientPort), "http"),
+                new HttpHost(server2, Integer.parseInt(clientPort), "http"),
+                new HttpHost(server3, Integer.parseInt(clientPort), "http")));
         indexRequest = new IndexRequest(index);
         bulkRequest = new BulkRequest();
     }
     //TODO
     public void getTermVector() {
         Settings settings = Settings.builder()
-                .put("cluster.name", "moama").put("client.transport.sniff", true).build();
+                .put("cluster.name", clusterName).put("client.transport.sniff", true).build();
         TransportClient termVectorClient = null;
         try {
             termVectorClient = new PreBuiltTransportClient(settings)
-                    .addTransportAddress(new TransportAddress(InetAddress.getByName("s1"), 9300));
+                    .addTransportAddress(new TransportAddress(InetAddress.getByName(server1), Integer.parseInt(vectorPort)));
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }

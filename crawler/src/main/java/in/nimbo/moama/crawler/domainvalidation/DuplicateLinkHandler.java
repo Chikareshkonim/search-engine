@@ -1,5 +1,7 @@
 package in.nimbo.moama.crawler.domainvalidation;
 
+import in.nimbo.moama.configmanager.ConfigManager;
+import in.nimbo.moama.util.PropertyType;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -7,11 +9,17 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 
+import static in.nimbo.moama.configmanager.ConfigManager.FileType.PROPERTIES;
+
 public class DuplicateLinkHandler {
-    private static DuplicateLinkHandler ourInstance = new DuplicateLinkHandler();
-    private static Logger logger = Logger.getLogger("error");
+    private static DuplicateLinkHandler ourInstance;
+    private static Logger errorLogger = Logger.getLogger("error");
+    private ConfigManager configManager;
 
     public static DuplicateLinkHandler getInstance() {
+        if(ourInstance == null){
+            ourInstance = new DuplicateLinkHandler();
+        }
         return ourInstance;
     }
     private static int hashPrime ;
@@ -22,7 +30,12 @@ public class DuplicateLinkHandler {
         ourInstance=new DuplicateLinkHandler();
     }
     private DuplicateLinkHandler() {
-        hashPrime = 1610612741;
+        try {
+            configManager = new ConfigManager(new File(getClass().getClassLoader().getResource("config.properties").getFile()).getAbsolutePath(), PROPERTIES);
+        } catch (IOException e) {
+            errorLogger.error("Loading properties failed");
+        }
+        hashPrime = Integer.parseInt(configManager.getProperty(PropertyType.CRAWLER_DUPLICATE_HASH_PRIME));
         hashTableSize=hashPrime/8 +1;
         linkHashTableTime = new byte[hashTableSize];
         twoPowers= new byte[]{0b1, 0b10, 0b100, 0b1000, 0b10000, 0b100000, 0b1000000, -128};//-128 = 10000000
@@ -63,7 +76,7 @@ public class DuplicateLinkHandler {
         try(FileOutputStream fileOutputStream=new FileOutputStream("duplicateHashTable.information")){
             fileOutputStream.write(linkHashTableTime);
         } catch (IOException e) {
-            logger.error(e.getMessage());
+            errorLogger.error(e.getMessage());
         }
     }
 }
