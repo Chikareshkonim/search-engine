@@ -27,6 +27,7 @@ public class HBaseManager {
     private TableName webPageTable;
     private String contentFamily;
     private String rankFamily;
+    private String rankColumn;
     private Configuration configuration;
     private final List<Put> puts;
     private static int size = 0;
@@ -44,6 +45,7 @@ public class HBaseManager {
         webPageTable = TableName.valueOf(configManager.getProperty(PropertyType.H_BASE_TABLE));
         contentFamily = configManager.getProperty(PropertyType.H_BASE_CONTENT_FAMILY);
         rankFamily = configManager.getProperty(PropertyType.H_BASE_RANK_FAMILY);
+        rankColumn = configManager.getProperty(PropertyType.H_BASE_COLUMN_PAGE_RANK);
         sizeLimit = Integer.parseInt(configManager.getProperty(PropertyType.PUT_SIZE_LIMIT));
         puts = new ArrayList<>();
         boolean status = false;
@@ -147,5 +149,19 @@ public class HBaseManager {
             System.out.println("couldn't get document for " + url + " from HBase!");
         }
         return score;
+    }
+    public boolean checkDuplicate(String url) {
+        Get get = new Get(Bytes.toBytes(generateRowKeyFromUrl(url)));
+        get.addColumn(rankFamily.getBytes(), rankColumn.getBytes());
+        try (Connection connection = ConnectionFactory.createConnection(configuration)) {
+            Table t = connection.getTable(webPageTable);
+            Result result = t.get(get);
+            if (result.listCells() == null) {
+                return false;
+            }
+        } catch (IOException e) {
+            errorLogger.error("HBase service unavailable");
+        }
+        return true;
     }
 }

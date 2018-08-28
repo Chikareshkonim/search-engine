@@ -1,5 +1,6 @@
 package in.nimbo.moama.rankcalculator;
 
+import in.nimbo.moama.configmanager.ConfigManager;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Put;
