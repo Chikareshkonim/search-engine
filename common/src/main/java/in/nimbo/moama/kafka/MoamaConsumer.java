@@ -13,22 +13,22 @@ import java.util.Collections;
 
 import static in.nimbo.moama.configmanager.ConfigManager.FileType.PROPERTIES;
 
-public class Consumer {
+public class MoamaConsumer {
     private KafkaConsumer<String, String> consumer;
     private Logger errorLogger = Logger.getLogger("error");
 
-    public Consumer(String topic, String propertiesAddress) {
+    public MoamaConsumer(String topic, String propertiesAddress) {
         //TODO
         ConfigManager configManager = null;
         try {
             configManager = new ConfigManager(propertiesAddress, PROPERTIES);
         } catch (IOException e) {
-            e.printStackTrace();
+            errorLogger.error("config doesn't exists");
         }
         consumer = new KafkaConsumer<>(configManager.getProperties("",true));
         consumer.subscribe(Collections.singletonList(topic));
     }
-    public synchronized ArrayList<String> getDocument() {
+    public synchronized ArrayList<String> getDocuments() {
         //TODO
         ArrayList<String> result = new ArrayList<>();
         ConsumerRecords<String, String> records = consumer.poll(10000);

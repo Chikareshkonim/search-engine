@@ -6,6 +6,8 @@ import in.nimbo.moama.exception.DomainFrequencyException;
 import in.nimbo.moama.exception.DuplicateLinkException;
 import in.nimbo.moama.exception.IllegalLanguageException;
 import in.nimbo.moama.exception.URLException;
+import in.nimbo.moama.kafka.MoamaConsumer;
+import in.nimbo.moama.kafka.MoamaProducer;
 import in.nimbo.moama.metrics.Metrics;
 import org.apache.log4j.Logger;
 
@@ -22,13 +24,28 @@ import static java.lang.Thread.sleep;
 public class Crawler implements Runnable {
     private static Logger errorLogger = Logger.getLogger("error");
     private Parser parser;
-    private URLQueue urlQueue;
-    private URLQueue tempUrlQueue;
-
-    public Crawler(URLQueue urlQueue, URLQueue tempUrlQueue) {
-        this.urlQueue = urlQueue;
-        this.tempUrlQueue = tempUrlQueue;
+    private MoamaProducer mainProducer;
+    private MoamaProducer helperProducer;
+    private MoamaProducer documentProducer;
+    private MoamaConsumer linkConsumer;
+    private MoamaConsumer helperConsumer;
+    private static final int SHUFFLE_SIZE = 200000;
+    private static final int THREAD_INTERRUPTION=0;
+    public Crawler() {
+        //TODO
+        mainProducer = new MoamaProducer("", "");
+        helperProducer = new MoamaProducer("", "");
+        documentProducer = new MoamaProducer("", "");
+        linkConsumer = new MoamaConsumer("", "");
+        helperConsumer = new MoamaConsumer("", "");
         parser = Parser.getInstance();
+        try {
+            manageKafkaHelper();
+        } catch (InterruptedException e) {
+            //FIXME
+            errorLogger.error("link shuffling thread has been interrupted");
+            System.exit(THREAD_INTERRUPTION);
+        }
     }
 
     @Override
@@ -40,17 +57,19 @@ public class Crawler implements Runnable {
             } catch (InterruptedException ignored) {
             }
             Thread thread = new Thread(() -> {
-                LinkedList<String> urlsOfThisThread = new LinkedList<>(urlQueue.getUrls());
+                LinkedList<String> urlsOfThisThread = new LinkedList<>(linkConsumer.getDocuments());
                 while (true) {
                     if (urlsOfThisThread.size() < CRAWLER_MIN_OF_EACH_THREAD_QUEUE) {
-                        urlsOfThisThread.addAll(urlQueue.getUrls());
+                        urlsOfThisThread.addAll(linkConsumer.getDocuments());
                     } else {
                         WebDocument webDocument;
                         String url = urlsOfThisThread.pop();
                         try {
                             webDocument = parser.parse(url);
                             Metrics.byteCounter += webDocument.getTextDoc().getBytes().length;
-                            tempUrlQueue.pushNewURL(giveGoodLink(webDocument));
+                            helperProducer.pushNewURL(giveGoodLink(webDocument));
+                            //TODO
+                            documentProducer.pushDocument(webDocument.toString());
                         } catch (RuntimeException e) {
                             errorLogger.error("important" + e.getMessage());
                             throw e;
@@ -75,6 +94,19 @@ public class Crawler implements Runnable {
             externalLink.addAll(internalLink);
         }
         return externalLink.toArray(new String[0]);
+    }
+
+    private void manageKafkaHelper() throws InterruptedException {
+        LinkedList<String> linkedList = new LinkedList<>();
+        while (true) {
+            sleep(2000);
+            linkedList.addAll(helperConsumer.getDocuments());
+            if (linkedList.size() > SHUFFLE_SIZE) {
+                Collections.shuffle(linkedList);
+                mainProducer.pushNewURL(linkedList.toArray(new String[0]));
+                linkedList.clear();
+            }
+        }
     }
 }
 
