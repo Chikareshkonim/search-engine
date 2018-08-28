@@ -94,7 +94,6 @@ public class WebDocumentHBaseManager extends HBaseManager{
             admin.close();
             connection.close();
             return true;
-
         } catch (IOException e) {
             errorLogger.error(e.getMessage());
             return false;
