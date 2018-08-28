@@ -5,6 +5,8 @@ import in.nimbo.moama.metrics.Metrics;
 import in.nimbo.moama.util.HBasePropertyType;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
@@ -16,20 +18,24 @@ import java.util.List;
 
 public class WebDocumentHBaseManager extends HBaseManager{
     private static Logger errorLogger = Logger.getLogger("error");
+    private String outLinksFamily;
+    private String scoreFamily;
     private static int size = 0;
     private static int added = 0;
 
-    public WebDocumentHBaseManager(String tableName) {
-        super(tableName);
+    public WebDocumentHBaseManager(String tableName, String outLinksFamily, String scoreFamily) {
+        super(tableName, scoreFamily);
+        this.outLinksFamily = outLinksFamily;
+        this.scoreFamily = scoreFamily;
     }
 
     public void put(JSONObject document) {
         String pageRankColumn = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_COLUMN_PAGE_RANK);
         Put put = new Put(Bytes.toBytes(generateRowKeyFromUrl((String) document.get("pageLink"))));
         for (Object link : (JSONArray)document.get("outLinks")) {
-            put.addColumn(family1.getBytes(), generateRowKeyFromUrl(((String)((JSONObject)link).get("LinkUrl"))).getBytes(), ((String)((JSONObject)link).get("LinkAnchor")).getBytes());
+            put.addColumn(outLinksFamily.getBytes(), generateRowKeyFromUrl(((String)((JSONObject)link).get("LinkUrl"))).getBytes(), ((String)((JSONObject)link).get("LinkAnchor")).getBytes());
         }
-        put.addColumn(family2.getBytes(), pageRankColumn.getBytes(), Bytes.toBytes(1.0));
+        put.addColumn(scoreFamily.getBytes(), pageRankColumn.getBytes(), Bytes.toBytes(1.0));
         puts.add(put);
         size++;
         if (size >= sizeLimit) {
@@ -56,7 +62,7 @@ public class WebDocumentHBaseManager extends HBaseManager{
     public int getReference(String url) {
         Get get = new Get(Bytes.toBytes(url));
         int score = 0;
-        get.addColumn(family1.getBytes(), family2.getBytes());
+        get.addColumn(outLinksFamily.getBytes(), scoreFamily.getBytes());
         try (Connection connection = ConnectionFactory.createConnection(configuration)) {
             Table t = connection.getTable(tableName);
             Result result = t.get(get);
@@ -73,6 +79,24 @@ public class WebDocumentHBaseManager extends HBaseManager{
             System.out.println("couldn't get document for " + url + " from HBase!");
         }
         return score;
+    }
+
+    public boolean createTable() {
+        try (Connection connection = ConnectionFactory.createConnection(configuration)) {
+            Admin admin = connection.getAdmin();
+            HTableDescriptor hTableDescriptor = new HTableDescriptor(tableName);
+            hTableDescriptor.addFamily(new HColumnDescriptor(outLinksFamily));
+            hTableDescriptor.addFamily(new HColumnDescriptor(scoreFamily));
+            if (!admin.tableExists(tableName))
+                admin.createTable(hTableDescriptor);
+            admin.close();
+            connection.close();
+            return true;
+
+        } catch (IOException e) {
+            errorLogger.error(e.getMessage());
+            return false;
+        }
     }
 
 }

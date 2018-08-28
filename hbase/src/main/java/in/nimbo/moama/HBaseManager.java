@@ -5,8 +5,6 @@ import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.util.HBasePropertyType;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.HColumnDescriptor;
-import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -19,20 +17,18 @@ import java.util.ArrayList;
 
 public class HBaseManager {
     TableName tableName;
-    String family1;
-    String family2;
+    private String duplicateCheckFamily;
     static Logger errorLogger = Logger.getLogger("error");
     Configuration configuration;
     static int sizeLimit = 0;
     private String checkColumn;
     final ArrayList<Put> puts;
 
-    HBaseManager(String tableName) {
+    HBaseManager(String tableName, String duplicateCheckFamily) {
         configuration = HBaseConfiguration.create();
         configuration.addResource(getClass().getResourceAsStream("/hbase-site.xml"));
         this.tableName = TableName.valueOf(tableName);
-        family1 = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_OUTLINKS_FAMILY);
-        family2 = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_SCORE_FAMILY);
+        this.duplicateCheckFamily = duplicateCheckFamily;
         checkColumn = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_COLUMN_PAGE_RANK);
         sizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(HBasePropertyType.PUT_SIZE_LIMIT));
         puts = new ArrayList<>();
@@ -44,24 +40,6 @@ public class HBaseManager {
             } catch (ServiceException | IOException e) {
                 errorLogger.error(e.getMessage());
             }
-        }
-    }
-
-    public boolean createTable() {
-        try (Connection connection = ConnectionFactory.createConnection(configuration)) {
-            Admin admin = connection.getAdmin();
-            HTableDescriptor hTableDescriptor = new HTableDescriptor(tableName);
-            hTableDescriptor.addFamily(new HColumnDescriptor(family1));
-            hTableDescriptor.addFamily(new HColumnDescriptor(family2));
-            if (!admin.tableExists(tableName))
-                admin.createTable(hTableDescriptor);
-            admin.close();
-            connection.close();
-            return true;
-
-        } catch (IOException e) {
-            errorLogger.error(e.getMessage());
-            return false;
         }
     }
 
@@ -87,9 +65,10 @@ public class HBaseManager {
         }
         return domainToHBase + "-" + urlSections[urlSections.length - 1];
     }
+
     public boolean checkDuplicate(String url) {
         Get get = new Get(Bytes.toBytes(generateRowKeyFromUrl(url)));
-        get.addColumn(family2.getBytes(), checkColumn.getBytes());
+        get.addColumn(duplicateCheckFamily.getBytes(), checkColumn.getBytes());
         try (Connection connection = ConnectionFactory.createConnection(configuration)) {
             Table t = connection.getTable(tableName);
             Result result = t.get(get);

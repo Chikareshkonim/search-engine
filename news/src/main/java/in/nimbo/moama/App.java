@@ -8,7 +8,7 @@ import in.nimbo.moama.fetcher.RSSReader;
 
 import java.io.IOException;
 
-import static newsutil.NewsPropertyType.NEWS_QUEUE_CAPACITY;
+import static in.nimbo.moama.newsutil.NewsPropertyType.NEWS_QUEUE_CAPACITY;
 
 /**
  * Hello world!

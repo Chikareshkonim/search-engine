@@ -11,8 +11,12 @@ import java.util.List;
 
 public class NewsWebsiteHBaseManager extends HBaseManager{
     private final List<Put> puts;
-    public NewsWebsiteHBaseManager(String tableName) {
-        super(tableName);
+    private String templateFamily;
+    private String rssFamily;
+    public NewsWebsiteHBaseManager(String tableName, String templateFamily, String rssFamily) {
+        super(tableName, templateFamily);
+        this.templateFamily = templateFamily;
+        this.rssFamily = rssFamily;
         puts = new ArrayList<>();
         boolean status = false;
         while (!status) {

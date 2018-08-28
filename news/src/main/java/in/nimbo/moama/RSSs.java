@@ -4,8 +4,8 @@ import in.nimbo.moama.configmanager.ConfigManager;
 
 import java.util.LinkedHashMap;
 
-import static newsutil.NewsPropertyType.CACHE_INITIAL_CAPACITY;
-import static newsutil.NewsPropertyType.CACHE_MAX_CAPACITY;
+import static in.nimbo.moama.newsutil.NewsPropertyType.CACHE_INITIAL_CAPACITY;
+import static in.nimbo.moama.newsutil.NewsPropertyType.CACHE_MAX_CAPACITY;
 
 
 public class RSSs {

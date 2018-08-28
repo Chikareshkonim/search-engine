@@ -5,8 +5,8 @@ import in.nimbo.moama.configmanager.ConfigManager;
 import java.io.IOException;
 import java.util.LinkedList;
 
-import static newsutil.NewsPropertyType.FETCHER_THREAD_PRIORITY;
-import static newsutil.NewsPropertyType.NUMBER_OF_FETCHER_THREADS;
+import static in.nimbo.moama.newsutil.NewsPropertyType.FETCHER_THREAD_PRIORITY;
+import static in.nimbo.moama.newsutil.NewsPropertyType.NUMBER_OF_FETCHER_THREADS;
 
 
 public class NewsFetcher implements Runnable {
