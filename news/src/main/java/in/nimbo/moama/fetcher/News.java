@@ -1,20 +1,14 @@
 package in.nimbo.moama.fetcher;
 
+import org.json.JSONObject;
+
 public class News {
     private NewsInfo newsInfo;
-    private String text;
+    private String content;
 
-    public News(NewsInfo newsInfo, String text) {
+    public News(NewsInfo newsInfo, String content) {
         this.newsInfo = newsInfo;
-        this.text=text;
-    }
-
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
+        this.content=content;
     }
 
     public NewsInfo getNewsInfo() {
@@ -27,6 +21,15 @@ public class News {
 
     @Override
     public String toString() {
-        return newsInfo.toString() + "\n" + "Content: " + text;
+        return newsInfo.toString() + "\n" + "Content: " + content;
+    }
+
+    public JSONObject documentToJson() {
+        JSONObject jsonDocument = new JSONObject();
+        jsonDocument.put("title", newsInfo.getTitle());
+        jsonDocument.put("date", newsInfo.getDate());
+        jsonDocument.put("url", newsInfo.getUrl());
+        jsonDocument.put("content", content);
+        return jsonDocument;
     }
 }

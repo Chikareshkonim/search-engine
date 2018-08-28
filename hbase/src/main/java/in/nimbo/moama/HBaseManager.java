@@ -12,38 +12,28 @@ import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.List;
-
-import static in.nimbo.moama.configmanager.ConfigManager.FileType.PROPERTIES;
 
 public class HBaseManager {
     TableName tableName;
     String family1;
     String family2;
-    ConfigManager configManager;
     static Logger errorLogger = Logger.getLogger("error");
     Configuration configuration;
     static int sizeLimit = 0;
     private String checkColumn;
     final ArrayList<Put> puts;
     HBaseManager(String configPath) {
-        try {
-            configManager = new ConfigManager(new File(getClass().getClassLoader().getResource(configPath).getFile()).getAbsolutePath(), PROPERTIES);
-        } catch (IOException e) {
-            errorLogger.error("Loading properties failed");
-        }
         configuration = HBaseConfiguration.create();
         configuration.addResource(getClass().getResourceAsStream("/hbase-site.xml"));
-        tableName = TableName.valueOf(configManager.getProperty(PropertyType.H_BASE_TABLE));
-        family1 = configManager.getProperty(PropertyType.H_BASE_CONTENT_FAMILY);
-        family2 = configManager.getProperty(PropertyType.H_BASE_RANK_FAMILY);
-        checkColumn = configManager.getProperty(PropertyType.H_BASE_COLUMN_PAGE_RANK);
-        sizeLimit = Integer.parseInt(configManager.getProperty(PropertyType.PUT_SIZE_LIMIT));
+        tableName = TableName.valueOf(ConfigManager.getInstance().getProperty(PropertyType.H_BASE_TABLE));
+        family1 = ConfigManager.getInstance().getProperty(PropertyType.H_BASE_CONTENT_FAMILY);
+        family2 = ConfigManager.getInstance().getProperty(PropertyType.H_BASE_RANK_FAMILY);
+        checkColumn = ConfigManager.getInstance().getProperty(PropertyType.H_BASE_COLUMN_PAGE_RANK);
+        sizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(PropertyType.PUT_SIZE_LIMIT));
         puts = new ArrayList<>();
         boolean status = false;
         while (!status) {
