@@ -69,7 +69,7 @@ public class Crawler implements Runnable {
                             Metrics.byteCounter += webDocument.getTextDoc().getBytes().length;
                             helperProducer.pushNewURL(giveGoodLink(webDocument));
                             //TODO
-                            documentProducer.pushDocument(webDocument.toString());
+                            documentProducer.pushDocument(webDocument.documentToJson());
                         } catch (RuntimeException e) {
                             errorLogger.error("important" + e.getMessage());
                             throw e;

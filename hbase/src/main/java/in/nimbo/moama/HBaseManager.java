@@ -71,11 +71,11 @@ public class HBaseManager {
     }
 
     public void put(WebDocument document) {
-        String outLinksColumn = configManager.getProperty(PropertyType.H_BASE_COLUMN_OUT_LINKS);
         String pageRankColumn = configManager.getProperty(PropertyType.H_BASE_COLUMN_PAGE_RANK);
         Put put = new Put(Bytes.toBytes(generateRowKeyFromUrl(document.getPageLink())));
-        byte[] outLinks = SerializationUtils.serialize(document.getLinks());
-        put.addColumn(contextFamily.getBytes(), outLinksColumn.getBytes(), outLinks);
+        document.getLinks().forEach(link->{
+            put.addColumn(contextFamily.getBytes(),link.getUrl().getBytes(),link.getAnchorLink().getBytes());
+        });
         put.addColumn(rankFamily.getBytes(), pageRankColumn.getBytes(), Bytes.toBytes(1.0));
         puts.add(put);
         size++;
@@ -90,8 +90,10 @@ public class HBaseManager {
                     Metrics.numberOfPagesAddedToHBase = added;
                     size = 0;
                 } catch (IOException e) {
+                    //TODO
                     errorLogger.error("couldn't put document for " + document.getPageLink() + " into HBase!");
                 } catch (RuntimeException e) {
+                    //TODO
                     errorLogger.error("HBase error" + e.getMessage());
                 }
             }

@@ -1,6 +1,7 @@
 package in.nimbo.moama.document;
 
 import in.nimbo.moama.document.Link;
+import org.json.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,5 +44,20 @@ public class WebDocument {
         this.pageLink = pageLink;
     }
 
+    public String documentToJson(){
+        JSONObject jsonDocument = new JSONObject();
+        jsonDocument.put("content",this.textDoc);
+        jsonDocument.put("pageLink", this.pageLink);
+        JSONArray outLinks = new JSONArray();
+        JSONObject outLink;
+        for(Link link : this.getLinks()){
+            outLink = new JSONObject();
+            outLink.put("LinkUrl", link.getUrl());
+            outLink.put("LinkAnchor", link.getAnchorLink());
+            outLinks.put(outLink);
+        }
+        jsonDocument.put("outLinks", outLinks);
+        return String.valueOf(jsonDocument);
+    }
 
 }
