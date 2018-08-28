@@ -1,6 +1,7 @@
 package in.nimbo.moama;
 
 import in.nimbo.moama.configmanager.ConfigManager;
+import in.nimbo.moama.metrics.JMXManager;
 import in.nimbo.moama.metrics.Metrics;
 import in.nimbo.moama.util.HBasePropertyType;
 import org.apache.hadoop.hbase.Cell;
@@ -29,7 +30,7 @@ public class WebDocumentHBaseManager extends HBaseManager{
         this.scoreFamily = scoreFamily;
     }
 
-    public void put(JSONObject document) {
+    public void put(JSONObject document, JMXManager jmxManager) {
         String pageRankColumn = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_COLUMN_PAGE_RANK);
         Put put = new Put(Bytes.toBytes(generateRowKeyFromUrl((String) document.get("pageLink"))));
         for (Object link : (JSONArray)document.get("outLinks")) {
@@ -47,6 +48,7 @@ public class WebDocumentHBaseManager extends HBaseManager{
                     puts.clear();
                     added += size;
                     Metrics.numberOfPagesAddedToHBase = added;
+                    jmxManager.markNewAddedToHBase();
                     size = 0;
                 } catch (IOException e) {
                     //TODO

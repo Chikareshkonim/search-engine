@@ -1,6 +1,7 @@
 package in.nimbo.moama;
 
 import in.nimbo.moama.configmanager.ConfigManager;
+import in.nimbo.moama.metrics.JMXManager;
 import in.nimbo.moama.metrics.Metrics;
 import in.nimbo.moama.util.ElasticPropertyType;
 import org.apache.http.HttpHost;
@@ -56,7 +57,6 @@ public class ElasticManager {
     private static String clusterName;
 
     public ElasticManager() {
-
         elasticFlushSizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_SIZE_LIMIT));
         elasticFlushNumberLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_NUMBER_LIMIT));
         index = ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_PAGES_TABLE);
@@ -103,7 +103,7 @@ public class ElasticManager {
         }
     }
 
-    public void put(JSONObject document) {
+    public void put(JSONObject document, JMXManager jmxManager) {
         try {
             XContentBuilder builder = XContentFactory.jsonBuilder();
             builder.startObject();
@@ -128,6 +128,7 @@ public class ElasticManager {
                     bulkRequest = new BulkRequest();
                     indexRequest = new IndexRequest(index);
                     Metrics.numberOfPagesAddedToElastic = added;
+                    jmxManager.markNewAddedToElastic();
                 }
             }
         } catch (IOException e) {

@@ -5,8 +5,8 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jmx.JmxReporter;
 
 public class JMXManager {
-    private MetricRegistry metrics = new MetricRegistry();;
-    private JmxReporter reporter;
+    private static JMXManager ourInstance = new JMXManager();
+    private MetricRegistry metrics;
     private Meter numberOfUrlReceived = metrics.meter("numberOfUrlReceived");
     private Meter numberOfNull = metrics.meter("numberOfNull");
     private Meter numberOfDuplicate = metrics.meter("numberOfDuplicate");
@@ -18,8 +18,13 @@ public class JMXManager {
     private Meter numberOfComplete = metrics.meter("numberOfComplete");
 
 
-    public JMXManager(){
-        reporter = JmxReporter.forRegistry(metrics).build();
+    public static JMXManager getInstance(){
+        return ourInstance;
+    }
+
+    private JMXManager(){
+        metrics = new MetricRegistry();
+        JmxReporter reporter = JmxReporter.forRegistry(metrics).build();
         reporter.start();
     }
 

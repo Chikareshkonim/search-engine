@@ -1,6 +1,9 @@
 package in.nimbo.moama.crawler;
 
+import in.nimbo.moama.ElasticManager;
+import in.nimbo.moama.HBaseManager;
 import in.nimbo.moama.UrlHandler;
+import in.nimbo.moama.WebDocumentHBaseManager;
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.crawler.domainvalidation.DomainFrequencyHandler;
 import in.nimbo.moama.crawler.domainvalidation.DuplicateHandler;
@@ -11,6 +14,7 @@ import in.nimbo.moama.exception.IllegalLanguageException;
 import in.nimbo.moama.exception.URLException;
 import in.nimbo.moama.kafka.MoamaConsumer;
 import in.nimbo.moama.kafka.MoamaProducer;
+import in.nimbo.moama.metrics.JMXManager;
 import in.nimbo.moama.metrics.Metrics;
 import in.nimbo.moama.util.CrawlerPropertyType;
 import org.apache.log4j.Logger;
@@ -27,14 +31,16 @@ import static in.nimbo.moama.configmanager.ConfigManager.FileType.PROPERTIES;
 import static java.lang.Thread.sleep;
 
 public class Crawler implements Runnable {
-    private static Logger errorLogger = Logger.getLogger("error");
+    private static Logger errorLogger = Logger.getLogger(Crawler.class);
     private Parser parser;
     private MoamaProducer mainProducer;
     private MoamaProducer helperProducer;
     private MoamaProducer documentProducer;
     private MoamaConsumer linkConsumer;
     private MoamaConsumer helperConsumer;
-    private ConfigManager configManager;
+    private JMXManager jmxManager;
+    private ElasticManager elasticManager;
+    private WebDocumentHBaseManager webDocumentHBaseManager;
     private static int minOfEachQueue;
     private static int threadPriority;
     private static int shuffleSize;
@@ -45,6 +51,8 @@ public class Crawler implements Runnable {
     private DuplicateHandler DuplicateChecker = DuplicateHandler.getInstance();
 
     public Crawler() {
+        jmxManager = JMXManager.getInstance();
+        webDocumentHBaseManager = new WebDocumentHBaseManager("pages", "outLinks", "rank");
         InputStream fileInputStream = Crawler.class.getResourceAsStream("/crawler.properties");
         try {
             ConfigManager.getInstance().load(fileInputStream, PROPERTIES);
@@ -105,10 +113,13 @@ public class Crawler implements Runnable {
             String url = urlsOfThisThread.pop();
             try {
                 checkLink(url);
-                webDocument = parser.parse(url);
+                webDocument = parser.parse(url, jmxManager);
                 Metrics.byteCounter += webDocument.getTextDoc().getBytes().length;
                 helperProducer.pushNewURL(normalizeOutLink(webDocument));
+                webDocumentHBaseManager.put(webDocument.documentToJson(), jmxManager);
+                elasticManager.put(webDocument.documentToJson(), jmxManager);
                 Metrics.numberOFComplete++;//todo
+                jmxManager.markNewComplete();
             } catch (RuntimeException e) {
                 errorLogger.error("important" + e.getMessage());
                 throw e;
@@ -122,6 +133,7 @@ public class Crawler implements Runnable {
                 errorLogger.error("take less than 30s to request to " + url);
             } catch (URLException e) {
                 errorLogger.error("number of null" + Metrics.numberOfNull++);
+                jmxManager.markNewNull();
             } catch (DuplicateLinkException e) {
                 errorLogger.error(url + " is duplicate");
             }
@@ -133,10 +145,12 @@ public class Crawler implements Runnable {
             throw new URLException();
         } else if (!domainTimeHandler.isAllow(url)) {
             Metrics.numberOfDomainError++;
+            jmxManager.markNewDomainError();
             throw new DomainFrequencyException();
         }
         if (DuplicateChecker.isDuplicate(url)) {
             Metrics.numberOfDuplicate++;
+            jmxManager.markNewDuplicate();
             throw new DuplicateLinkException();
         }
 

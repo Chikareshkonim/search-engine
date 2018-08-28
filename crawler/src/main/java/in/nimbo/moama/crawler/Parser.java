@@ -11,6 +11,7 @@ import in.nimbo.moama.exception.DomainFrequencyException;
 import in.nimbo.moama.exception.DuplicateLinkException;
 import in.nimbo.moama.exception.IllegalLanguageException;
 import in.nimbo.moama.exception.URLException;
+import in.nimbo.moama.metrics.JMXManager;
 import in.nimbo.moama.metrics.Metrics;
 import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -41,21 +42,24 @@ public class Parser {
         Parser.langDetector = langDetector;
     }
 
-    public WebDocument parse(String url) throws IllegalLanguageException, IOException {
+    public WebDocument parse(String url, JMXManager jmxManager) throws IllegalLanguageException, IOException {
         String text;
         Document document = Jsoup.connect(url).validateTLSCertificates(false).get();
         HashDuplicateChecker.confirm(url);
         Metrics.numberOfUrlReceived++;
+        jmxManager.markNewUrlReceived();
         WebDocument webDocument = new WebDocument();
         text = document.text();
         checkLanguage(document, text);
         Metrics.numberOfLanguagePassed++;
+        jmxManager.markNewLanguagePassed();
         Link[] links = UrlHandler.getLinks(document.getElementsByTag("a"), new URL(url).getHost());
         webDocument.setTextDoc(text);
         webDocument.setTitle(document.title());
         webDocument.setPageLink(url);
         webDocument.setLinks(new ArrayList<>(Arrays.asList(links)));
         Metrics.numberOFCrawledPage++;
+        jmxManager.markNewCrawledPage();
         return webDocument;
 
     }
