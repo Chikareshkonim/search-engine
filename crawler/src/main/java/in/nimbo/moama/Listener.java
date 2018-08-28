@@ -1,6 +1,6 @@
 package in.nimbo.moama;
 
-import in.nimbo.moama.crawler.domainvalidation.DuplicateLinkHandler;
+import in.nimbo.moama.crawler.domainvalidation.HashDuplicateChecker;
 import in.nimbo.moama.metrics.Metrics;
 
 import java.io.IOException;
@@ -44,7 +44,7 @@ public class Listener {
     public static void loadDuplicate(PrintStream out, Scanner scanner) {
         out.println("load duplicate called");
         try {
-            DuplicateLinkHandler.getInstance().loadHashTable();
+            HashDuplicateChecker.getInstance().loadHashTable();
             out.println("done");
             out.flush();
             out.close();
@@ -59,7 +59,7 @@ public class Listener {
 
     public static void saveDuplicate(PrintStream out, Scanner scanner) {
         out.println("save duplicate called");
-        DuplicateLinkHandler.getInstance().saveHashTable();
+        HashDuplicateChecker.getInstance().saveHashTable();
         out.println("done");
         out.flush();
         out.close();
@@ -77,7 +77,7 @@ public class Listener {
     }
 
     public static void isDuplicatte(PrintStream out, Scanner scanner) {
-        out.println(DuplicateLinkHandler.getInstance().isDuplicate(scanner.nextLine()));
+        out.println(HashDuplicateChecker.getInstance().isDuplicate(scanner.nextLine()));
     }
 }
 

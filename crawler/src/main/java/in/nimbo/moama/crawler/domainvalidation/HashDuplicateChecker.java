@@ -11,14 +11,13 @@ import java.nio.file.Files;
 
 import static in.nimbo.moama.configmanager.ConfigManager.FileType.PROPERTIES;
 
-public class DuplicateLinkHandler {
-    private static DuplicateLinkHandler ourInstance;
+public class HashDuplicateChecker {
+    private static HashDuplicateChecker ourInstance;
     private static Logger errorLogger = Logger.getLogger("error");
     private ConfigManager configManager;
-
-    public static DuplicateLinkHandler getInstance() {
+    public static HashDuplicateChecker getInstance() {
         if(ourInstance == null){
-            ourInstance = new DuplicateLinkHandler();
+            ourInstance = new HashDuplicateChecker();
         }
         return ourInstance;
     }
@@ -26,15 +25,13 @@ public class DuplicateLinkHandler {
     private static int hashTableSize;
     private byte[] linkHashTableTime;
     private byte[] twoPowers;
-    public static void refresh(){
-        ourInstance=new DuplicateLinkHandler();
-    }
-    private DuplicateLinkHandler() {
-        try {
-            configManager = new ConfigManager(new File(getClass().getClassLoader().getResource("config.properties").getFile()).getAbsolutePath(), PROPERTIES);
-        } catch (IOException e) {
-            errorLogger.error("Loading properties failed");
-        }
+    private HashDuplicateChecker() {
+        // FIXME: 8/28/18 ALIREZA
+//        try {
+//            configManager = new ConfigManager(new File(getClass().getClassLoader().getResource("config.properties").getFile()).getAbsolutePath(), PROPERTIES);
+//        } catch (IOException e) {
+//            errorLogger.error("Loading properties failed");
+//        }
         hashPrime = Integer.parseInt(configManager.getProperty(PropertyType.CRAWLER_DUPLICATE_HASH_PRIME));
         hashTableSize=hashPrime/8 +1;
         linkHashTableTime = new byte[hashTableSize];
@@ -44,12 +41,12 @@ public class DuplicateLinkHandler {
         try {
             linkHashTableTime= Files.readAllBytes(new File("duplicateHashTable.information").toPath());
         } catch (IOException e) {
-            DuplicateLinkHandler.getInstance().saveHashTable();
+            HashDuplicateChecker.getInstance().saveHashTable();
             throw e;
         }
     }
     public void confirm(String url) {
-        int hash = url.hashCode() % hashPrime;
+        int hash = hash(url) % hashPrime;
         if (hash < 0)
             hash += hashPrime;
         int hasht = hash / 8;
@@ -57,14 +54,10 @@ public class DuplicateLinkHandler {
         if (index<0)
             index+=8;
         linkHashTableTime[hasht]|=twoPowers[index];
-
     }
-
-
     public boolean isDuplicate(String url) {
-        int hash = url.hashCode() % hashPrime;
+        int hash = hash(url) % hashPrime;
         if (hash < 0)
-
             hash += hashPrime;
         int hasht = hash / 8;
         int index = hash % 8;
@@ -79,4 +72,8 @@ public class DuplicateLinkHandler {
             errorLogger.error(e.getMessage());
         }
     }
+    public int hash(Object object){
+        return object.hashCode();
+    }
+
 }

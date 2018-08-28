@@ -1,6 +1,8 @@
 package in.nimbo.moama.template;
 
 import in.nimbo.moama.Util;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.streaming.api.java.JavaDStream;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -11,18 +13,21 @@ import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
 public class TemplateFinder {
     public static void main(String[] args) throws IOException {
-        System.out.println(findTemplate("http://www.entekhab.ir/fa/rss/allnews", "link"));
+        System.out.println(findTemplate("http://www.asriran.com/fa/rss/1", "link"));
     }
+
     public static Template findTemplate(String rss, String newsTag) throws IOException {
         Document rssDoc = Jsoup.connect(rss).get();
         Document goodPage = findMaxTextPage(rssDoc, newsTag);
-        System.out.println(goodPage);
+        System.out.println(goodPage.text());
         String dateFormat = findDateFormat(rssDoc);
         System.out.println(dateFormat);
         String newsTextAddress = findTextAddress(goodPage);
@@ -50,10 +55,10 @@ public class TemplateFinder {
     }
 
     private static Document findMaxTextPage(Document rssDoc, String newsTag) {
-        return rssDoc.getElementsByTag("item").stream()
-                .flatMap(element -> element.getElementsByTag(newsTag).stream()).skip(4).limit(25)
-                .parallel().map(Element::text).map(Util::getPage)
-                .max(Comparator.comparing(a -> a.text().length())).get();
+        Stream<Element> stream = rssDoc.getElementsByTag("item").stream()
+                .flatMap(element -> element.getElementsByTag(newsTag).stream()).skip(4).limit(25);
+        return stream.parallel().peek(element -> System.out.println(element.html())
+            ).map(Element::text).map(Util::getPage).max(Comparator.comparing(a -> a.text().length())).get();
     }
 }
 
@@ -63,7 +68,7 @@ class MyElement implements Comparable<MyElement> {
 
     MyElement(Element element) {
         this.element = element;
-        String string = element.text().replaceAll("[.]+",".");
+        String string = element.text().replaceAll("[.]+", ".");
         numberOfDots = string.length() - string.replaceAll("[.]+", "").length();
     }
 
@@ -71,6 +76,7 @@ class MyElement implements Comparable<MyElement> {
     public int compareTo(MyElement o) {
         return numberOfDots - o.numberOfDots;
     }
+
     Element getElement() {
         return element;
     }
