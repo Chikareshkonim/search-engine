@@ -17,6 +17,7 @@ public class Metrics {
     public static int numberOfLanguagePassed = 0;
     public static int numberOfPagesAddedToElastic = 0;
     public static int numberOfPagesAddedToHBase = 0;
+    public static int numberOFComplete=0;
 
     private static long lastTime = System.currentTimeMillis();
     private static Logger infoLogger = Logger.getLogger("info");

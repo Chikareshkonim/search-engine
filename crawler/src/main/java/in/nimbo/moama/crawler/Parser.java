@@ -5,7 +5,7 @@ import in.nimbo.moama.document.Link;
 import in.nimbo.moama.UrlHandler;
 import in.nimbo.moama.document.WebDocument;
 import in.nimbo.moama.crawler.domainvalidation.DomainFrequencyHandler;
-import in.nimbo.moama.crawler.domainvalidation.DuplicateLinkHandler;
+import in.nimbo.moama.crawler.domainvalidation.HashDuplicateChecker;
 import in.nimbo.moama.crawler.language.LangDetector;
 import in.nimbo.moama.exception.DomainFrequencyException;
 import in.nimbo.moama.exception.DuplicateLinkException;
@@ -26,11 +26,11 @@ public class Parser {
     private static Logger errorLogger = Logger.getLogger("error");
     private static LangDetector langDetector;
     private static Parser parser;
-    private static DuplicateLinkHandler duplicateLinkHandler;
+    private static HashDuplicateChecker HashDuplicateChecker;
     private static DomainFrequencyHandler domainTimeHandler;
 
     public synchronized static Parser getInstance(ConfigManager configManager) {
-        duplicateLinkHandler = DuplicateLinkHandler.getInstance();
+        HashDuplicateChecker = HashDuplicateChecker.getInstance();
         domainTimeHandler = DomainFrequencyHandler.getInstance();
         if (parser == null)
             parser = new Parser();
@@ -41,47 +41,23 @@ public class Parser {
         Parser.langDetector = langDetector;
     }
 
-    public WebDocument parse(String url) throws IllegalLanguageException, IOException, URLException,
-            DuplicateLinkException, DomainFrequencyException {
-        if (url == null) {
-            errorLogger.error("number of null" + Metrics.numberOfNull++);
-            throw new URLException();
-        } else if (!domainTimeHandler.isAllow(url)) {
-            errorLogger.error("take less than 30s to request to " + url);
-            Metrics.numberOfDomainError++;
-            throw new DomainFrequencyException();
-        }
-        String text = null;
-        if (duplicateLinkHandler.isDuplicate(url)) {
-            errorLogger.error(url + " is duplicate");
-            Metrics.numberOfDuplicate++;
-            throw new DuplicateLinkException();
-        }
-        try {
-            Document document = Jsoup.connect(url).validateTLSCertificates(false).get();
-            duplicateLinkHandler.confirm(url);
-            Metrics.numberOfUrlReceived++;
-            WebDocument webDocument = new WebDocument();
-            text = document.text();
-            checkLanguage(document, text);
-            Metrics.numberOfLanguagePassed++;
-            Link[] links = UrlHandler.getLinks(document.getElementsByTag("a"), new URL(url).getHost());
-            webDocument.setTextDoc(text);
-            webDocument.setTitle(document.title());
-            webDocument.setPageLink(url);
-            webDocument.setLinks(new ArrayList<>(Arrays.asList(links)));
-            Metrics.numberOFCrawledPage++;
-            return webDocument;
-        } catch (MalformedURLException e) {
-            errorLogger.error(url + " is malformatted!");
-            throw e;
-        } catch (IOException e) {
-            errorLogger.error("Jsoup connection to " + url + " failed");
-            throw e;
-        } catch (IllegalLanguageException e) {
-            errorLogger.error("Couldn't recognize url language!" + url);
-            throw e;
-        }
+    public WebDocument parse(String url) throws IllegalLanguageException, IOException {
+        String text;
+        Document document = Jsoup.connect(url).validateTLSCertificates(false).get();
+        HashDuplicateChecker.confirm(url);
+        Metrics.numberOfUrlReceived++;
+        WebDocument webDocument = new WebDocument();
+        text = document.text();
+        checkLanguage(document, text);
+        Metrics.numberOfLanguagePassed++;
+        Link[] links = UrlHandler.getLinks(document.getElementsByTag("a"), new URL(url).getHost());
+        webDocument.setTextDoc(text);
+        webDocument.setTitle(document.title());
+        webDocument.setPageLink(url);
+        webDocument.setLinks(new ArrayList<>(Arrays.asList(links)));
+        Metrics.numberOFCrawledPage++;
+        return webDocument;
+
     }
 
     private void checkLanguage(Document document, String text) throws IllegalLanguageException {
