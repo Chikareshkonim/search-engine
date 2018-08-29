@@ -106,26 +106,28 @@ public class ElasticManager {
         }
     }
 
-    public synchronized void put(JSONObject document, JMXManager jmxManager) {
+    public void put(JSONObject document, JMXManager jmxManager) {
         try {
             XContentBuilder builder = XContentFactory.jsonBuilder();
             try {
-                builder.startObject();
-                {
-                    Set<String> keys = document.keySet();
-                    keys.forEach(key -> {
-                        try {
-                            if (!key.equals("outLinks")) {
-                                builder.field(key, document.get(key));
-                                System.out.println(key);
+                synchronized (builder) {
+                    builder.startObject();
+                    {
+                        Set<String> keys = document.keySet();
+                        keys.forEach(key -> {
+                            try {
+                                if (!key.equals("outLinks")) {
+                                    builder.field(key, document.get(key));
+                                    System.out.println(key);
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                errorLogger.error("ERROR! couldn't add " + document.get(key) + " to elastic");
                             }
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                            errorLogger.error("ERROR! couldn't add " + document.get(key) + " to elastic");
-                        }
-                    });
+                        });
+                    }
+                    builder.endObject();
                 }
-                builder.endObject();
                 indexRequest.source(builder);
                 bulkRequest.add(indexRequest);
                 indexRequest = new IndexRequest(index, "_doc");
