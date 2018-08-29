@@ -76,14 +76,9 @@ public class Crawler{
         String hBaseTable = ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_TABLE);
         String scoreFamily = ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_FAMILY_SCORE);
         String outLinksFamily = ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_FAMILY_OUTLINKS);
-//        webDocumentHBaseManager = new WebDocumentHBaseManager(hBaseTable, outLinksFamily, scoreFamily);
-//        elasticManager = new ElasticManager();
+        webDocumentHBaseManager = new WebDocumentHBaseManager(hBaseTable, outLinksFamily, scoreFamily);
+        elasticManager = new ElasticManager();
         parser = Parser.getInstance();
-//        try {
-//            manageKafkaHelper();
-//        } catch (InterruptedException e) {
-//            errorLogger.error("link shuffling thread has been interrupted");
-//        }
     }
     public void run() {
         crawlerThreadList = new LinkedList<>();
