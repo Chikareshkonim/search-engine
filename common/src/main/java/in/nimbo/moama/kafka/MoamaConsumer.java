@@ -15,7 +15,8 @@ public class MoamaConsumer {
 
     public MoamaConsumer(String topic) {
         //TODO
-        consumer = new KafkaConsumer<>(ConfigManager.getInstance().getProperties(".",true));
+        consumer = new KafkaConsumer<>(ConfigManager.getInstance().getProperties("kafka.",true));
+        System.out.println(ConfigManager.getInstance().getProperties("kafka.", true));
         consumer.subscribe(Collections.singletonList(topic));
     }
     public synchronized ArrayList<String> getDocuments() {

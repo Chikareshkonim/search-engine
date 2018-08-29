@@ -7,6 +7,7 @@ public class News {
     private String content;
 
     public News(NewsInfo newsInfo, String content) {
+
         this.newsInfo = newsInfo;
         this.content=content;
     }
@@ -24,12 +25,12 @@ public class News {
         return newsInfo.toString() + "\n" + "Content: " + content;
     }
 
-    public JSONObject documentToJson() {
+    public synchronized JSONObject documentToJson() {
         JSONObject jsonDocument = new JSONObject();
-        jsonDocument.put("title", newsInfo.getTitle());
-        jsonDocument.put("date", newsInfo.getDate());
         jsonDocument.put("url", newsInfo.getUrl());
         jsonDocument.put("content", content);
+        jsonDocument.put("title", newsInfo.getTitle());
+        jsonDocument.put("date", newsInfo.getDate());
         return jsonDocument;
     }
 }

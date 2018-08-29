@@ -32,7 +32,10 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 
@@ -72,7 +75,7 @@ public class ElasticManager {
         client = new RestHighLevelClient(RestClient.builder(new HttpHost("s1", Integer.parseInt("9200"), "http"),
                 new HttpHost("s2", Integer.parseInt("9200"), "http"),
                 new HttpHost("s3", Integer.parseInt("9200"), "http")));
-        indexRequest = new IndexRequest("newspages","_doc");
+        indexRequest = new IndexRequest("newspages", "_doc");
         bulkRequest = new BulkRequest();
     }
 
@@ -106,34 +109,40 @@ public class ElasticManager {
     public synchronized void put(JSONObject document, JMXManager jmxManager) {
         try {
             XContentBuilder builder = XContentFactory.jsonBuilder();
-            builder.startObject();
-            {
-                Set<String> keys = document.keySet();
-                keys.forEach(key -> {
-                    try {
-                        if (!key.equals("outLinks"))
-                            builder.field(key, document.get(key));
-                    } catch (IOException e) {
-                        errorLogger.error("ERROR! couldn't add " + document.get(key) + " to elastic");
-                    }
-                });
-            }
-            builder.endObject();
-            indexRequest.source(builder);
-            bulkRequest.add(indexRequest);
-            indexRequest = new IndexRequest("newspages","_doc");
-            added++;
-            if (bulkRequest.estimatedSizeInBytes()  >= 1 ||
-                    bulkRequest.numberOfActions() >= 1) {
-                synchronized (sync) {
-                    client.bulk(bulkRequest);
-                    bulkRequest = new BulkRequest();
-                    Metrics.numberOfPagesAddedToElastic = added;
-//                    jmxManager.markNewAddedToElastic();
+            try {
+                builder.startObject();
+                {
+                    Set<String> keys = document.keySet();
+                    keys.forEach(key -> {
+                        try {
+                            if (!key.equals("outLinks")) {
+                                builder.field(key, document.get(key));
+                                System.out.println(key);
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            errorLogger.error("ERROR! couldn't add " + document.get(key) + " to elastic");
+                        }
+                    });
                 }
+                builder.endObject();
+                indexRequest.source(builder);
+                bulkRequest.add(indexRequest);
+                indexRequest = new IndexRequest("newspages", "_doc");
+                if (bulkRequest.estimatedSizeInBytes() >= 1 ||
+                        bulkRequest.numberOfActions() >= 1) {
+                        client.bulk(bulkRequest);
+                        bulkRequest = new BulkRequest();
+                        Metrics.numberOfPagesAddedToElastic = added;
+                        System.out.println("added");
+//                    jmxManager.markNewAddedToElastic();
+
+                }
+            } catch (IOException e) {
+                errorLogger.error("ERROR! Couldn't add the document for " + document.get("pageLink"));
             }
         } catch (IOException e) {
-            errorLogger.error("ERROR! Couldn't add the document for " + document.get("pageLink"));
+            e.printStackTrace();
         }
     }
 

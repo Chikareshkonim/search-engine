@@ -13,9 +13,9 @@ import static in.nimbo.moama.newsutil.NewsPropertyType.*;
 public class NewsFetcher implements Runnable {
     private NewsURLQueue<NewsInfo> newsQueue;
     private NewsHBaseManager newsHBaseManager;
+    private ElasticManager elasticManager;
     private static final int FETCHER_THREADS = Integer.parseInt(ConfigManager.getInstance().getProperty(NUMBER_OF_FETCHER_THREADS));
     private static final int FETCHER_PRIORITY = Integer.parseInt(ConfigManager.getInstance().getProperty(FETCHER_THREAD_PRIORITY));
-    private ElasticManager elasticManager;
 
     public NewsFetcher(NewsURLQueue<NewsInfo> newsQueue) {
         this.newsQueue = newsQueue;
@@ -44,8 +44,8 @@ public class NewsFetcher implements Runnable {
                         String text = NewsParser.parse(newsInfo.getDomain(), newsInfo.getUrl());
                         News news = new News(newsInfo, text);
 //                        System.out.println(news);
-                        newsHBaseManager.put(news.documentToJson());
                         elasticManager.put(news.documentToJson(),null);
+//                        newsHBaseManager.put(news.documentToJson());
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
