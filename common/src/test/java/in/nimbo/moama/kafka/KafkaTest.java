@@ -16,8 +16,8 @@ public class KafkaTest {
     public void testKafka() throws IOException {
         InputStream fileInputStream = KafkaTest.class.getResourceAsStream("/config.properties");
         ConfigManager.getInstance().load(fileInputStream, PROPERTIES);
-        MoamaConsumer moamaConsumer = new MoamaConsumer("test");
-        MoamaProducer moamaProducer = new MoamaProducer("test");
+        MoamaConsumer moamaConsumer = new MoamaConsumer("","");
+        MoamaProducer moamaProducer = new MoamaProducer("test","");
         ArrayList<String> results = new ArrayList<>();
         List<String> links = new ArrayList<>();
         for (int i = 1; i < 6; i++) {
