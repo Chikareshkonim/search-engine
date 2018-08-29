@@ -167,7 +167,6 @@ public class ElasticManager {
         searchRequest.source(sourceBuilder);
         SearchResponse searchResponse = runSearch(searchRequest);
         SearchHit[] hits = searchResponse.getHits().getHits();
-        int i = 1;
         for (SearchHit hit : hits) {
             Map<String, Object> sourceAsMap = hit.getSourceAsMap();
             results.put((String) sourceAsMap.get(linkColumn), hit.getScore());
