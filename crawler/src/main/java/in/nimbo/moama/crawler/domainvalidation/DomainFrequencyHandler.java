@@ -6,14 +6,11 @@ import org.apache.log4j.Logger;
 
 public class DomainFrequencyHandler {
     private static Logger errorLogger = Logger.getLogger("error");
-    private static DomainFrequencyHandler ourInstance;
+    private static DomainFrequencyHandler ourInstance=new DomainFrequencyHandler();
     private static int politeTime;
     private static int hashPrime;
 
     public static DomainFrequencyHandler getInstance() {
-        if(ourInstance == null){
-            ourInstance = new DomainFrequencyHandler();
-        }
         return ourInstance;
     }
 

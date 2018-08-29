@@ -99,5 +99,4 @@ public class WebDocumentHBaseManager extends HBaseManager{
             return false;
         }
     }
-
 }

@@ -1,6 +1,7 @@
 package in.nimbo.moama.configmanager;
 
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -19,8 +20,8 @@ public class ConfigManager {
         return ourInstance;
     }
 
-    public void load(InputStream fileInputStream, FileType fileType) throws IOException {
-        this.fileInputStream = fileInputStream;
+    public void load(InputStream InputStream, FileType fileType) throws IOException {
+        this.fileInputStream = InputStream;
         this.fileType = fileType;
         properties = new Properties();
         switch (fileType) {
@@ -33,9 +34,9 @@ public class ConfigManager {
         }
     }
 
-    private void load() throws IOException {
+    public void load(FileInputStream fileInputStream) throws IOException {
         properties.clear();
-        load(fileInputStream, fileType);
+        load(this.fileInputStream, fileType);
     }
 
     public String getProperty(PropertyType type) {
@@ -47,8 +48,6 @@ public class ConfigManager {
     }
 
     public void refresh() throws IOException {
-        properties.clear();
-        load();
     }
     public Properties getProperties(String root, boolean cutRoot) {
         Properties tempProperties = new Properties();

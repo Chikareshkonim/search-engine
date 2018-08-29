@@ -18,10 +18,11 @@ public class Listener {
 
     public static void listen() {
         new Thread(() -> {
+            System.out.println("salam listener");
             try (ServerSocket serverSocket = new ServerSocket(LISTEN_PORT)) {
                 while (true) {
                     try (Socket socket = serverSocket.accept()) {
-                        sleep(4000);
+                        System.out.println("imready");
                         Scanner scanner = new Scanner(socket.getInputStream());
                         String[] strings = scanner.nextLine().split("[ ]+");
                         String funcName = "";
@@ -29,8 +30,9 @@ public class Listener {
                             funcName = funcName.concat(string.substring(0, 1).toUpperCase()).concat(string.substring(1).toLowerCase());
                         }
                         funcName = funcName.substring(0, 1).toLowerCase().concat(funcName.substring(1));
-                        Method method = in.nimbo.moama.listener.Listener.class.getMethod(funcName, PrintStream.class, Scanner.class);
+                        Method method = Listener.class.getMethod(funcName, PrintStream.class, Scanner.class);
                         method.invoke(null, new PrintStream(socket.getOutputStream()), scanner);
+                        sleep(4000);
                     } catch (IOException | InterruptedException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                         e.printStackTrace();
                     }

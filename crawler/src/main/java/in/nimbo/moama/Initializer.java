@@ -8,6 +8,7 @@ public class Initializer {
         LangDetector langDetector = LangDetector.getInstance();
         Parser.setLangDetector(langDetector);
         langDetector.profileLoad();
+        System.out.println("load langDetect finished");
 
     }
 }

@@ -1,6 +1,7 @@
 package in.nimbo.moama.crawler.language;
 
 import com.google.common.base.Optional;
+import com.optimaize.langdetect.DetectedLanguage;
 import com.optimaize.langdetect.LanguageDetector;
 import com.optimaize.langdetect.LanguageDetectorBuilder;
 import com.optimaize.langdetect.i18n.LdLocale;
@@ -45,6 +46,18 @@ public class LangDetector {
             Optional<LdLocale> lang = languageDetector.detect(textObject);
             if (!lang.get().getLanguage().equals("en"))
                 throw new IllegalLanguageException();
+        }catch (Exception e){
+            throw new IllegalLanguageException();
+        }
+    }
+    public void languageCheckHard(String text) throws IllegalLanguageException {
+        try {
+            TextObjectFactory textObjectFactory = CommonTextObjectFactories.forDetectingOnLargeText();
+            TextObject textObject = textObjectFactory.forText(text);
+            List<DetectedLanguage> lang = languageDetector.getProbabilities(textObject);
+            if (!(lang.get(0).getLocale().getLanguage().equals("en") && lang.get(0).getProbability() > 0.9)) {
+                throw new IllegalLanguageException();
+            }
         }catch (Exception e){
             throw new IllegalLanguageException();
         }

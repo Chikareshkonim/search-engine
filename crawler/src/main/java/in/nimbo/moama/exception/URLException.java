@@ -1,4 +1,8 @@
 package in.nimbo.moama.exception;
 
-public class URLException extends Exception {
+public final class URLException extends Exception {
+    @Override
+    public String getMessage() {
+        return "null ulr!!!!!!";
+    }
 }

@@ -1,11 +1,9 @@
 package in.nimbo.moama.crawler;
 
 import in.nimbo.moama.ElasticManager;
-import in.nimbo.moama.HBaseManager;
 import in.nimbo.moama.UrlHandler;
 import in.nimbo.moama.WebDocumentHBaseManager;
 import in.nimbo.moama.configmanager.ConfigManager;
-import in.nimbo.moama.configmanager.PropertyType;
 import in.nimbo.moama.crawler.domainvalidation.DomainFrequencyHandler;
 import in.nimbo.moama.crawler.domainvalidation.DuplicateHandler;
 import in.nimbo.moama.document.WebDocument;
@@ -18,6 +16,7 @@ import in.nimbo.moama.kafka.MoamaProducer;
 import in.nimbo.moama.metrics.JMXManager;
 import in.nimbo.moama.metrics.Metrics;
 import in.nimbo.moama.util.CrawlerPropertyType;
+import org.apache.hadoop.hbase.exceptions.IllegalArgumentIOException;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
@@ -31,8 +30,9 @@ import java.util.LinkedList;
 import static in.nimbo.moama.configmanager.ConfigManager.FileType.PROPERTIES;
 import static java.lang.Thread.sleep;
 
-public class Crawler implements Runnable {
+public class Crawler{
     private static Logger errorLogger = Logger.getLogger(Crawler.class);
+    private final MoamaProducer crawledProducer;
     private Parser parser;
     private MoamaProducer mainProducer;
     private MoamaProducer helperProducer;
@@ -42,29 +42,33 @@ public class Crawler implements Runnable {
     private ElasticManager elasticManager;
     private WebDocumentHBaseManager webDocumentHBaseManager;
     private static int minOfEachQueue;
-    private static int threadPriority;
+    private static int crawlerThreadPriority;
     private static int shuffleSize;
     private static int numOfInternalLinksToKafka;
     private static int numOfThreads;
     private static int startNewThreadDelay;
+    private LinkedList<Thread> crawlerThreadList;
     private DomainFrequencyHandler domainTimeHandler = DomainFrequencyHandler.getInstance();
     private DuplicateHandler DuplicateChecker = DuplicateHandler.getInstance();
 
+
+
+
     public Crawler() {
         jmxManager = JMXManager.getInstance();
-        InputStream fileInputStream = Crawler.class.getResourceAsStream("/crawler.properties");
-        try {
-            ConfigManager.getInstance().load(fileInputStream, PROPERTIES);
-        } catch (IOException e) {
-            errorLogger.error("Loading properties failed");
-        }
-        //TODO
-        mainProducer = new MoamaProducer("links");
-        helperProducer = new MoamaProducer("helper");
-        linkConsumer = new MoamaConsumer("links");
-        helperConsumer = new MoamaConsumer("helper");
+        // TODO: 8/29/18
+        mainProducer = new MoamaProducer(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_LINK_TOPIC_NAME)
+                ,"kafka.server.");
+        crawledProducer = new MoamaProducer(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_CRAWLED_TOPIC_NAME)
+                ,"kafka.crawled.");
+        helperProducer = new MoamaProducer(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_HELPER_TOPIC_NAME)
+                ,"kafka.helper.");
+        linkConsumer = new MoamaConsumer(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_LINK_TOPIC_NAME)
+                ,"kafka.server.");
+        helperConsumer = new MoamaConsumer(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_HELPER_TOPIC_NAME)
+                ,"kafka.helper.");
         minOfEachQueue = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_MIN_OF_EACH_THREAD_QUEUE));
-        threadPriority = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_THREAD_PRIORITY));
+        crawlerThreadPriority = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_THREAD_PRIORITY));
         shuffleSize = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_SHUFFLE_SIZE));
         numOfInternalLinksToKafka = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_INTERNAL_LINK_ADD_TO_KAFKA));
         numOfThreads = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_NUMBER_OF_THREADS));
@@ -74,24 +78,25 @@ public class Crawler implements Runnable {
         String outLinksFamily = ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_FAMILY_OUTLINKS);
         webDocumentHBaseManager = new WebDocumentHBaseManager(hBaseTable, outLinksFamily, scoreFamily);
         elasticManager = new ElasticManager();
-        parser = Parser.getInstance(ConfigManager.getInstance());
-        try {
-            manageKafkaHelper();
-        } catch (InterruptedException e) {
-            //FIXME
-            errorLogger.error("link shuffling thread has been interrupted");
-        }
+        parser = Parser.getInstance();
     }
-
-    @Override
     public void run() {
+        crawlerThreadList = new LinkedList<>();
         for (int i = 0; i < numOfThreads; i++) {
-            createCrawlingThread(true);
+            Thread thread=createCrawlingThread(true);
+            thread.setPriority(crawlerThreadPriority);
+            thread.start();
+            crawlerThreadList.add(thread);
             try {
                 //To make sure CPU can handle sudden start of many threads
                 sleep(startNewThreadDelay);
             } catch (InterruptedException ignored) {
             }
+        }
+        try {
+            manageKafkaHelper();
+        } catch (InterruptedException e) {
+            System.out.println("vaay vaaay");
         }
     }
 
@@ -102,9 +107,8 @@ public class Crawler implements Runnable {
                 work(urlsOfThisThread);
             }
             helperProducer.pushNewURL(urlsOfThisThread.toArray(new String[0]));
-
         });
-        thread.setPriority(threadPriority);
+        thread.setPriority(crawlerThreadPriority);
         return thread;
     }
 
@@ -116,37 +120,40 @@ public class Crawler implements Runnable {
             String url = urlsOfThisThread.pop();
             try {
                 checkLink(url);
-                webDocument = parser.parse(url, jmxManager);
+                webDocument = parser.parse(url);
                 Metrics.byteCounter += webDocument.getTextDoc().getBytes().length;
                 helperProducer.pushNewURL(normalizeOutLink(webDocument));
+                crawledProducer.pushNewURL(url);
                 webDocumentHBaseManager.put(webDocument.documentToJson(), jmxManager);
                 elasticManager.put(webDocument.documentToJson(), jmxManager);
                 Metrics.numberOFComplete++;//todo
                 jmxManager.markNewComplete();
-            } catch (RuntimeException e) {
-                errorLogger.error("important" + e.getMessage());
-                throw e;
-            } catch (MalformedURLException e) {
-                errorLogger.error(url + " is malformatted!");
+            }
+            catch (IllegalArgumentException e ){
+                System.out.println(e.getMessage());
+            }
+            catch (MalformedURLException e) {
+                errorLogger.error(url + " is malformed!");
             } catch (IOException e) {
                 errorLogger.error("Jsoup connection to " + url + " failed");
             } catch (IllegalLanguageException e) {
                 errorLogger.error("Couldn't recognize url language!" + url);
             } catch (DomainFrequencyException e) {
                 errorLogger.error("take less than 30s to request to " + url);
-            } catch (URLException e) {
-                errorLogger.error("number of null" + Metrics.numberOfNull++);
-                jmxManager.markNewNull();
-            } catch (DuplicateLinkException e) {
-                errorLogger.error(url + " is duplicate");
+            } catch (URLException | DuplicateLinkException e) {
+                errorLogger.error(e.getMessage()+url);
+            } catch (RuntimeException e) {
+                errorLogger.error("important" + e.getMessage());
+                throw e;
             }
         }
     }
 
-    private void checkLink(String url) throws URLException, DomainFrequencyException, DuplicateLinkException {
+    private void checkLink(String url) throws URLException, DomainFrequencyException, DuplicateLinkException, MalformedURLException {
         if (url == null) {
+            jmxManager.markNewNull();
             throw new URLException();
-        } else if (!domainTimeHandler.isAllow(url)) {
+        } else if (!domainTimeHandler.isAllow(new URL(url).getHost())) {
             Metrics.numberOfDomainError++;
             jmxManager.markNewDomainError();
             throw new DomainFrequencyException();
@@ -157,14 +164,6 @@ public class Crawler implements Runnable {
             throw new DuplicateLinkException();
         }
 
-    }
-
-    private void work(Boolean isRun) {
-        LinkedList<String> urlsOfThisThread = new LinkedList<>(linkConsumer.getDocuments());
-        while (isRun) {
-            work(urlsOfThisThread);
-        }
-        helperProducer.pushNewURL(urlsOfThisThread.toArray(new String[0]));
     }
 
     private String[] normalizeOutLink(WebDocument webDocument) throws MalformedURLException {
@@ -183,12 +182,14 @@ public class Crawler implements Runnable {
     private void manageKafkaHelper() throws InterruptedException {
         LinkedList<String> linkedList = new LinkedList<>();
         while (true) {
-            sleep(2000);
+            sleep(500);
+            System.out.println("helperSize"+linkedList.size());
             linkedList.addAll(helperConsumer.getDocuments());
             if (linkedList.size() > shuffleSize) {
                 Collections.shuffle(linkedList);
                 mainProducer.pushNewURL(linkedList.toArray(new String[0]));
                 linkedList.clear();
+                System.out.println("shaffled");
             }
         }
     }

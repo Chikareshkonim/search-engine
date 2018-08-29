@@ -12,7 +12,6 @@ import java.nio.file.Files;
 public class HashDuplicateChecker {
     private static HashDuplicateChecker ourInstance;
     private static Logger errorLogger = Logger.getLogger("error");
-    private ConfigManager configManager;
     public static HashDuplicateChecker getInstance() {
         if(ourInstance == null){
             ourInstance = new HashDuplicateChecker();
@@ -30,7 +29,7 @@ public class HashDuplicateChecker {
 //        } catch (IOException e) {
 //            errorLogger.error("Loading properties failed");
 //        }
-        hashPrime = Integer.parseInt(configManager.getProperty(CrawlerPropertyType.CRAWLER_DUPLICATE_HASH_PRIME));
+        hashPrime = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_DUPLICATE_HASH_PRIME));
         hashTableSize=hashPrime/8 +1;
         linkHashTableTime = new byte[hashTableSize];
         twoPowers= new byte[]{0b1, 0b10, 0b100, 0b1000, 0b10000, 0b100000, 0b1000000, -128};//-128 = 10000000

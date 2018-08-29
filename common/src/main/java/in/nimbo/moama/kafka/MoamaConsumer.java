@@ -13,10 +13,10 @@ public class MoamaConsumer {
     private KafkaConsumer<String, String> consumer;
     private Logger errorLogger = Logger.getLogger(this.getClass());
 
-    public MoamaConsumer(String topic) {
+    public MoamaConsumer(String topic,String rootAddress) {
+        System.out.println("consumed");
         //TODO
-        consumer = new KafkaConsumer<>(ConfigManager.getInstance().getProperties("kafka.",true));
-        System.out.println(ConfigManager.getInstance().getProperties("kafka.", true));
+        consumer = new KafkaConsumer<>(ConfigManager.getInstance().getProperties(rootAddress,true));
         consumer.subscribe(Collections.singletonList(topic));
     }
     public synchronized ArrayList<String> getDocuments() {
