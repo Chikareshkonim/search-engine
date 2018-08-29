@@ -36,7 +36,7 @@ public class ReferenceCalculator {
     public ReferenceCalculator(String appName, String master) {
         configuration = HBaseConfiguration.create();
         configuration.addResource(getClass().getResourceAsStream("/hbase-site.xml"));
-        webPageTable = TableName.valueOf(ConfigManager.getInstance().getProperty(PropertyType.H_BASE_TABLE));
+        webPageTable = TableName.valueOf("pages");
         contentFamily = ConfigManager.getInstance().getProperty(PropertyType.H_BASE_CONTENT_FAMILY);
         refrenceFamilyName = ConfigManager.getInstance().getProperty(PropertyType.HBASE_FAMILY_SCORE);
         refrenceColumn = ConfigManager.getInstance().getProperty(PropertyType.HBASE_REFRENCE_CLOUMN);
