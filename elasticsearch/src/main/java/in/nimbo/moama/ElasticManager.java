@@ -75,7 +75,7 @@ public class ElasticManager {
         client = new RestHighLevelClient(RestClient.builder(new HttpHost(server1, Integer.parseInt(clientPort), "http"),
                 new HttpHost(server2, Integer.parseInt(clientPort), "http"),
                 new HttpHost(server3, Integer.parseInt(clientPort), "http")));
-        indexRequest = new IndexRequest("newspages", "_doc");
+        indexRequest = new IndexRequest(index, "_doc");
         bulkRequest = new BulkRequest();
     }
 

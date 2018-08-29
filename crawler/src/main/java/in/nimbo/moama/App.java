@@ -12,7 +12,7 @@ import static in.nimbo.moama.configmanager.ConfigManager.FileType.PROPERTIES;
 
 public class App {
     public static void main(String[] args) throws IOException {
-        InputStream fileInputStream = Crawler.class.getResourceAsStream("/test.properties");
+        InputStream fileInputStream = Crawler.class.getResourceAsStream("/crawler.properties");
         ConfigManager configManager=ConfigManager.getInstance();
         configManager.load(fileInputStream,ConfigManager.FileType.PROPERTIES);
         Initializer.initialize();

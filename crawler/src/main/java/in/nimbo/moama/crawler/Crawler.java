@@ -129,8 +129,8 @@ public class Crawler{
                 Metrics.byteCounter += webDocument.getTextDoc().getBytes().length;
                 helperProducer.pushNewURL(normalizeOutLink(webDocument));
                 crawledProducer.pushNewURL(url);
-//                webDocumentHBaseManager.put(webDocument.documentToJson(), jmxManager);
-//                elasticManager.put(webDocument.documentToJson(), jmxManager);
+                webDocumentHBaseManager.put(webDocument.documentToJson(), jmxManager);
+                elasticManager.put(webDocument.documentToJson(), jmxManager);
                 Metrics.numberOFComplete++;//todo
                 jmxManager.markNewComplete();
             }
