@@ -129,8 +129,7 @@ public class ElasticManager {
                 indexRequest.source(builder);
                 bulkRequest.add(indexRequest);
                 indexRequest = new IndexRequest(index, "_doc");
-                if (bulkRequest.estimatedSizeInBytes() >= 1 ||
-                        bulkRequest.numberOfActions() >= 1) {
+                if ( bulkRequest.numberOfActions() >= elasticFlushSizeLimit) {
                         client.bulk(bulkRequest);
                         bulkRequest = new BulkRequest();
                         Metrics.numberOfPagesAddedToElastic = added;

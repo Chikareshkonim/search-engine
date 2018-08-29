@@ -78,6 +78,7 @@ public class Crawler{
         String outLinksFamily = ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_FAMILY_OUTLINKS);
         webDocumentHBaseManager = new WebDocumentHBaseManager(hBaseTable, outLinksFamily, scoreFamily);
         elasticManager = new ElasticManager();
+        webDocumentHBaseManager.createTable();
         parser = Parser.getInstance();
     }
     public void run() {
