@@ -14,7 +14,6 @@ import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.hadoop.hbase.mapreduce.TableOutputFormat;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -29,8 +28,8 @@ public class ReferenceCalculator {
     private TableName webPageTable;
     private String contentFamily;
     private Configuration configuration;
-    private static String refrencerank = "refrencerank";
-    private static String refrenceFamilyName = "score";
+    private static String refrenceColumn;
+    private static String refrenceFamilyName;
     private Configuration hbaseConf;
     private JavaSparkContext sparkContext;
 
@@ -39,6 +38,8 @@ public class ReferenceCalculator {
         configuration.addResource(getClass().getResourceAsStream("/hbase-site.xml"));
         webPageTable = TableName.valueOf(ConfigManager.getInstance().getProperty(PropertyType.H_BASE_TABLE));
         contentFamily = ConfigManager.getInstance().getProperty(PropertyType.H_BASE_CONTENT_FAMILY);
+        refrenceFamilyName = ConfigManager.getInstance().getProperty(PropertyType.HBASE_FAMILY_SCORE);
+        refrenceColumn = ConfigManager.getInstance().getProperty(PropertyType.HBASE_REFRENCE_CLOUMN);
         String[] jars = {"/home/search-engine/page-rank/target/page-rank-1.0-SNAPSHOT-jar-with-dependencies.jar"};
         SparkConf sparkConf = new SparkConf().setAppName(appName).setMaster(master).setJars(jars);
         sparkContext = new JavaSparkContext(sparkConf);
@@ -55,7 +56,8 @@ public class ReferenceCalculator {
 
     }
     private JavaPairRDD<String, Integer> getFromHBase() {
-        JavaPairRDD<ImmutableBytesWritable, Result> data = sparkContext.newAPIHadoopRDD(hbaseConf, TableInputFormat.class, ImmutableBytesWritable.class, Result.class);
+        JavaPairRDD<ImmutableBytesWritable, Result> data = sparkContext.newAPIHadoopRDD(hbaseConf, TableInputFormat.class,
+                ImmutableBytesWritable.class, Result.class);
         return data.flatMapToPair(pair->{
             List<Cell> cells = pair._2.listCells();
             List<Tuple2<String,Integer>> resultList = new ArrayList<>();
@@ -71,7 +73,7 @@ public class ReferenceCalculator {
             jobConfig.setOutputFormatClass(TableOutputFormat.class);
             JavaPairRDD<ImmutableBytesWritable, Put> hbasePuts = toWrite.mapToPair(pair -> {
                 Put put = new Put(Bytes.toBytes(pair._1));
-                put.addColumn(refrenceFamilyName.getBytes(), refrencerank.getBytes(), Bytes.toBytes(pair._2));
+                put.addColumn(refrenceFamilyName.getBytes(), refrenceColumn.getBytes(), Bytes.toBytes(pair._2));
                 return new Tuple2<>(new ImmutableBytesWritable(), put);
             });
             hbasePuts.saveAsNewAPIHadoopDataset(jobConfig.getConfiguration());
