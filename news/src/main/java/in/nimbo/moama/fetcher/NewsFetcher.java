@@ -1,5 +1,6 @@
 package in.nimbo.moama.fetcher;
 
+import in.nimbo.moama.ElasticManager;
 import in.nimbo.moama.NewsHBaseManager;
 import in.nimbo.moama.configmanager.ConfigManager;
 
@@ -14,12 +15,14 @@ public class NewsFetcher implements Runnable {
     private NewsHBaseManager newsHBaseManager;
     private static final int FETCHER_THREADS = Integer.parseInt(ConfigManager.getInstance().getProperty(NUMBER_OF_FETCHER_THREADS));
     private static final int FETCHER_PRIORITY = Integer.parseInt(ConfigManager.getInstance().getProperty(FETCHER_THREAD_PRIORITY));
+    private ElasticManager elasticManager;
 
     public NewsFetcher(NewsURLQueue<NewsInfo> newsQueue) {
         this.newsQueue = newsQueue;
         ConfigManager configManager = ConfigManager.getInstance();
         newsHBaseManager = new NewsHBaseManager(configManager.getProperty(NEWS_PAGES_TABLE),
                 configManager.getProperty(HBASE_TWITTER_FAMILY), configManager.getProperty(HBASE_VISITED_FAMILY));
+        elasticManager = new ElasticManager();
     }
 
     @Override
@@ -40,8 +43,9 @@ public class NewsFetcher implements Runnable {
                         NewsInfo newsInfo = list.removeFirst();
                         String text = NewsParser.parse(newsInfo.getDomain(), newsInfo.getUrl());
                         News news = new News(newsInfo, text);
-                        System.out.println(news);
-//                        newsHBaseManager.put(news.documentToJson());
+//                        System.out.println(news);
+                        newsHBaseManager.put(news.documentToJson());
+                        elasticManager.put(news.documentToJson(),null);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

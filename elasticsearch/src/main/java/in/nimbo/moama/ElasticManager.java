@@ -57,22 +57,22 @@ public class ElasticManager {
     private static String clusterName;
 
     public ElasticManager() {
-        elasticFlushSizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_SIZE_LIMIT));
-        elasticFlushNumberLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_NUMBER_LIMIT));
-        index = ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_PAGES_TABLE);
-        test = ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_TEST_TABLE);
-        textColumn = ConfigManager.getInstance().getProperty(ElasticPropertyType.Text_COLUMN);
-        linkColumn = ConfigManager.getInstance().getProperty(ElasticPropertyType.LINK_COLUMN);
-        server1 = ConfigManager.getInstance().getProperty(ElasticPropertyType.SERVER_1);
-        server2 = ConfigManager.getInstance().getProperty(ElasticPropertyType.SERVER_2);
-        server3 = ConfigManager.getInstance().getProperty(ElasticPropertyType.SERVER_3);
-        clientPort = ConfigManager.getInstance().getProperty(ElasticPropertyType.CLIENT_PORT);
-        vectorPort = ConfigManager.getInstance().getProperty(ElasticPropertyType.VECTOR_PORT);
-        clusterName = ConfigManager.getInstance().getProperty(ElasticPropertyType.CLUSTER_NAME);
-        client = new RestHighLevelClient(RestClient.builder(new HttpHost(server1, Integer.parseInt(clientPort), "http"),
-                new HttpHost(server2, Integer.parseInt(clientPort), "http"),
-                new HttpHost(server3, Integer.parseInt(clientPort), "http")));
-        indexRequest = new IndexRequest(index);
+//        elasticFlushSizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_SIZE_LIMIT));
+//        elasticFlushNumberLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_NUMBER_LIMIT));
+//        index = ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_PAGES_TABLE);
+//        test = ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_TEST_TABLE);
+//        textColumn = ConfigManager.getInstance().getProperty(ElasticPropertyType.Text_COLUMN);
+//        linkColumn = ConfigManager.getInstance().getProperty(ElasticPropertyType.LINK_COLUMN);
+//        server1 = ConfigManager.getInstance().getProperty(ElasticPropertyType.SERVER_1);
+//        server2 = ConfigManager.getInstance().getProperty(ElasticPropertyType.SERVER_2);
+//        server3 = ConfigManager.getInstance().getProperty(ElasticPropertyType.SERVER_3);
+//        clientPort = ConfigManager.getInstance().getProperty(ElasticPropertyType.CLIENT_PORT);
+//        vectorPort = ConfigManager.getInstance().getProperty(ElasticPropertyType.VECTOR_PORT);
+//        clusterName = ConfigManager.getInstance().getProperty(ElasticPropertyType.CLUSTER_NAME);
+        client = new RestHighLevelClient(RestClient.builder(new HttpHost("s1", Integer.parseInt("9200"), "http"),
+                new HttpHost("s2", Integer.parseInt("9200"), "http"),
+                new HttpHost("s3", Integer.parseInt("9200"), "http")));
+        indexRequest = new IndexRequest("newspages","_doc");
         bulkRequest = new BulkRequest();
     }
 
@@ -103,7 +103,7 @@ public class ElasticManager {
         }
     }
 
-    public void put(JSONObject document, JMXManager jmxManager) {
+    public synchronized void put(JSONObject document, JMXManager jmxManager) {
         try {
             XContentBuilder builder = XContentFactory.jsonBuilder();
             builder.startObject();
@@ -119,16 +119,17 @@ public class ElasticManager {
                 });
             }
             builder.endObject();
+            indexRequest.source(builder);
+            bulkRequest.add(indexRequest);
+            indexRequest = new IndexRequest("newspages","_doc");
             added++;
-            if (bulkRequest.estimatedSizeInBytes() / 1000000 >= elasticFlushSizeLimit ||
-                    bulkRequest.numberOfActions() >= elasticFlushNumberLimit) {
+            if (bulkRequest.estimatedSizeInBytes()  >= 1 ||
+                    bulkRequest.numberOfActions() >= 1) {
                 synchronized (sync) {
-                    bulkRequest.add(indexRequest);
                     client.bulk(bulkRequest);
                     bulkRequest = new BulkRequest();
-                    indexRequest = new IndexRequest(index);
                     Metrics.numberOfPagesAddedToElastic = added;
-                    jmxManager.markNewAddedToElastic();
+//                    jmxManager.markNewAddedToElastic();
                 }
             }
         } catch (IOException e) {
