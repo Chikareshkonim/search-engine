@@ -35,8 +35,8 @@ public class App {
 
     private static boolean createTable() {
         ConfigManager configManager = ConfigManager.getInstance();
-        NewsWebsiteHBaseManager hBaseManager = new NewsWebsiteHBaseManager(configManager.getProperty(NEWS_PAGES_TABLE),
-                configManager.getProperty(HBASE_TWITTER_FAMILY), configManager.getProperty(HBASE_VISITED_FAMILY));
-        return hBaseManager.createTable();
+        NewsWebsiteHBaseManager webHBaseManager = new NewsWebsiteHBaseManager(configManager.getProperty(NEWS_WEBSITE_TABLE),
+                configManager.getProperty(HBASE_TEMPLATE_FAMILY), configManager.getProperty(HBASE_RSS_FAMILY));
+        return webHBaseManager.createTable(null);
     }
 }

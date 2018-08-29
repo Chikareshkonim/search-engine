@@ -17,17 +17,14 @@ import java.util.stream.Stream;
 
 public class TemplateFinder {
     public static void main(String[] args) throws IOException {
-        System.out.println(findTemplate("http://www.asriran.com/fa/rss/1", "link"));
+        System.out.println(findTemplate("https://www.theguardian.com/world/rss", "link"));
     }
 
     public static Template findTemplate(String rss, String newsTag) throws IOException {
         Document rssDoc = Jsoup.connect(rss).get();
         Document goodPage = findMaxTextPage(rssDoc, newsTag);
-        System.out.println(goodPage.text());
         String dateFormat = findDateFormat(rssDoc);
-        System.out.println(dateFormat);
         String newsTextAddress = findTextAddress(goodPage);
-        System.out.println(newsTextAddress);
         return new Template("Class", newsTextAddress, dateFormat, newsTag);
     }
 
@@ -53,8 +50,7 @@ public class TemplateFinder {
     private static Document findMaxTextPage(Document rssDoc, String newsTag) {
         Stream<Element> stream = rssDoc.getElementsByTag("item").stream()
                 .flatMap(element -> element.getElementsByTag(newsTag).stream()).skip(4).limit(25);
-        return stream.parallel().peek(element -> System.out.println(element.html())
-            ).map(Element::text).map(Util::getPage).max(Comparator.comparing(a -> a.text().length())).get();
+        return stream.parallel().map(Element::text).map(Util::getPage).max(Comparator.comparing(a -> a.text().length())).get();
     }
 }
 
