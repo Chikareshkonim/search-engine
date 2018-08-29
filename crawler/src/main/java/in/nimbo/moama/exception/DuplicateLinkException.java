@@ -1,4 +1,9 @@
 package in.nimbo.moama.exception;
 
-public class DuplicateLinkException extends Exception {
+public final class DuplicateLinkException extends Exception {
+    @Override
+    public String getMessage() {
+        return "is Duplicate";
+
+    }
 }
