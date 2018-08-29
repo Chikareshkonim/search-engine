@@ -42,8 +42,9 @@ public class NewsWebsiteHBaseManager extends HBaseManager{
             }
         } catch (IOException e) {
             e.printStackTrace();
+            return false;
         }
-        return false;
+        return true;
     }
 
     public List<JSONObject> getTemplates() {

@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class NewsWebsiteHBaseManagerTest {
@@ -32,11 +33,16 @@ public class NewsWebsiteHBaseManagerTest {
 
     @Test
     public void getTemplates() {
-        System.out.println(hBaseManager.getTemplates());
+//        System.out.println(hBaseManager.getTemplates());
+        assertEquals("[{\"attModel\":\"class\",\"attValue\":\"css-18sbwfn StoryBodyCompanionColumn\"," +
+                "\"dateFormat\":\"EEE, dd MMM yyyy HH:mm:ss z\",\"domain\":\"nytimes.com\",\"newsTag\":\"link\"}]",
+                hBaseManager.getTemplates().toString());
     }
 
     @Test
     public void getRSSList() {
-        System.out.println(hBaseManager.getRSSList());
+//        System.out.println(hBaseManager.getRSSList());
+        assertEquals("[{\"rss\":\"http://rss.nytimes.com/services/xml/rss/nyt/World.xml\"" +
+                ",\"domain\":\"nytimes.com\"}]",hBaseManager.getRSSList().toString());
     }
 }

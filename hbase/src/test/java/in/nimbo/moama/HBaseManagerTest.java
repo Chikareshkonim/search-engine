@@ -5,12 +5,18 @@ import in.nimbo.moama.configmanager.ConfigManager;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
 
 public class HBaseManagerTest {
+    @BeforeClass
+    public static void beforeClass() throws IOException {
+        ConfigManager.getInstance().load(NewsWebsiteHBaseManager.class.getResourceAsStream("/config.properties"),
+                ConfigManager.FileType.PROPERTIES);
 
+    }
     @Test
     public void connectionTest() throws Exception {
         Configuration configuration = HBaseConfiguration.create();
@@ -22,9 +28,7 @@ public class HBaseManagerTest {
         }
     }
     @Test
-    public void constructorTest() throws Exception {
-        ConfigManager.getInstance().load(HBaseManager.class.getResourceAsStream("/config.properties"), ConfigManager.FileType.PROPERTIES);
+    public void constructorTest() {
         HBaseManager hBaseManager = new HBaseManager("test","test");
-        throw new Exception();
     }
 }
