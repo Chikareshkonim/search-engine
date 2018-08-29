@@ -80,7 +80,7 @@ public class ElasticManagerTest {
     public void putTest(){
         ElasticManager elasticManager = new ElasticManager();
         JSONObject document = new JSONObject();
-        document.put("url","g.com");
+        document.put("url","me.com");
         document.put("content","gdsfghshgssjsjfsjsfj");
         document.put("title","yes");
         document.put("date","2015-01-01");
