@@ -39,7 +39,7 @@ public class ReferenceCalculator {
         configuration.addResource(getClass().getResourceAsStream("/hbase-site.xml"));
         webPageTable = TableName.valueOf(ConfigManager.getInstance().getProperty(PropertyType.H_BASE_TABLE));
         contentFamily = ConfigManager.getInstance().getProperty(PropertyType.H_BASE_CONTENT_FAMILY);
-        String[] jars = {"/home/rank/target/rank-1.0-SNAPSHOT-jar-with-dependencies.jar"};
+        String[] jars = {"/home/search-engine/page-rank/target/page-rank-1.0-SNAPSHOT-jar-with-dependencies.jar"};
         SparkConf sparkConf = new SparkConf().setAppName(appName).setMaster(master).setJars(jars);
         sparkContext = new JavaSparkContext(sparkConf);
         hbaseConf = HBaseConfiguration.create();
@@ -51,6 +51,7 @@ public class ReferenceCalculator {
     public void calculate(){
         JavaPairRDD<String,Integer> input = getFromHBase();
         JavaPairRDD<String,Integer> result = input.reduceByKey((value1,value2)-> value1+value2);
+        writeToHBase(result);
 
     }
     private JavaPairRDD<String, Integer> getFromHBase() {
