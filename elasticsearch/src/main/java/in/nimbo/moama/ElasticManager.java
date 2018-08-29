@@ -60,21 +60,9 @@ public class ElasticManager {
     private static String clusterName;
 
     public ElasticManager() {
-        elasticFlushSizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_SIZE_LIMIT));
-        elasticFlushNumberLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_NUMBER_LIMIT));
-        index = ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_PAGES_TABLE);
-//        test = ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_TEST_TABLE);
-        textColumn = ConfigManager.getInstance().getProperty(ElasticPropertyType.TEXT_COLUMN);
-        linkColumn = ConfigManager.getInstance().getProperty(ElasticPropertyType.LINK_COLUMN);
-        server1 = ConfigManager.getInstance().getProperty(ElasticPropertyType.SERVER_1);
-        server2 = ConfigManager.getInstance().getProperty(ElasticPropertyType.SERVER_2);
-        server3 = ConfigManager.getInstance().getProperty(ElasticPropertyType.SERVER_3);
-        clientPort = ConfigManager.getInstance().getProperty(ElasticPropertyType.CLIENT_PORT);
-        vectorPort = ConfigManager.getInstance().getProperty(ElasticPropertyType.VECTOR_PORT);
-        clusterName = ConfigManager.getInstance().getProperty(ElasticPropertyType.CLUSTER_NAME);
         client = new RestHighLevelClient(
-                RestClient.builder(new HttpHost(server1, Integer.parseInt(clientPort), "http")));
-        indexRequest = new IndexRequest(index,"_doc");
+                RestClient.builder(new HttpHost("46.4.120.138", 9200, "http")));
+        indexRequest = new IndexRequest("newspages","_doc");
         bulkRequest = new BulkRequest();
     }
 
@@ -106,7 +94,6 @@ public class ElasticManager {
     }
 
     public void put(JSONObject document, JMXManager jmxManager) {
-
         try {
             XContentBuilder builder = XContentFactory.jsonBuilder();
             try {
@@ -129,10 +116,9 @@ public class ElasticManager {
                 builder.endObject();
                 indexRequest.source(builder);
                 bulkRequest.add(indexRequest);
-                indexRequest = new IndexRequest(index,"_doc");
-                added++;
-                if (bulkRequest.estimatedSizeInBytes() >= elasticFlushSizeLimit ||
-                        bulkRequest.numberOfActions() >= elasticFlushNumberLimit) {
+                indexRequest = new IndexRequest("newspages","_doc");
+                if (bulkRequest.estimatedSizeInBytes() >= 1 ||
+                        bulkRequest.numberOfActions() >= 1) {
                     synchronized (sync) {
                         System.out.println(bulkRequest.numberOfActions());
                         client.bulk(bulkRequest);

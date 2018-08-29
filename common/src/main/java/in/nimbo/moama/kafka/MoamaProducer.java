@@ -16,19 +16,22 @@ public class MoamaProducer {
     public MoamaProducer(String topic) {
         //TODO
         this.topic = topic;
-        producer = new KafkaProducer<>(ConfigManager.getInstance().getProperties("",true));
+        producer = new KafkaProducer<>(ConfigManager.getInstance().getProperties("kafka.",true));
     }
     public void pushDocument(String document){
         producer.send(new ProducerRecord<>(topic,"", document));
     }
     public void pushNewURL(String... links) {
-        for (String url : links) {
-            try {
-                String key = new URL(url).getHost();
-                producer.send(new ProducerRecord<>(topic, key, url));
-            } catch (MalformedURLException e) {
-                errorLogger.error("Wrong Exception" + url);
-            }
-        }
+        System.out.println(producer.metrics());
+//        for (String url : links) {
+//            try {
+//                String key = new URL(url).getHost();
+//                producer.send(new ProducerRecord<>(topic, key, url));
+//            } catch (MalformedURLException e) {
+//                System.out.println(e.getMessage());
+//                errorLogger.error("Wrong Exception" + url);
+//            }
+//            producer.flush();
+//        }
     }
 }
