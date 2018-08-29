@@ -96,7 +96,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>in.nimbo.moama.CrawlerApp</mainClass>
+                            <mainClass>in.nimbo.moama.App</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
