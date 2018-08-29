@@ -1,5 +1,6 @@
 package in.nimbo.moama;
 
+import com.google.gson.Gson;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.*;
@@ -21,7 +22,7 @@ public class NewsWebsiteHBaseManager extends HBaseManager{
         puts = new ArrayList<>();
     }
 
-    public boolean createTable() {
+    public boolean createTable(List<JSONObject> jsons) {
         try (Connection connection = ConnectionFactory.createConnection(configuration)) {
             Admin admin = connection.getAdmin();
             if (!admin.tableExists(tableName)) {
@@ -29,14 +30,22 @@ public class NewsWebsiteHBaseManager extends HBaseManager{
                 hTableDescriptor.addFamily(new HColumnDescriptor(templateFamily));
                 hTableDescriptor.addFamily(new HColumnDescriptor(rssFamily));
                 admin.createTable(hTableDescriptor);
+                List<Put> puts = new ArrayList<>();
                 // TODO: 8/29/18 Change
-                Put put = new Put("nytimes.com".getBytes());
-                put.addColumn(templateFamily.getBytes(), "attModel".getBytes(), "class".getBytes());
-                put.addColumn(templateFamily.getBytes(), "attValue".getBytes(), "css-18sbwfn StoryBodyCompanionColumn".getBytes());
-                put.addColumn(templateFamily.getBytes(), "dateFormat".getBytes(), "EEE, dd MMM yyyy HH:mm:ss z".getBytes());
-                put.addColumn(rssFamily.getBytes(), "1".getBytes(), "http://rss.nytimes.com/services/xml/rss/nyt/World.xml".getBytes());
+                for (JSONObject json : jsons) {
+                    Put put = new Put(json.getString("domain").getBytes());
+                    put.addColumn(templateFamily.getBytes(), "attModel".getBytes(), json.getString("attModel").getBytes());
+                    put.addColumn(templateFamily.getBytes(), "attValue".getBytes(), json.getString("attValue").getBytes());
+                    put.addColumn(templateFamily.getBytes(), "dateFormat".getBytes(), json.getString("dateFormat").getBytes());
+                    put.addColumn(templateFamily.getBytes(), "newsTag".getBytes(), json.getString("newsTag").getBytes());
+                    List<String> rss = new Gson().fromJson(json.getString("rss"), List.class);
+                    for (int i = 0; i < rss.size(); i++) {
+                        put.addColumn(rssFamily.getBytes(), ("" + i).getBytes(), rss.get(i).getBytes());
+                    }
+                    puts.add(put);
+                }
                 Table table = connection.getTable(tableName);
-                table.put(put);
+                table.put(puts);
                 table.close();
                 return true;
             }
