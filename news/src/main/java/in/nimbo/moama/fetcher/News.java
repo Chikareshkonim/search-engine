@@ -25,7 +25,7 @@ public class News {
         return newsInfo.toString() + "\n" + "Content: " + content;
     }
 
-    public synchronized JSONObject documentToJson() {
+    public  JSONObject documentToJson() {
         JSONObject jsonDocument = new JSONObject();
         jsonDocument.put("url", newsInfo.getUrl());
         jsonDocument.put("content", content);
