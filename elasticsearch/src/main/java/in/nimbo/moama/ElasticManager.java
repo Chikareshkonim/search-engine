@@ -32,7 +32,10 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 
@@ -60,8 +63,8 @@ public class ElasticManager {
         elasticFlushSizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_SIZE_LIMIT));
         elasticFlushNumberLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_NUMBER_LIMIT));
         index = ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_PAGES_TABLE);
-        test = ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_TEST_TABLE);
-        textColumn = ConfigManager.getInstance().getProperty(ElasticPropertyType.Text_COLUMN);
+//        test = ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_TEST_TABLE);
+        textColumn = ConfigManager.getInstance().getProperty(ElasticPropertyType.TEXT_COLUMN);
         linkColumn = ConfigManager.getInstance().getProperty(ElasticPropertyType.LINK_COLUMN);
         server1 = ConfigManager.getInstance().getProperty(ElasticPropertyType.SERVER_1);
         server2 = ConfigManager.getInstance().getProperty(ElasticPropertyType.SERVER_2);
@@ -69,10 +72,9 @@ public class ElasticManager {
         clientPort = ConfigManager.getInstance().getProperty(ElasticPropertyType.CLIENT_PORT);
         vectorPort = ConfigManager.getInstance().getProperty(ElasticPropertyType.VECTOR_PORT);
         clusterName = ConfigManager.getInstance().getProperty(ElasticPropertyType.CLUSTER_NAME);
-        client = new RestHighLevelClient(RestClient.builder(new HttpHost(server1, Integer.parseInt(clientPort), "http"),
-                new HttpHost(server2, Integer.parseInt(clientPort), "http"),
-                new HttpHost(server3, Integer.parseInt(clientPort), "http")));
-        indexRequest = new IndexRequest(index);
+        client = new RestHighLevelClient(
+                RestClient.builder(new HttpHost(server1, Integer.parseInt(clientPort), "http")));
+        indexRequest = new IndexRequest(index,"_doc");
         bulkRequest = new BulkRequest();
     }
 
@@ -104,35 +106,47 @@ public class ElasticManager {
     }
 
     public void put(JSONObject document, JMXManager jmxManager) {
+
         try {
             XContentBuilder builder = XContentFactory.jsonBuilder();
-            builder.startObject();
-            {
-                Set<String> keys = document.keySet();
-                keys.forEach(key -> {
-                    try {
-                        if (!key.equals("outLinks"))
-                            builder.field(key, document.get(key));
-                    } catch (IOException e) {
-                        errorLogger.error("ERROR! couldn't add " + document.get(key) + " to elastic");
-                    }
-                });
-            }
-            builder.endObject();
-            added++;
-            if (bulkRequest.estimatedSizeInBytes() / 1000000 >= elasticFlushSizeLimit ||
-                    bulkRequest.numberOfActions() >= elasticFlushNumberLimit) {
-                synchronized (sync) {
-                    bulkRequest.add(indexRequest);
-                    client.bulk(bulkRequest);
-                    bulkRequest = new BulkRequest();
-                    indexRequest = new IndexRequest(index);
-                    Metrics.numberOfPagesAddedToElastic = added;
-                    jmxManager.markNewAddedToElastic();
+            try {
+                builder.startObject();
+                {
+                    Set<String> keys = document.keySet();
+                    keys.forEach(key -> {
+                        try {
+                            if (!key.equals("outLinks")) {
+                                builder.field(key, document.get(key));
+                                System.out.println(key);
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            errorLogger.error("ERROR! couldn't add " + document.get(key) + " to elastic");
+                        }
+                    });
                 }
+                System.out.println(builder.toString());
+                builder.endObject();
+                indexRequest.source(builder);
+                bulkRequest.add(indexRequest);
+                indexRequest = new IndexRequest(index,"_doc");
+                added++;
+                if (bulkRequest.estimatedSizeInBytes() >= elasticFlushSizeLimit ||
+                        bulkRequest.numberOfActions() >= elasticFlushNumberLimit) {
+                    synchronized (sync) {
+                        System.out.println(bulkRequest.numberOfActions());
+                        client.bulk(bulkRequest);
+                        bulkRequest = new BulkRequest();
+                        Metrics.numberOfPagesAddedToElastic = added;
+                        System.out.println("added                     ");
+//                    jmxManager.markNewAddedToElastic();
+                    }
+                }
+            } catch (IOException e) {
+                errorLogger.error("ERROR! Couldn't add the document for " + document.get("pageLink"));
             }
         } catch (IOException e) {
-            errorLogger.error("ERROR! Couldn't add the document for " + document.get("pageLink"));
+            e.printStackTrace();
         }
     }
 
