@@ -127,8 +127,8 @@ public class ElasticManager {
                         });
                     }
                     builder.endObject();
+                    indexRequest.source(builder);
                 }
-                indexRequest.source(builder);
                 bulkRequest.add(indexRequest);
                 indexRequest = new IndexRequest(index, "_doc");
                 if ( bulkRequest.numberOfActions() >= elasticFlushSizeLimit) {
