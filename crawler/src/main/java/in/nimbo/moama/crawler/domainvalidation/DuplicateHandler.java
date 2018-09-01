@@ -3,6 +3,7 @@ package in.nimbo.moama.crawler.domainvalidation;
 import in.nimbo.moama.HBaseManager;
 import in.nimbo.moama.LRUCache;
 import in.nimbo.moama.configmanager.ConfigManager;
+import in.nimbo.moama.configmanager.PropertyType;
 import in.nimbo.moama.util.CrawlerPropertyType;
 
 public class DuplicateHandler {
@@ -16,30 +17,27 @@ public class DuplicateHandler {
 
     private DuplicateHandler() {
         // FIXME: 8/28/18 ALIREZA
-        hBaseManager = new HBaseManager("pages", "pagerank");
+        hBaseManager = new HBaseManager(ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_TABLE),
+                ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_FAMILY_SCORE));
         lruCache = new LRUCache<>(initialCapacity, maxCapacity);
     }
-
     public static DuplicateHandler getInstance() {
         return ourInstance;
     }
-
     public boolean isDuplicate(String url) {
-
         if (lruCache.containsKey(url)) {
+            System.out.println("true lru");
             return true;
         } else if (hBaseManager.isDuplicate(url)) {
             lruCache.put(url, 0);
-            System.out.println("true hbase"+ url);
+            System.out.println("true hbase" + url);
             return true;
         }
         System.out.println("false");
         return false;
-
     }
 
     public void weakConfirm(String url) {
         lruCache.put(url, 1);
     }
-
 }

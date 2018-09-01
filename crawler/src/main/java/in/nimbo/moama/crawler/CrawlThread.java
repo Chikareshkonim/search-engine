@@ -85,7 +85,7 @@ public class CrawlThread extends Thread {
                 Metrics.byteCounter += webDocument.getTextDoc().getBytes().length;
                 helperProducer.pushNewURL(normalizeOutLink(webDocument));
                 crawledProducer.pushNewURL(url);
-                webDocumentHBaseManager.put(webDocument.documentToJson(), jmxManager);
+                webDocumentHBaseManager.put(webDocument.documentToJson());
                 elasticManager.put(webDocument.documentToJson(), jmxManager);
                 Metrics.numberOFComplete++;// TODO: 8/31/18
                 jmxManager.markNewComplete();

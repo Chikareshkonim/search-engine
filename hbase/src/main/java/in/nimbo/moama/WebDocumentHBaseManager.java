@@ -23,6 +23,7 @@ public class WebDocumentHBaseManager extends HBaseManager{
     private String scoreFamily;
     private static int size = 0;
     private static int added = 0;
+    private JMXManager jmxManager=JMXManager.getInstance();
 
     public WebDocumentHBaseManager(String tableName, String outLinksFamily, String scoreFamily)  {
         super(tableName, scoreFamily);
@@ -30,7 +31,7 @@ public class WebDocumentHBaseManager extends HBaseManager{
         this.scoreFamily = scoreFamily;
     }
 
-    public void put(JSONObject document, JMXManager jmxManager) {
+    public void put(JSONObject document) {
         String pageRankColumn = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_DUPCHECK_COLUMN);
         Put put = new Put(Bytes.toBytes(generateRowKeyFromUrl((String) document.get("pageLink"))));
         for (Object link : (JSONArray)document.get("outLinks")) {
