@@ -5,6 +5,7 @@ import in.nimbo.moama.configmanager.ConfigManager;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -17,6 +18,7 @@ public class HBaseManagerTest {
                 ConfigManager.FileType.PROPERTIES);
 
     }
+
     @Test
     public void connectionTest() throws Exception {
         Configuration configuration = HBaseConfiguration.create();
@@ -27,8 +29,17 @@ public class HBaseManagerTest {
             throw new Exception();
         }
     }
+
     @Test
     public void constructorTest() {
-        HBaseManager hBaseManager = new HBaseManager("test","test");
+        HBaseManager hBaseManager = new HBaseManager("test", "test");
+    }
+
+    @Test
+    public void isDuplicate() {
+        HBaseManager hBaseManager = new HBaseManager("pages", "score");
+        WebDocumentHBaseManager webDocumentHBaseManager =new WebDocumentHBaseManager("pages","outLinks","score");
+
+        Assert.assertFalse(hBaseManager.isDuplicate("https://en.wikipedia.org/wiki/Main_Page"));
     }
 }

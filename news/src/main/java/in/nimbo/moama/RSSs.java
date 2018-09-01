@@ -36,7 +36,7 @@ public class RSSs {
     public boolean isSeen (String url) {
         boolean answer = cache.containsKey(url);
         if (!answer) {
-            answer = hBaseManager.checkDuplicate(url);
+            answer = hBaseManager.isDuplicate(url);
             if (answer)
                 setSeen(url);
         }

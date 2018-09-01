@@ -23,14 +23,15 @@ public class WebDocumentHBaseManager extends HBaseManager{
     private String scoreFamily;
     private static int size = 0;
     private static int added = 0;
+    private JMXManager jmxManager=JMXManager.getInstance();
 
-    public WebDocumentHBaseManager(String tableName, String outLinksFamily, String scoreFamily) {
+    public WebDocumentHBaseManager(String tableName, String outLinksFamily, String scoreFamily)  {
         super(tableName, scoreFamily);
         this.outLinksFamily = outLinksFamily;
         this.scoreFamily = scoreFamily;
     }
 
-    public void put(JSONObject document, JMXManager jmxManager) {
+    public void put(JSONObject document) {
         String pageRankColumn = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_DUPCHECK_COLUMN);
         Put put = new Put(Bytes.toBytes(generateRowKeyFromUrl((String) document.get("pageLink"))));
         for (Object link : (JSONArray)document.get("outLinks")) {
@@ -38,15 +39,16 @@ public class WebDocumentHBaseManager extends HBaseManager{
         }
         put.addColumn(scoreFamily.getBytes(), pageRankColumn.getBytes(), Bytes.toBytes(1.0));
         puts.add(put);
-        size++;
         if (size >= sizeLimit) {
             synchronized (puts) {
-                try (Connection connection = ConnectionFactory.createConnection(configuration)) {
+                try  {
                     Table t = connection.getTable(tableName);
                     t.put(puts);
+                    errorLogger.error("added");
                     t.close();
+                    added += puts.size();
+                    System.out.println("habse out size"+puts.size());
                     puts.clear();
-                    added += size;
                     Metrics.numberOfPagesAddedToHBase = added;
                     jmxManager.markNewAddedToHBase();
                     size = 0;
@@ -65,7 +67,7 @@ public class WebDocumentHBaseManager extends HBaseManager{
         Get get = new Get(Bytes.toBytes(url));
         int score = 0;
         get.addColumn(outLinksFamily.getBytes(), scoreFamily.getBytes());
-        try (Connection connection = ConnectionFactory.createConnection(configuration)) {
+        try  {
             Table t = connection.getTable(tableName);
             Result result = t.get(get);
             if (result.listCells() != null) {

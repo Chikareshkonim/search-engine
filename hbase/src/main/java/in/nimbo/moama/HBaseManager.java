@@ -22,8 +22,9 @@ public class HBaseManager {
     Configuration configuration;
     static int sizeLimit = 0;
     final ArrayList<Put> puts;
+    Connection connection;
 
-    HBaseManager(String tableName, String duplicateCheckFamily) {
+    public HBaseManager(String tableName, String duplicateCheckFamily) {
         configuration = HBaseConfiguration.create();
         configuration.addResource(getClass().getResourceAsStream("/hbase-site.xml"));
         this.tableName = TableName.valueOf(tableName);
@@ -31,6 +32,11 @@ public class HBaseManager {
         String checkColumn = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_DUPCHECK_COLUMN);
         sizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(HBasePropertyType.PUT_SIZE_LIMIT));
         puts = new ArrayList<>();
+        try {
+            connection = ConnectionFactory.createConnection(configuration);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         boolean status = false;
         while (!status) {
             try {
@@ -65,18 +71,26 @@ public class HBaseManager {
         return domainToHBase + "-" + urlSections[urlSections.length - 1];
     }
 
-    public boolean checkDuplicate(String url) {
+    public boolean isDuplicate(String url) {
         Get get = new Get(Bytes.toBytes(generateRowKeyFromUrl(url)));
         get.addFamily(duplicateCheckFamily.getBytes());
-        try (Connection connection = ConnectionFactory.createConnection(configuration)) {
-            Table t = connection.getTable(tableName);
-            Result result = t.get(get);
-            if (result.listCells() == null) {
-                return false;
+        Table t = null;
+        try  {
+            t = connection.getTable(tableName);
+            if (t.exists(get)) {
+                t.close();
+                return true;
             }
         } catch (IOException e) {
             errorLogger.error("HBase service unavailable");
+        }finally {
+            try {
+                assert t != null;
+                t.close();
+            } catch (IOException e) {
+                errorLogger.error("table is not open");
+            }
         }
-        return true;
+        return false;
     }
 }
