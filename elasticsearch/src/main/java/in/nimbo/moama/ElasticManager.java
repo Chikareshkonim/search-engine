@@ -112,12 +112,10 @@ public class ElasticManager {
             try {
                 builder.startObject();
                 {
-                    Set<String> keys = document.keySet();
-                    keys.forEach(key -> {
+                    document.keySet().forEach(key -> {
                         try {
                             if (!key.equals("outLinks")) {
                                 builder.field(key, document.get(key));
-                                System.out.println(key);
                             }
                         } catch (IOException e) {
                             e.printStackTrace();
@@ -133,7 +131,6 @@ public class ElasticManager {
                         client.bulk(bulkRequest);
                         bulkRequest = new BulkRequest();
                         Metrics.numberOfPagesAddedToElastic = added;
-                        System.out.println("added");
 //                    jmxManager.markNewAddedToElastic();
 
                 }

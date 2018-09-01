@@ -5,6 +5,7 @@ import in.nimbo.moama.configmanager.ConfigManager;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -30,5 +31,11 @@ public class HBaseManagerTest {
     @Test
     public void constructorTest() {
         HBaseManager hBaseManager = new HBaseManager("test","test");
+    }
+
+    @Test
+    public void isDuplicate() {
+        HBaseManager hBaseManager = new HBaseManager("pages","score");
+        Assert.assertFalse(hBaseManager.isDuplicate("http://calpirg.org/ways-to-give"));
     }
 }
