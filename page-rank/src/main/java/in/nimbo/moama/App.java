@@ -16,7 +16,7 @@ public class App {
             System.out.println("Loading properties failed!");
         }
         ReferenceCalculator referenceCalculator;
-        referenceCalculator = new ReferenceCalculator("reference","s2");
+        referenceCalculator = new ReferenceCalculator("refrence","spark://s2:7077");
         referenceCalculator.calculate();
     }
 }
