@@ -1,7 +1,6 @@
 package in.nimbo.moama;
 
 import in.nimbo.moama.configmanager.ConfigManager;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;

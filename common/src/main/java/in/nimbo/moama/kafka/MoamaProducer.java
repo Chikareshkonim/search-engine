@@ -4,16 +4,15 @@ import in.nimbo.moama.configmanager.ConfigManager;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.protocol.types.Field;
 import org.apache.log4j.Logger;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 
 public class MoamaProducer {
-    private String topic;
-    private Producer<String, String> producer;
-    private Logger errorLogger = Logger.getLogger(this.getClass());
+    private final String topic;
+    private final Producer<String, String> producer;
+    private final Logger errorLogger = Logger.getLogger(this.getClass());
     public MoamaProducer(String topic, String rootAddress) {
         //TODO
         this.topic = topic;

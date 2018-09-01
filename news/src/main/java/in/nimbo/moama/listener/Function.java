@@ -11,14 +11,20 @@ import java.util.LinkedList;
 import java.util.Scanner;
 
 public class Function {
+    @CLI(help = "for test")
+    public static void stat(PrintStream out,Scanner scanner){
+        out.println("stat called");
+    }
 
     @CLI(help = "give you last news of each site")
     public static void lastNews(PrintStream out, Scanner scanner) {
+        out.println("salam");
         // TODO: 8/16/18
     }
 
     @CLI(help = "give you trend words in last Hour(for news)")
     public static void newsTrendWordInLastHour(PrintStream out, Scanner scanner) {
+        System.out.println("salam");
         // TODO: 8/16/18
     }
 

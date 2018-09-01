@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public class MoamaConsumer {
-    private KafkaConsumer<String, String> consumer;
+    private final KafkaConsumer<String, String> consumer;
     private Logger errorLogger = Logger.getLogger(this.getClass());
 
     public MoamaConsumer(String topic,String rootAddress) {

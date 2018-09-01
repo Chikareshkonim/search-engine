@@ -39,7 +39,7 @@ public class ReferenceCalculator {
         webPageTable = TableName.valueOf("pages");
         contentFamily = ConfigManager.getInstance().getProperty(PropertyType.H_BASE_CONTENT_FAMILY);
         refrenceFamilyName = ConfigManager.getInstance().getProperty(PropertyType.HBASE_FAMILY_SCORE);
-        refrenceColumn = ConfigManager.getInstance().getProperty(PropertyType.HBASE_REFRENCE_CLOUMN);
+        refrenceColumn = ConfigManager.getInstance().getProperty(PropertyType.HBASE_REFERENCE_COLUMN);
         String[] jars = {"/home/search-engine/page-rank/target/page-rank-1.0-SNAPSHOT-jar-with-dependencies.jar"};
         SparkConf sparkConf = new SparkConf().setAppName(appName).setMaster(master).setJars(jars);
         sparkContext = new JavaSparkContext(sparkConf);

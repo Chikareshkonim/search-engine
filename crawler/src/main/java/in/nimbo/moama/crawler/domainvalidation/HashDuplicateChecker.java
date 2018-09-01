@@ -11,7 +11,7 @@ import java.nio.file.Files;
 
 public class HashDuplicateChecker {
     private static HashDuplicateChecker ourInstance;
-    private static Logger errorLogger = Logger.getLogger("error");
+    private static final Logger errorLogger = Logger.getLogger("error");
     public static HashDuplicateChecker getInstance() {
         if(ourInstance == null){
             ourInstance = new HashDuplicateChecker();
@@ -19,19 +19,11 @@ public class HashDuplicateChecker {
         return ourInstance;
     }
     private static int hashPrime ;
-    private static int hashTableSize;
     private byte[] linkHashTableTime;
-    private byte[] twoPowers;
+    private final byte[] twoPowers;
     private HashDuplicateChecker() {
-        // FIXME: 8/28/18 ALIREZA
-//        try {
-//            configManager = new ConfigManager(new File(getClass().getClassLoader().getResource("config.properties").getFile()).getAbsolutePath(), PROPERTIES);
-//        } catch (IOException e) {
-//            errorLogger.error("Loading properties failed");
-//        }
         hashPrime = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_DUPLICATE_HASH_PRIME));
-        hashTableSize=hashPrime/8 +1;
-        linkHashTableTime = new byte[hashTableSize];
+        linkHashTableTime = new byte[hashPrime / 8 + 1];
         twoPowers= new byte[]{0b1, 0b10, 0b100, 0b1000, 0b10000, 0b100000, 0b1000000, -128};//-128 = 10000000
     }
     public void loadHashTable() throws IOException {
@@ -69,7 +61,7 @@ public class HashDuplicateChecker {
             errorLogger.error(e.getMessage());
         }
     }
-    public int hash(Object object){
+    private int hash(Object object){
         return object.hashCode();
     }
 

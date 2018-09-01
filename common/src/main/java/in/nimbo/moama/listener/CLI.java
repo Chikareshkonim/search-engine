@@ -6,8 +6,9 @@ import java.lang.annotation.*;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface CLI {
-    String help() default "";
 
-    String name()default "unknown";
+public @interface CLI {
+    String help() ;
+
+    String name() default "";
 }

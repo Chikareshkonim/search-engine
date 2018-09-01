@@ -4,7 +4,6 @@ import in.nimbo.moama.crawler.domainvalidation.DuplicateHandler;
 import in.nimbo.moama.document.Link;
 import in.nimbo.moama.UrlHandler;
 import in.nimbo.moama.document.WebDocument;
-import in.nimbo.moama.crawler.domainvalidation.HashDuplicateChecker;
 import in.nimbo.moama.crawler.language.LangDetector;
 import in.nimbo.moama.exception.IllegalLanguageException;
 import in.nimbo.moama.metrics.JMXManager;
@@ -38,13 +37,13 @@ public class Parser {
         Document document = Jsoup.connect(url).validateTLSCertificates(false).get();
         duplicateChecker.weakConfirm(url);
         Metrics.numberOfUrlReceived++;
-        jmxManager.markNewUrlReceived();
+//        jmxManager.markNewUrlReceived();
 
         WebDocument webDocument = new WebDocument();
         String text = document.text();
         checkLanguage(document, text);
         Metrics.numberOfLanguagePassed++;
-        jmxManager.markNewLanguagePassed();
+//        jmxManager.markNewLanguagePassed();
 
         Link[] links = UrlHandler.getLinks(document.getElementsByTag("a"), new URL(url).getHost());
         webDocument.setTextDoc(text);
@@ -52,10 +51,9 @@ public class Parser {
         webDocument.setPageLink(url);
         webDocument.setLinks(new ArrayList<>(Arrays.asList(links)));
         Metrics.numberOFCrawledPage++;
-        jmxManager.markNewCrawledPage();
+//        jmxManager.markNewCrawledPage();
 
         return webDocument;
-
     }
 
     private void checkLanguage(Document document, String text) throws IllegalLanguageException {

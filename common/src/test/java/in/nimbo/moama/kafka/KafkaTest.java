@@ -9,14 +9,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static in.nimbo.moama.configmanager.ConfigManager.FileType.PROPERTIES;
-import static org.junit.Assert.*;
 
 public class KafkaTest {
     @Test
     public void testKafka() throws IOException {
         InputStream fileInputStream = KafkaTest.class.getResourceAsStream("/config.properties");
         ConfigManager.getInstance().load(fileInputStream, PROPERTIES);
-        MoamaConsumer moamaConsumer = new MoamaConsumer("","");
+        MoamaConsumer moamaConsumer = new MoamaConsumer("test","");
         MoamaProducer moamaProducer = new MoamaProducer("test","");
         ArrayList<String> results = new ArrayList<>();
         List<String> links = new ArrayList<>();

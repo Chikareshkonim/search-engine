@@ -1,17 +1,12 @@
 package in.nimbo.moama;
 
 import in.nimbo.moama.configmanager.ConfigManager;
-import in.nimbo.moama.crawler.Crawler;
 import in.nimbo.moama.crawler.domainvalidation.DuplicateHandler;
-import in.nimbo.moama.crawler.domainvalidation.HashDuplicateChecker;
 import in.nimbo.moama.kafka.MoamaConsumer;
 import in.nimbo.moama.kafka.MoamaProducer;
-import org.omg.Messaging.SYNC_WITH_TRANSPORT;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Collections;
 import java.util.LinkedList;
 

@@ -4,13 +4,9 @@ import in.nimbo.moama.configmanager.ConfigManager;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-
-import static org.junit.Assert.*;
 
 public class DomainFrequencyHandlerTest {
 

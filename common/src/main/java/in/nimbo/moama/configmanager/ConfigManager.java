@@ -9,7 +9,7 @@ import java.util.Properties;
 
 public class ConfigManager {
     private Properties properties;
-    private static ConfigManager ourInstance = new ConfigManager();
+    private static final ConfigManager ourInstance = new ConfigManager();
     private InputStream fileInputStream;
     private FileType fileType;
 
@@ -47,7 +47,7 @@ public class ConfigManager {
         return properties.getProperty(extendRoot + type.toString());
     }
 
-    public void refresh() throws IOException {
+    public void refresh() {
     }
     public Properties getProperties(String root, boolean cutRoot) {
         Properties tempProperties = new Properties();

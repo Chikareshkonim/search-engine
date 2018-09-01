@@ -6,12 +6,12 @@ import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.util.CrawlerPropertyType;
 
 public class DuplicateHandler {
-    private LRUCache<String, Integer> lruCache;
+    private final LRUCache<String, Integer> lruCache;
     private HashDuplicateChecker HashDuplicateChecker;
     private static DuplicateHandler duplicateHandler = new DuplicateHandler();
-    private static int initialCapacity =Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.DUPLICATE_HANDLER_INITIAL_CAPACITY));;
-    private static int maxCapacity =Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.DUPLICATE_HANDLER_MAX_CAPACITY)); ;
-    private static DuplicateHandler ourInstance=new DuplicateHandler();
+    private static final int initialCapacity =Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.DUPLICATE_HANDLER_INITIAL_CAPACITY));
+    private static final int maxCapacity =Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.DUPLICATE_HANDLER_MAX_CAPACITY));
+    private static final DuplicateHandler ourInstance=new DuplicateHandler();
     private HBaseManager hBaseManager;
 
     private DuplicateHandler() {
@@ -25,13 +25,10 @@ public class DuplicateHandler {
     }
 
     public boolean isDuplicate(String url) {
-        if (lruCache.containsKey(url)) {
-            return true;
-//        } else if (hBaseManager.checkDuplicate(url)) {
+        //        } else if (hBaseManager.checkDuplicate(url)) {
 //            lruCache.put(url, 0);
 //            return true;
-        } else
-            return false;
+        return lruCache.containsKey(url);
     }
     public void weakConfirm(String url){
         lruCache.put(url,1);

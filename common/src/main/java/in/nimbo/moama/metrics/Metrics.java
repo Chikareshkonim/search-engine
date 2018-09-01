@@ -20,7 +20,7 @@ public class Metrics {
     public static int numberOFComplete=0;
 
     private static long lastTime = System.currentTimeMillis();
-    private static Logger infoLogger = Logger.getLogger("info");
+    private static final Logger infoLogger = Logger.getLogger("info");
     private static int lastNumberOfLanguagePassed = 0;
     private static int lastNumberOfCrawledPage = 0;
     private static int lastNumberOfDuplicate = 0;

@@ -1,7 +1,6 @@
 package in.nimbo.moama;
 
 import in.nimbo.moama.document.WebDocument;
-import in.nimbo.moama.metrics.Metrics;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.index.IndexRequest;
@@ -15,8 +14,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Set;
-
-import static org.junit.Assert.*;
 
 public class ElasticManagerTest {
     private RestHighLevelClient client;

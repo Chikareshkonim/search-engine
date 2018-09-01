@@ -26,7 +26,7 @@ public class NewsWebsiteHBaseManagerTest {
     }
 
     @Test
-    public void createTable() throws IOException {
+    public void createTable() {
 //        assertTrue(hBaseManager.createTable());
     }
 
