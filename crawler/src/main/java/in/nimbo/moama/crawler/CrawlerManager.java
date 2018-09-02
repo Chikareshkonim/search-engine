@@ -60,7 +60,7 @@ public class CrawlerManager implements Reconfigurable  {
                 Collections.shuffle(linkedList);
                 mainProducer.pushNewURL(linkedList.toArray(new String[0]));
                 linkedList.clear();
-                System.out.println("shaffled");
+                System.out.println("shuffled");
             }
         }
     }

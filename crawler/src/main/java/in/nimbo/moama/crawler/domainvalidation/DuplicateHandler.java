@@ -26,14 +26,11 @@ public class DuplicateHandler {
     }
     public boolean isDuplicate(String url) {
         if (lruCache.containsKey(url)) {
-            System.out.println("true lru");
             return true;
         } else if (hBaseManager.isDuplicate(url)) {
             lruCache.put(url, 0);
-            System.out.println("true hbase" + url);
             return true;
         }
-        System.out.println("false");
         return false;
     }
 
