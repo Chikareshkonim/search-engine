@@ -3,9 +3,7 @@ package in.nimbo.moama.crawler.domainvalidation;
 import in.nimbo.moama.HBaseManager;
 import in.nimbo.moama.LRUCache;
 import in.nimbo.moama.configmanager.ConfigManager;
-import in.nimbo.moama.metrics.FloatMeter;
 import in.nimbo.moama.metrics.IntMeter;
-import in.nimbo.moama.metrics.Metrics;
 import in.nimbo.moama.util.CrawlerPropertyType;
 
 public class DuplicateHandler {
@@ -21,7 +19,6 @@ public class DuplicateHandler {
     private static IntMeter duplicateAccept=new IntMeter("Duplicate Accepted");
 
     private DuplicateHandler() {
-        // FIXME: 8/28/18 ALIREZA
         hBaseManager = new HBaseManager(ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_TABLE),
                 ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_FAMILY_SCORE));
         lruCache = new LRUCache<>(initialCapacity, maxCapacity);

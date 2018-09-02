@@ -1,8 +1,8 @@
 package in.nimbo.moama;
 
 import in.nimbo.moama.configmanager.ConfigManager;
+import in.nimbo.moama.metrics.IntMeter;
 import in.nimbo.moama.metrics.JMXManager;
-import in.nimbo.moama.metrics.Metrics;
 import in.nimbo.moama.util.ElasticPropertyType;
 import org.apache.http.HttpHost;
 import org.apache.log4j.Logger;
@@ -35,7 +35,6 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 
@@ -58,6 +57,7 @@ public class ElasticManager {
     private static String clientPort;
     private static String vectorPort;
     private static String clusterName;
+    private static IntMeter elasticAdded =new IntMeter("elastic Added");
 
     public ElasticManager() {
         elasticFlushSizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_SIZE_LIMIT));
@@ -130,10 +130,9 @@ public class ElasticManager {
                 indexRequest = new IndexRequest(index, "_doc");
                 if ( bulkRequest.numberOfActions() >= elasticFlushSizeLimit) {
                         client.bulk(bulkRequest);
-                    Metrics.numberOfPagesAddedToElastic = bulkRequest.numberOfActions();
+                    elasticAdded.add(bulkRequest.numberOfActions());
                     bulkRequest = new BulkRequest();
 //                    jmxManager.markNewAddedToElastic();
-
                 }
             } catch (IOException e) {
                 errorLogger.error("ERROR! Couldn't add the document for " + document.get("pageLink"));

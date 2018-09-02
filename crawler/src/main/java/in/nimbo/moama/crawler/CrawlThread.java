@@ -41,11 +41,15 @@ public class CrawlThread extends Thread {
     private static int numOfInternalLinksToKafka;
     private static final DuplicateHandler DuplicateChecker = DuplicateHandler.getInstance();
     private static final DomainFrequencyHandler domainTimeHandler = DomainFrequencyHandler.getInstance();
-    private static FloatMeter megaByteCounter=new FloatMeter("MB Crawled");
-    private static IntMeter duplicate=new IntMeter("duplicate");
-    private static IntMeter complete=new IntMeter("complete");
-    private static IntMeter domainError=new IntMeter("domain Error");
-
+    private static FloatMeter megaByteCounter = new FloatMeter("MB Crawled");
+    private static IntMeter duplicate = new IntMeter("duplicate");
+    private static IntMeter complete = new IntMeter("complete");
+    private static IntMeter domainError = new IntMeter("domain Error");
+    private static FloatMeter checkTime = new FloatMeter("check url Time");
+    private static FloatMeter parseTime = new FloatMeter("parse url Time");
+    private static FloatMeter hbaseTime= new FloatMeter("hbase put Time");
+    private static FloatMeter elasticTime=new FloatMeter("elastic put Time");
+    private long tempTime;
     static {
         jmxManager = JMXManager.getInstance();
         crawledProducer = new MoamaProducer(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_CRAWLED_TOPIC_NAME)
@@ -65,10 +69,8 @@ public class CrawlThread extends Thread {
         parser = Parser.getInstance();
     }
 
-
     public CrawlThread(boolean isRun) {
         this.isRun = isRun;
-
     }
 
     @Override
@@ -87,13 +89,21 @@ public class CrawlThread extends Thread {
             WebDocument webDocument;
             String url = urlsOfThisThread.pop();
             try {
+                tempTime = System.currentTimeMillis();
                 checkLink(url);
+                checkTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+                tempTime = System.currentTimeMillis();
                 webDocument = parser.parse(url);
-                megaByteCounter.add( webDocument.getTextDoc().getBytes().length>>20);
+                parseTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+                megaByteCounter.add((float) webDocument.getTextDoc().getBytes().length / 0b100000000000000000000);
                 helperProducer.pushNewURL(normalizeOutLink(webDocument));
                 crawledProducer.pushNewURL(url);
+                tempTime = System.currentTimeMillis();
                 webDocumentHBaseManager.put(webDocument.documentToJson());
+                hbaseTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+                tempTime = System.currentTimeMillis();
                 elasticManager.put(webDocument.documentToJson(), jmxManager);
+                elasticTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
                 complete.increment();// TODO: 8/31/18
                 jmxManager.markNewComplete();
             } catch (IllegalArgumentException e) {
@@ -129,9 +139,7 @@ public class CrawlThread extends Thread {
             jmxManager.markNewDuplicate();
             throw new DuplicateLinkException();
         }
-
     }
-
 
     private String[] normalizeOutLink(WebDocument webDocument) throws MalformedURLException {
         ArrayList<String> externalLink = new ArrayList<>();

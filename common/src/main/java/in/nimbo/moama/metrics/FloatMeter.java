@@ -11,7 +11,7 @@ public final class FloatMeter implements Metered{
         Metrics.addMeter(this);
     }
 
-    public void add(int value) {
+    public void add(float value) {
         this.value += value;
     }
 
