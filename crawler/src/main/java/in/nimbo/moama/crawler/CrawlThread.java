@@ -13,6 +13,8 @@ import in.nimbo.moama.exception.IllegalLanguageException;
 import in.nimbo.moama.exception.URLException;
 import in.nimbo.moama.kafka.MoamaConsumer;
 import in.nimbo.moama.kafka.MoamaProducer;
+import in.nimbo.moama.metrics.FloatMeter;
+import in.nimbo.moama.metrics.IntMeter;
 import in.nimbo.moama.metrics.JMXManager;
 import in.nimbo.moama.metrics.Metrics;
 import in.nimbo.moama.util.CrawlerPropertyType;
@@ -39,6 +41,10 @@ public class CrawlThread extends Thread {
     private static int numOfInternalLinksToKafka;
     private static final DuplicateHandler DuplicateChecker = DuplicateHandler.getInstance();
     private static final DomainFrequencyHandler domainTimeHandler = DomainFrequencyHandler.getInstance();
+    private static FloatMeter megaByteCounter=new FloatMeter("MB Crawled");
+    private static IntMeter duplicate=new IntMeter("duplicate");
+    private static IntMeter complete=new IntMeter("complete");
+    private static IntMeter domainError=new IntMeter("domain Error");
 
     static {
         jmxManager = JMXManager.getInstance();
@@ -58,6 +64,7 @@ public class CrawlThread extends Thread {
         webDocumentHBaseManager.createTable();
         parser = Parser.getInstance();
     }
+
 
     public CrawlThread(boolean isRun) {
         this.isRun = isRun;
@@ -82,12 +89,12 @@ public class CrawlThread extends Thread {
             try {
                 checkLink(url);
                 webDocument = parser.parse(url);
-                Metrics.byteCounter += webDocument.getTextDoc().getBytes().length;
+                megaByteCounter.add( webDocument.getTextDoc().getBytes().length>>20);
                 helperProducer.pushNewURL(normalizeOutLink(webDocument));
                 crawledProducer.pushNewURL(url);
                 webDocumentHBaseManager.put(webDocument.documentToJson());
                 elasticManager.put(webDocument.documentToJson(), jmxManager);
-                Metrics.numberOFComplete++;// TODO: 8/31/18
+                complete.increment();// TODO: 8/31/18
                 jmxManager.markNewComplete();
             } catch (IllegalArgumentException e) {
                 System.out.println(e.getMessage());
@@ -113,12 +120,12 @@ public class CrawlThread extends Thread {
             jmxManager.markNewNull();
             throw new URLException();
         } else if (!domainTimeHandler.isAllow(new URL(url).getHost())) {
-            Metrics.numberOfDomainError++;
+            domainError.increment();
             jmxManager.markNewDomainError();
             throw new DomainFrequencyException();
         }
         if (DuplicateChecker.isDuplicate(url)) {
-            Metrics.numberOfDuplicate++;
+            duplicate.increment();
             jmxManager.markNewDuplicate();
             throw new DuplicateLinkException();
         }

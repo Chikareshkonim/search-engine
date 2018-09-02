@@ -1,6 +1,8 @@
 package in.nimbo.moama;
 
 import in.nimbo.moama.configmanager.ConfigManager;
+import in.nimbo.moama.metrics.FloatMeter;
+import in.nimbo.moama.metrics.IntMeter;
 import in.nimbo.moama.metrics.JMXManager;
 import in.nimbo.moama.metrics.Metrics;
 import in.nimbo.moama.util.HBasePropertyType;
@@ -17,15 +19,16 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.List;
 
-public class WebDocumentHBaseManager extends HBaseManager{
+public class WebDocumentHBaseManager extends HBaseManager {
     private static Logger errorLogger = Logger.getLogger("error");
+    private static IntMeter numberOfPagesAddedToHBase = new IntMeter("Hbase Added");
     private String outLinksFamily;
     private String scoreFamily;
     private static int size = 0;
     private static int added = 0;
-    private JMXManager jmxManager=JMXManager.getInstance();
+    private JMXManager jmxManager = JMXManager.getInstance();
 
-    public WebDocumentHBaseManager(String tableName, String outLinksFamily, String scoreFamily)  {
+    public WebDocumentHBaseManager(String tableName, String outLinksFamily, String scoreFamily) {
         super(tableName, scoreFamily);
         this.outLinksFamily = outLinksFamily;
         this.scoreFamily = scoreFamily;
@@ -34,29 +37,29 @@ public class WebDocumentHBaseManager extends HBaseManager{
     public void put(JSONObject document) {
         String pageRankColumn = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_DUPCHECK_COLUMN);
         Put put = new Put(Bytes.toBytes(generateRowKeyFromUrl((String) document.get("pageLink"))));
-        for (Object link : (JSONArray)document.get("outLinks")) {
-            put.addColumn(outLinksFamily.getBytes(), generateRowKeyFromUrl(((String)((JSONObject)link).get("LinkUrl"))).getBytes(), ((String)((JSONObject)link).get("LinkAnchor")).getBytes());
+        for (Object link : (JSONArray) document.get("outLinks")) {
+            put.addColumn(outLinksFamily.getBytes(), generateRowKeyFromUrl(((String) ((JSONObject) link).get("LinkUrl"))).getBytes(), ((String) ((JSONObject) link).get("LinkAnchor")).getBytes());
         }
         put.addColumn(scoreFamily.getBytes(), pageRankColumn.getBytes(), Bytes.toBytes(1.0));
         puts.add(put);
-        if (size >= sizeLimit) {
+        if (puts.size() >= sizeLimit) {
             synchronized (puts) {
-                try  {
+                try {
                     Table t = connection.getTable(tableName);
                     t.put(puts);
-                    errorLogger.error("added");
                     t.close();
-                    added += puts.size();
-                    System.out.println("habse out size"+puts.size());
+                    numberOfPagesAddedToHBase.add(puts.size());
+                    System.out.println("habse out size" + puts.size());
                     puts.clear();
-                    Metrics.numberOfPagesAddedToHBase = added;
                     jmxManager.markNewAddedToHBase();
                     size = 0;
                 } catch (IOException e) {
                     //TODO
+                    System.out.println("couldn't put document for " + document.get("pageLink") + " into HBase!");
                     errorLogger.error("couldn't put document for " + document.get("pageLink") + " into HBase!");
                 } catch (RuntimeException e) {
                     //TODO
+                    System.out.println("HBase error" + e.getMessage());
                     errorLogger.error("HBase error" + e.getMessage());
                 }
             }
@@ -67,7 +70,7 @@ public class WebDocumentHBaseManager extends HBaseManager{
         Get get = new Get(Bytes.toBytes(url));
         int score = 0;
         get.addColumn(outLinksFamily.getBytes(), scoreFamily.getBytes());
-        try  {
+        try {
             Table t = connection.getTable(tableName);
             Result result = t.get(get);
             if (result.listCells() != null) {

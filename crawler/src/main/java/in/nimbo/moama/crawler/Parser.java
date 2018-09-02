@@ -6,8 +6,8 @@ import in.nimbo.moama.UrlHandler;
 import in.nimbo.moama.document.WebDocument;
 import in.nimbo.moama.crawler.language.LangDetector;
 import in.nimbo.moama.exception.IllegalLanguageException;
+import in.nimbo.moama.metrics.IntMeter;
 import in.nimbo.moama.metrics.JMXManager;
-import in.nimbo.moama.metrics.Metrics;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -21,6 +21,10 @@ public class Parser {
     private static Parser ourInstance=new Parser();
     private static DuplicateHandler duplicateChecker=DuplicateHandler.getInstance();
     private static JMXManager jmxManager=JMXManager.getInstance();
+
+    private static IntMeter crawledPage=new IntMeter("crawled Page");
+    private static IntMeter languagePassed=new IntMeter("language passed");
+    private static IntMeter urlReceived=new IntMeter("url received");
 
     public synchronized static Parser getInstance() {
         return ourInstance;
@@ -36,13 +40,13 @@ public class Parser {
     public WebDocument parse(String url) throws IllegalLanguageException, IOException {
         Document document = Jsoup.connect(url).validateTLSCertificates(false).get();
         duplicateChecker.weakConfirm(url);
-        Metrics.numberOfUrlReceived++;
+        urlReceived.increment();
 //        jmxManager.markNewUrlReceived();
 
         WebDocument webDocument = new WebDocument();
         String text = document.text();
         checkLanguage(document, text);
-        Metrics.numberOfLanguagePassed++;
+        languagePassed.increment();
 //        jmxManager.markNewLanguagePassed();
 
         Link[] links = UrlHandler.getLinks(document.getElementsByTag("a"), new URL(url).getHost());
@@ -50,7 +54,7 @@ public class Parser {
         webDocument.setTitle(document.title());
         webDocument.setPageLink(url);
         webDocument.setLinks(new ArrayList<>(Arrays.asList(links)));
-        Metrics.numberOFCrawledPage++;
+        crawledPage.increment();
 //        jmxManager.markNewCrawledPage();
 
         return webDocument;

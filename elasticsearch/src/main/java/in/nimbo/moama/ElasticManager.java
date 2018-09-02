@@ -129,8 +129,8 @@ public class ElasticManager {
                 indexRequest = new IndexRequest(index, "_doc");
                 if ( bulkRequest.numberOfActions() >= elasticFlushSizeLimit) {
                         client.bulk(bulkRequest);
-                        bulkRequest = new BulkRequest();
-                        Metrics.numberOfPagesAddedToElastic = added;
+                    Metrics.numberOfPagesAddedToElastic = bulkRequest.numberOfActions();
+                    bulkRequest = new BulkRequest();
 //                    jmxManager.markNewAddedToElastic();
 
                 }
@@ -203,5 +203,4 @@ public class ElasticManager {
         }
         return searchResponse;
     }
-
 }

@@ -1,4 +1,4 @@
 package in.nimbo.moama.exception;
 
-public class DomainFrequencyException extends Exception {
+public final class DomainFrequencyException extends Exception {
 }

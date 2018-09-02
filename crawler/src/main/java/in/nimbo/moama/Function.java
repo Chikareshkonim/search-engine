@@ -28,7 +28,7 @@ public class Function {
     }
 
     public static void stat(PrintStream out, Scanner scanner) {
-        Metrics.stat(out);
+        Metrics.stat(out::println);
     }
 
     @CLI(help = "exit program" )

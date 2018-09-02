@@ -4,7 +4,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jmx.JmxReporter;
 
-public class JMXManager {
+public class JMXManager extends Meter {
     private static JMXManager ourInstance = new JMXManager();
     private MetricRegistry metrics = new MetricRegistry();
     private Meter numberOfUrlReceived = metrics.meter("numberOfUrlReceived");
