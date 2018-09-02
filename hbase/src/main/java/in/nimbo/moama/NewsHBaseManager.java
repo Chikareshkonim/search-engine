@@ -41,4 +41,6 @@ public class NewsHBaseManager extends HBaseManager {
             }
         }
     }
+
+
 }

@@ -29,7 +29,6 @@ public class HBaseManager {
         configuration.addResource(getClass().getResourceAsStream("/hbase-site.xml"));
         this.tableName = TableName.valueOf(tableName);
         this.duplicateCheckFamily = duplicateCheckFamily;
-        String checkColumn = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_DUPCHECK_COLUMN);
         sizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(HBasePropertyType.PUT_SIZE_LIMIT));
         puts = new ArrayList<>();
         try {

@@ -17,11 +17,13 @@ public class RSSReader implements Runnable {
         while (true) {
             System.out.println("reading rss...");
             RSSs.getInstance().getRssToDomainMap().entrySet().stream().parallel().forEach(entry -> {
-                try {
-                    newsQueue.addUrls(RSSParser.parse(entry.getKey(), entry.getValue()));
-                    System.out.println("rss added to queue");
-                } catch (IOException e) {
-                    e.printStackTrace();
+                if (RSSs.getInstance().isPolite(entry.getValue())) {
+                    try {
+                        newsQueue.addUrls(RSSParser.parse(entry.getKey(), entry.getValue()));
+                        System.out.println("rss added to queue");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             });
         }

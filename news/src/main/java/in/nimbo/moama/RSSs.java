@@ -12,6 +12,9 @@ import static in.nimbo.moama.newsutil.NewsPropertyType.*;
 public class RSSs {
     private static final int INITIAL_CAPACITY = Integer.parseInt(ConfigManager.getInstance().getProperty(CACHE_INITIAL_CAPACITY));
     private static final int MAX_CAPACITY = Integer.parseInt(ConfigManager.getInstance().getProperty(CACHE_MAX_CAPACITY));
+    private static final int INITIAL_POLITE_CAPACITY = 1000;
+    private static final int MAX_POLITE_CAPACITY = 100;
+    private static final long POLITE_WAIT_TIME = 30;
     private HBaseManager hBaseManager = new HBaseManager(ConfigManager.getInstance().getProperty(NEWS_PAGES_TABLE),
             ConfigManager.getInstance().getProperty(HBASE_VISITED_FAMILY));
 
@@ -28,19 +31,29 @@ public class RSSs {
     private LinkedHashMap<String, String> rssToDomainMap = new LinkedHashMap<>();
 
     private LRUCache<String, Boolean> cache = new LRUCache<>(INITIAL_CAPACITY, MAX_CAPACITY);
+    private LRUCache<String, Long> politeCache = new LRUCache<>(INITIAL_POLITE_CAPACITY, MAX_POLITE_CAPACITY);
 
     public LinkedHashMap<String, String> getRssToDomainMap() {
         return rssToDomainMap;
     }
 
-    public boolean isSeen (String url) {
-        boolean answer = (cache.get(url)==null);
+    public boolean isSeen(String url) {
+        boolean answer = cache.get(url) == null;
         if (!answer) {
             answer = hBaseManager.isDuplicate(url);
             if (answer)
                 setSeen(url);
         }
         return answer;
+    }
+
+    public boolean isPolite(String domain) {
+        Long time = politeCache.get(domain);
+        if (time == null || System.currentTimeMillis() - time > POLITE_WAIT_TIME) {
+            politeCache.put(domain, System.currentTimeMillis());
+            return true;
+        }
+        return false;
     }
 
     private void setSeen(String url) {

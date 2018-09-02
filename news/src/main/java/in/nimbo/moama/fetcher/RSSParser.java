@@ -11,6 +11,7 @@ import java.util.List;
 
 public class RSSParser {
     public static List<NewsInfo> parse(String rss, String domain) throws IOException {
+        System.out.println("pa rsing " + rss);
         List<NewsInfo> result = new ArrayList<>();
         Document document = Jsoup.connect(rss).validateTLSCertificates(false).get();
         for (Element element : document.getElementsByTag("item")) {
