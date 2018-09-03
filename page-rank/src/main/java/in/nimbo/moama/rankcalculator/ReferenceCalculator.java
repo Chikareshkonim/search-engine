@@ -37,11 +37,11 @@ public class ReferenceCalculator {
     private JavaSparkContext sparkContext;
 
     public ReferenceCalculator(String appName, String master) {
-        webPageTable = TableName.valueOf(ConfigManager.getInstance().getProperty(ReferencePropertyType.H_BASE_TABLE));
-        contentFamily = ConfigManager.getInstance().getProperty(ReferencePropertyType.H_BASE_CONTENT_FAMILY);
-        refrenceFamilyName = ConfigManager.getInstance().getProperty(ReferencePropertyType.HBASE_FAMILY_SCORE);
-        refrenceColumn = ConfigManager.getInstance().getProperty(ReferencePropertyType.HBASE_REFERENCE_COLUMN);
-        String[] jars = {ConfigManager.getInstance().getProperty(ReferencePropertyType.JAR_FILE_ADDRESS)};
+        webPageTable = TableName.valueOf("pages");
+        contentFamily = "outLinks";
+        refrenceFamilyName = "score";
+        refrenceColumn = "reference";
+        String[] jars = {"/home/moama/search-engine/page-rank/target/page-rank-1.0-SNAPSHOT-jar-with-dependencies.jar"};
         SparkConf sparkConf = new SparkConf().setAppName(appName).setMaster(master).setJars(jars);
         sparkContext = new JavaSparkContext(sparkConf);
         hbaseConf = HBaseConfiguration.create();

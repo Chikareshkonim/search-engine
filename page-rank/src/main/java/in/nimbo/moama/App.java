@@ -19,7 +19,7 @@ public class App {
             errorLogger.error("Loading properties failed!");
         }
         ReferenceCalculator referenceCalculator;
-        referenceCalculator = new ReferenceCalculator(configManager.getProperty(ReferencePropertyType.APP_NAME),configManager.getProperty(ReferencePropertyType.MASTER_ADDRESS));
+        referenceCalculator = new ReferenceCalculator("reference","spark://s2:7077");
         referenceCalculator.calculate();
     }
 }

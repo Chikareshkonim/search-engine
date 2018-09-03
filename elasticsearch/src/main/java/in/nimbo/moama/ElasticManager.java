@@ -26,6 +26,7 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.json.JSONObject;
@@ -37,9 +38,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-
+import org.elasticsearch.search.aggregations.AggregationBuilders;
 
 public class ElasticManager {
+
     private RestHighLevelClient client;
     private String index;
     private String test;
@@ -59,8 +61,9 @@ public class ElasticManager {
     private static String vectorPort;
     private static String clusterName;
     private static IntMeter elasticAdded =new IntMeter("elastic Added");
-
+    private TransportClient transportClient ;
     public ElasticManager() {
+        transportClient = null;
         elasticFlushSizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_SIZE_LIMIT));
         elasticFlushNumberLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_NUMBER_LIMIT));
         index = ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_PAGES_TABLE);
@@ -84,9 +87,8 @@ public class ElasticManager {
     public void getTermVector() {
         Settings settings = Settings.builder()
                 .put("cluster.name", clusterName).put("client.transport.sniff", true).build();
-        TransportClient termVectorClient = null;
         try {
-            termVectorClient = new PreBuiltTransportClient(settings)
+            transportClient = new PreBuiltTransportClient(settings)
                     .addTransportAddress(new TransportAddress(InetAddress.getByName(server1), Integer.parseInt(vectorPort)));
         } catch (UnknownHostException e) {
             e.printStackTrace();
@@ -94,8 +96,8 @@ public class ElasticManager {
         TermVectorsRequest termVectorsRequest = new TermVectorsRequest(test, "_doc", "1");
         termVectorsRequest.fieldStatistics(true);
         termVectorsRequest.termStatistics(true);
-        assert termVectorClient != null;
-        TermVectorsResponse termVectorsResponse = termVectorClient.termVectors(termVectorsRequest).actionGet();
+        assert transportClient != null;
+        TermVectorsResponse termVectorsResponse = transportClient.termVectors(termVectorsRequest).actionGet();
         try {
             XContentBuilder builder = XContentFactory.jsonBuilder();
             termVectorsResponse.toXContent(builder, ToXContent.EMPTY_PARAMS);
@@ -106,7 +108,15 @@ public class ElasticManager {
             //TODO
         }
     }
-
+    public void newsWordTrends(){
+        SearchResponse response = transportClient.prepareSearch().setQuery(QueryBuilders.matchAllQuery())
+                .addAggregation(
+                        AggregationBuilders.dateRange("data").addRange("","")
+                )
+                .get();
+        Terms trendTerms = response.getAggregations().get("date");
+        System.out.println(trendTerms);
+    }
     public synchronized void put(JSONObject document, JMXManager jmxManager) {
         try {
             XContentBuilder builder = XContentFactory.jsonBuilder();
