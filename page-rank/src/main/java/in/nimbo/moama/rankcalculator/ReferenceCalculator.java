@@ -60,10 +60,9 @@ public class ReferenceCalculator {
         JavaPairRDD<ImmutableBytesWritable, Result> data = sparkContext.newAPIHadoopRDD(hbaseConf, TableInputFormat.class,
                 ImmutableBytesWritable.class, Result.class);
         return data.flatMapToPair(pair->{
-            List<Cell> cells = pair._2.listCells();
             List<Tuple2<String,Integer>> resultList = new ArrayList<>();
+            List<Cell> cells = pair._2.listCells();
             cells.forEach(cell -> resultList.add(new Tuple2<>(Bytes.toString(CellUtil.cloneQualifier(cell)),1)));
-            System.out.println(pair._2);
             return resultList.iterator();
         });
     }
@@ -73,13 +72,17 @@ public class ReferenceCalculator {
             jobConfig.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, String.valueOf(webPageTable));
             jobConfig.setOutputFormatClass(TableOutputFormat.class);
             JavaPairRDD<ImmutableBytesWritable, Put> hbasePuts = toWrite.mapToPair(pair -> {
-                Put put = new Put(Bytes.toBytes(pair._1));
-                put.addColumn(refrenceFamilyName.getBytes(), refrenceColumn.getBytes(), Bytes.toBytes(pair._2));
-                System.out.println(pair._1);
-                return new Tuple2<>(new ImmutableBytesWritable(), put);
+                try {
+                        Put put = new Put(Bytes.toBytes(pair._1));
+                        put.addColumn(refrenceFamilyName.getBytes(), refrenceColumn.getBytes(), Bytes.toBytes(pair._2));
+                        return new Tuple2<>(new ImmutableBytesWritable(), put);
+                }catch (NullPointerException e){
+                    errorLogger.error(e.getMessage());
+                }
+                return null;
             });
             hbasePuts.saveAsNewAPIHadoopDataset(jobConfig.getConfiguration());
-        } catch (IOException e) {
+        } catch (IOException |NullPointerException e) {
             //TODO : set logger
             errorLogger.error(e.getMessage());
         }

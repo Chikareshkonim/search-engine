@@ -40,6 +40,6 @@ public class HBaseManagerTest {
         HBaseManager hBaseManager = new HBaseManager("pages", "score");
         WebDocumentHBaseManager webDocumentHBaseManager =new WebDocumentHBaseManager("pages","outLinks","score");
 
-        Assert.assertFalse(hBaseManager.isDuplicate("https://en.wikipedia.org/wiki/Main_Page"));
+        Assert.assertTrue(hBaseManager.isDuplicate("https://en.wikipedia.org/wiki/Main_Page"));
     }
 }

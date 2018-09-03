@@ -14,6 +14,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.termvectors.TermVectorsRequest;
 import org.elasticsearch.action.termvectors.TermVectorsResponse;
 import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.Strings;
@@ -62,6 +63,7 @@ public class ElasticManager {
     private static String clusterName;
     private static IntMeter elasticAdded =new IntMeter("elastic Added");
     private TransportClient transportClient ;
+
     public ElasticManager() {
         transportClient = null;
         elasticFlushSizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_SIZE_LIMIT));
@@ -76,9 +78,11 @@ public class ElasticManager {
         clientPort = ConfigManager.getInstance().getProperty(ElasticPropertyType.CLIENT_PORT);
         vectorPort = ConfigManager.getInstance().getProperty(ElasticPropertyType.VECTOR_PORT);
         clusterName = ConfigManager.getInstance().getProperty(ElasticPropertyType.CLUSTER_NAME);
-        client = new RestHighLevelClient(RestClient.builder(new HttpHost(server1, Integer.parseInt(clientPort), "http"),
+        RestClientBuilder restClientBuilder = RestClient.builder(new HttpHost(server1, Integer.parseInt(clientPort), "http"),
                 new HttpHost(server2, Integer.parseInt(clientPort), "http"),
-                new HttpHost(server3, Integer.parseInt(clientPort), "http")));
+                new HttpHost(server3, Integer.parseInt(clientPort), "http"));
+        client = new RestHighLevelClient(restClientBuilder);
+
         indexRequest = new IndexRequest(index, "_doc");
         bulkRequest = new BulkRequest();
     }
@@ -117,6 +121,7 @@ public class ElasticManager {
         Terms trendTerms = response.getAggregations().get("date");
         System.out.println(trendTerms);
     }
+
     public synchronized void put(JSONObject document, JMXManager jmxManager) {
         try {
             XContentBuilder builder = XContentFactory.jsonBuilder();
