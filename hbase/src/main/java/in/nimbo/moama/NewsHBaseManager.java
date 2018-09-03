@@ -24,7 +24,7 @@ public class NewsHBaseManager extends HBaseManager {
     }
 
     public void put(JSONObject document) {
-        String url = (String) document.get("url");
+        String url = (String) document.get("pageLink");
         Put put = new Put(Bytes.toBytes(generateRowKeyFromUrl(url)));
         put.addColumn(duplicateCheckFamily.getBytes(), visitedFamily.getBytes(), new byte[0]);
         puts.add(put);

@@ -81,7 +81,7 @@ public class HBaseManager {
 
     public boolean isDuplicate(String url) {
         Get get = new Get(Bytes.toBytes(generateRowKeyFromUrl(url)));
-        get.addFamily("outLinks".getBytes());
+        get.addFamily(duplicateCheckFamily.getBytes());
         Table t = null;
         try  {
             t = connection.getTable(tableName);

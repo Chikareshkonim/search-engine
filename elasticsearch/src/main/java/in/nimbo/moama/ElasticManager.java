@@ -126,7 +126,7 @@ public class ElasticManager {
                 }
                 builder.endObject();
                 indexRequest.source(builder);
-                indexRequest.id(DigestUtils.md5Hex("pageLink"));
+                indexRequest.id(DigestUtils.md5Hex(document.getString("pageLink")));
                 bulkRequest.add(indexRequest);
                 indexRequest = new IndexRequest(index, "_doc");
                 if ( bulkRequest.numberOfActions() >= elasticFlushSizeLimit) {

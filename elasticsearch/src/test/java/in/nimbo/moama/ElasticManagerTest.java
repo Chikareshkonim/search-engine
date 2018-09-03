@@ -1,5 +1,6 @@
 package in.nimbo.moama;
 
+import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.document.WebDocument;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -9,6 +10,7 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.json.JSONObject;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -19,6 +21,11 @@ public class ElasticManagerTest {
     private RestHighLevelClient client;
     private IndexRequest indexRequest;
     private BulkRequest bulkRequest;
+
+    @Before
+    public void setUp() throws IOException {
+        ConfigManager.getInstance().load(getClass().getResourceAsStream("/config.properties"), ConfigManager.FileType.PROPERTIES);
+    }
 
     @Test
     public void testElastic(){
@@ -73,11 +80,12 @@ public class ElasticManagerTest {
             e.printStackTrace();
         }
     }
+
     @Test
     public void putTest(){
         ElasticManager elasticManager = new ElasticManager();
         JSONObject document = new JSONObject();
-        document.put("url","me.com");
+        document.put("pageLink","me.com");
         document.put("content","gdsfghshgssjsjfsjsfj");
         document.put("title","yes");
         document.put("date","2015-01-01");

@@ -19,7 +19,6 @@ public class RSSParser {
     private static String UNIQUE_DATE_FORMAT = ConfigManager.getInstance().getProperty(NEWS_DATE_FORMAT);
 
     public static List<NewsInfo> parse(String rss, String domain) throws IOException {
-        System.out.println("pa rsing " + rss);
         List<NewsInfo> result = new ArrayList<>();
         Document document = Jsoup.connect(rss).validateTLSCertificates(false).get();
         for (Element element : document.getElementsByTag("item")) {

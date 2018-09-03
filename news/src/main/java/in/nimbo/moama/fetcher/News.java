@@ -27,7 +27,7 @@ public class News {
 
     public  JSONObject documentToJson() {
         JSONObject jsonDocument = new JSONObject();
-        jsonDocument.put("url", newsInfo.getUrl());
+        jsonDocument.put("pageLink", newsInfo.getUrl());
         jsonDocument.put("content", content);
         jsonDocument.put("title", newsInfo.getTitle());
         jsonDocument.put("date", newsInfo.getDate());
