@@ -1,10 +1,8 @@
 package in.nimbo.moama;
 
 import in.nimbo.moama.configmanager.ConfigManager;
-import in.nimbo.moama.metrics.FloatMeter;
 import in.nimbo.moama.metrics.IntMeter;
 import in.nimbo.moama.metrics.JMXManager;
-import in.nimbo.moama.metrics.Metrics;
 import in.nimbo.moama.util.HBasePropertyType;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -17,16 +15,18 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.List;
 
 public class WebDocumentHBaseManager extends HBaseManager {
     private static Logger errorLogger = Logger.getLogger("error");
-    private static IntMeter numberOfPagesAddedToHBase = new IntMeter("Hbase Added");
+    private static IntMeter numberOfPagesAddedToHBase = new IntMeter("Hbase Added       " );
     private String outLinksFamily;
     private String scoreFamily;
     private static int size = 0;
     private static int added = 0;
     private JMXManager jmxManager = JMXManager.getInstance();
+    private static boolean mustPut = false;
 
     public WebDocumentHBaseManager(String tableName, String outLinksFamily, String scoreFamily) {
         super(tableName, scoreFamily);
@@ -34,36 +34,45 @@ public class WebDocumentHBaseManager extends HBaseManager {
         this.scoreFamily = scoreFamily;
     }
 
-    public void put(JSONObject document) {
+    public void put(JSONObject document, LinkedList<Put> webDocOfThisThread) {
         String pageRankColumn = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_DUPCHECK_COLUMN);
         Put put = new Put(Bytes.toBytes(generateRowKeyFromUrl((String) document.get("pageLink"))));
         for (Object link : (JSONArray) document.get("outLinks")) {
             put.addColumn(outLinksFamily.getBytes(), generateRowKeyFromUrl(((String) ((JSONObject) link).get("LinkUrl"))).getBytes(), ((String) ((JSONObject) link).get("LinkAnchor")).getBytes());
         }
         put.addColumn(scoreFamily.getBytes(), pageRankColumn.getBytes(), Bytes.toBytes(1.0));
-        puts.add(put);
-        if (puts.size() >= sizeLimit) {
-            synchronized (puts) {
+        webDocOfThisThread.add(put);
+        if (webDocOfThisThread.size() > sizeLimit) {
+            HTable t = null;
+            try {
+                t = (HTable) connection.getTable(tableName);
+                t.put(webDocOfThisThread);
+                numberOfPagesAddedToHBase.add(webDocOfThisThread.size());
+                webDocOfThisThread.clear();
+                jmxManager.markNewAddedToHBase();
+                size = 0;
+            } catch (IOException e) {
+                e.printStackTrace();
+                //TODO
+                System.out.println("couldn't put document for " + document.get("pageLink") + " into HBase!");
+                errorLogger.error("couldn't put document for " + document.get("pageLink") + " into HBase!");
+            } catch (RuntimeException e) {
+                e.printStackTrace();
+                //TODO
+                System.out.println("HBase error" + e.getMessage());
+                errorLogger.error("HBase error" + e.getMessage());
+            }finally {
                 try {
-                    Table t = connection.getTable(tableName);
-                    t.put(puts);
-                    t.close();
-                    numberOfPagesAddedToHBase.add(puts.size());
-                    System.out.println("habse out size" + puts.size());
-                    puts.clear();
-                    jmxManager.markNewAddedToHBase();
-                    size = 0;
+                    if (t != null) {
+                        t.close();
+                    }
                 } catch (IOException e) {
-                    //TODO
-                    System.out.println("couldn't put document for " + document.get("pageLink") + " into HBase!");
-                    errorLogger.error("couldn't put document for " + document.get("pageLink") + " into HBase!");
-                } catch (RuntimeException e) {
-                    //TODO
-                    System.out.println("HBase error" + e.getMessage());
-                    errorLogger.error("HBase error" + e.getMessage());
+                    e.printStackTrace();
                 }
             }
+
         }
+
     }
 
     public int getReference(String url) {

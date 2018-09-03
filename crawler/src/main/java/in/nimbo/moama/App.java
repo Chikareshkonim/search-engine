@@ -14,7 +14,7 @@ public class App {
         ConfigManager configManager=ConfigManager.getInstance();
         configManager.load(fileInputStream,ConfigManager.FileType.PROPERTIES);
         Initializer.initialize();
-        new Listener().listen(Function.class);
-        new CrawlerManager().run();
+        new Listener().listen(ListenerFunction.class);
+        CrawlerManager.getInstance().run();
     }
 }

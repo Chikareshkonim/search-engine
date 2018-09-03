@@ -14,13 +14,13 @@ import static java.lang.Thread.sleep;
 
 public class Listener {
     private static final int DEFAULT_LISTEN_PORT = 2719;
-    private static final long NEXT_TIME_LISTEN_MILLISECONDS = 4000;
+    private static final long NEXT_TIME_LISTEN_MILLISECONDS = 200;
     private int listenPort = DEFAULT_LISTEN_PORT;
     private Class functionClass;
     private boolean isListening = true;
 
     private String findMethodName(String input) {
-        String[] strings = input.toLowerCase().split("[ ]+");
+        String[] strings = input.toLowerCase().split(" +");
 
         return strings[0] + Stream.of(strings).skip(1).map(element -> element.substring(0, 1).toUpperCase().concat(element.substring(1)))
                 .reduce(String::concat).orElse("");
@@ -32,8 +32,12 @@ public class Listener {
             help(out, scanner);
             endMethod(out, scanner);
         } else {
-            Method method = null;
+            Method method;
             try {
+                if (funcName.equals("close")) {
+                    close(out, scanner);
+                    return;
+                }
                 method = functionClass.getMethod(funcName, PrintStream.class, Scanner.class);
                 method.invoke(null, out, scanner);
                 endMethod(out, scanner);
@@ -42,6 +46,13 @@ public class Listener {
                 out.println(funcName);
             }
         }
+    }
+
+    private void close(PrintStream out, Scanner scanner) {
+        out.flush();
+        out.close();
+        scanner.close();
+
     }
 
     public void listen(Class functionClass, int listenPort) {
@@ -62,14 +73,8 @@ public class Listener {
 
     private void endMethod(PrintStream out, Scanner scanner) {
         out.println("done");
-        out.println("resume ? (y/n)");
-        if (scanner.nextLine().toLowerCase().equals("n")) {
-            out.flush();
-            out.close();
-            scanner.close();
-        } else {
-            findAndCallMethod(out, scanner);
-        }
+        out.println("print your next order");
+        findAndCallMethod(out, scanner);
     }
 
     private void run() {
@@ -79,7 +84,7 @@ public class Listener {
                     sleep(NEXT_TIME_LISTEN_MILLISECONDS);
                     Scanner scanner = new Scanner(socket.getInputStream());
                     PrintStream out = new PrintStream(socket.getOutputStream());
-                    findAndCallMethod(out, scanner);
+                    new Thread(()->findAndCallMethod(out, scanner)).start();
                 } catch (IOException | InterruptedException ignored) {
                 }
             }

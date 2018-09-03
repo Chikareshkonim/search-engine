@@ -4,6 +4,7 @@ import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.metrics.IntMeter;
 import in.nimbo.moama.metrics.JMXManager;
 import in.nimbo.moama.util.ElasticPropertyType;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.HttpHost;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -125,7 +126,7 @@ public class ElasticManager {
                 }
                 builder.endObject();
                 indexRequest.source(builder);
-                indexRequest.id((String) document.get("pageLink"));
+                indexRequest.id(DigestUtils.md5Hex("pageLink"));
                 bulkRequest.add(indexRequest);
                 indexRequest = new IndexRequest(index, "_doc");
                 if ( bulkRequest.numberOfActions() >= elasticFlushSizeLimit) {

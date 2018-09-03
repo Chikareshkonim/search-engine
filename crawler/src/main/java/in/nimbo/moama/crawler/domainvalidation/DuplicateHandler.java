@@ -5,6 +5,7 @@ import in.nimbo.moama.LRUCache;
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.metrics.IntMeter;
 import in.nimbo.moama.util.CrawlerPropertyType;
+import org.apache.commons.codec.digest.DigestUtils;
 
 public class DuplicateHandler {
     private final LRUCache<String, Integer> lruCache;
@@ -14,8 +15,8 @@ public class DuplicateHandler {
     private static final int maxCapacity = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.DUPLICATE_HANDLER_MAX_CAPACITY));
     private static final DuplicateHandler ourInstance = new DuplicateHandler();
     private HBaseManager hBaseManager;
-    private static IntMeter duplicateRejectByLru =new IntMeter("Duplicate Reject ByLru");
-    private static IntMeter duplicateRejectByHBase=new IntMeter("Duplicate Reject ByHbase");
+    private static IntMeter duplicateRejectByLru =new IntMeter("Duplicate Lru");
+    private static IntMeter duplicateRejectByHBase=new IntMeter("Duplicate Hbase");
     private static IntMeter duplicateAccept=new IntMeter("Duplicate Accepted");
 
     private DuplicateHandler() {
@@ -27,8 +28,7 @@ public class DuplicateHandler {
         return ourInstance;
     }
     public boolean isDuplicate(String url) {
-        if (lruCache.containsKey(url)) {
-            System.out.println("true lru");
+        if (lruCache.get(url)!=null) {
             duplicateRejectByLru.increment();
             return true;
         } else if (hBaseManager.isDuplicate(url)) {

@@ -37,8 +37,7 @@ public class Parser {
         Parser.langDetector = langDetector;
     }
 
-    public WebDocument parse(String url) throws IllegalLanguageException, IOException {
-        Document document = Jsoup.connect(url).validateTLSCertificates(false).get();
+    public WebDocument parse(Document document ,String url) throws IllegalLanguageException, IOException {
         duplicateChecker.weakConfirm(url);
         urlReceived.increment();
 //        jmxManager.markNewUrlReceived();

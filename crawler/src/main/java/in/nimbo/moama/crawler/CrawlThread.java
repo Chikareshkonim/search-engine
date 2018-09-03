@@ -16,9 +16,13 @@ import in.nimbo.moama.kafka.MoamaProducer;
 import in.nimbo.moama.metrics.FloatMeter;
 import in.nimbo.moama.metrics.IntMeter;
 import in.nimbo.moama.metrics.JMXManager;
-import in.nimbo.moama.metrics.Metrics;
 import in.nimbo.moama.util.CrawlerPropertyType;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.log4j.Logger;
+import org.json.JSONObject;
+import org.jsoup.Jsoup;
+import org.jsoup.UncheckedIOException;
+import org.jsoup.nodes.Document;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -41,15 +45,21 @@ public class CrawlThread extends Thread {
     private static int numOfInternalLinksToKafka;
     private static final DuplicateHandler DuplicateChecker = DuplicateHandler.getInstance();
     private static final DomainFrequencyHandler domainTimeHandler = DomainFrequencyHandler.getInstance();
-    private static FloatMeter megaByteCounter = new FloatMeter("MB Crawled");
-    private static IntMeter duplicate = new IntMeter("duplicate");
-    private static IntMeter complete = new IntMeter("complete");
-    private static IntMeter domainError = new IntMeter("domain Error");
-    private static FloatMeter checkTime = new FloatMeter("check url Time");
-    private static FloatMeter parseTime = new FloatMeter("parse url Time");
-    private static FloatMeter hbaseTime= new FloatMeter("hbase put Time");
-    private static FloatMeter elasticTime=new FloatMeter("elastic put Time");
+    private static FloatMeter megaByteCounter = new FloatMeter("MB Crawled     ");
+    private static IntMeter duplicate = new IntMeter("duplicate url    ");
+    private static IntMeter complete = new IntMeter("complete      ");
+    private static IntMeter domainError = new IntMeter("domain Error   ");
+    private static IntMeter ioUncheckException=new IntMeter("Unchecked io Exception");
+    private static FloatMeter checkTime = new FloatMeter("check url Time ");
+    private static FloatMeter parseTime = new FloatMeter("parse url Time ");
+    private static FloatMeter hbaseTime = new FloatMeter("hbase put Time ");
+    private static FloatMeter elasticTime = new FloatMeter("elastic put Time");
+    private static FloatMeter fetchTime = new FloatMeter("fetch Page Time");
+    private static FloatMeter jsoupDocumentTime=new FloatMeter("jsoup document create time");
+    private static FloatMeter kafkaTime=new FloatMeter("kafka input time");
+
     private long tempTime;
+
     static {
         jmxManager = JMXManager.getInstance();
         crawledProducer = new MoamaProducer(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_CRAWLED_TOPIC_NAME)
@@ -69,6 +79,8 @@ public class CrawlThread extends Thread {
         parser = Parser.getInstance();
     }
 
+
+
     public CrawlThread(boolean isRun) {
         this.isRun = isRun;
     }
@@ -76,13 +88,17 @@ public class CrawlThread extends Thread {
     @Override
     public void run() {
         LinkedList<String> urlsOfThisThread = new LinkedList<>(linkConsumer.getDocuments());
+        LinkedList<Put> webDocOfThisThread= new LinkedList<>();
         while (isRun) {
-            work(urlsOfThisThread);
+            work(urlsOfThisThread,webDocOfThisThread);
         }
         helperProducer.pushNewURL(urlsOfThisThread.toArray(new String[0]));
+
+
+
     }
 
-    private void work(LinkedList<String> urlsOfThisThread) {
+    private void work(LinkedList<String> urlsOfThisThread, LinkedList<Put> webDocOfThisThread) {
         if (urlsOfThisThread.size() < minOfEachQueue) {
             urlsOfThisThread.addAll(linkConsumer.getDocuments());
         } else {
@@ -92,21 +108,47 @@ public class CrawlThread extends Thread {
                 tempTime = System.currentTimeMillis();
                 checkLink(url);
                 checkTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+                //////
                 tempTime = System.currentTimeMillis();
-                webDocument = parser.parse(url);
+                String string = Jsoup.connect(url).validateTLSCertificates(false).execute().body();
+                fetchTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+                //////
+                tempTime = System.currentTimeMillis();
+                Document document=Jsoup.parse(string);
+                jsoupDocumentTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+                //////
+                tempTime = System.currentTimeMillis();
+                webDocument = parser.parse(document, url);
                 parseTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
-                megaByteCounter.add((float) webDocument.getTextDoc().getBytes().length / 0b100000000000000000000);
+                //////
+                tempTime = System.currentTimeMillis();
+                megaByteCounter.add((float) document.outerHtml().getBytes().length / 0b100000000000000000000);
                 helperProducer.pushNewURL(normalizeOutLink(webDocument));
                 crawledProducer.pushNewURL(url);
+                kafkaTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+                //////
+
+
+                // TODO: 9/2/18 mustChange
+                JSONObject json = webDocument.documentToJson();
+
+
+                /////
                 tempTime = System.currentTimeMillis();
-                webDocumentHBaseManager.put(webDocument.documentToJson());
+                webDocumentHBaseManager.put(json,webDocOfThisThread);
                 hbaseTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+                //////
                 tempTime = System.currentTimeMillis();
-                elasticManager.put(webDocument.documentToJson(), jmxManager);
+                elasticManager.put(json, jmxManager);
                 elasticTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+                //////
                 complete.increment();// TODO: 8/31/18
                 jmxManager.markNewComplete();
-            } catch (IllegalArgumentException e) {
+
+            }catch (UncheckedIOException e){
+                ioUncheckException.increment();
+            }
+            catch (IllegalArgumentException e) {
                 System.out.println(e.getMessage());
             } catch (MalformedURLException e) {
                 errorLogger.error(url + " is malformed!");
