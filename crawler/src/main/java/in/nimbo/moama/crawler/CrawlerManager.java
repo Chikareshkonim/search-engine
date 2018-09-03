@@ -18,12 +18,16 @@ public class CrawlerManager implements Reconfigurable  {
 
     private static int crawlerThreadPriority;
     private static int shuffleSize;
-    private LinkedList<Thread> crawlerThreadList;
+    private LinkedList<Thread> crawlerThreadList = new LinkedList<>();
     private static int numOfThreads;
     private static int startNewThreadDelay;
+    private static CrawlerManager ourInstance=new CrawlerManager();
 
+    public static CrawlerManager getInstance() {
+        return ourInstance;
+    }
 
-    public CrawlerManager() {
+    private CrawlerManager() {
         mainProducer = new MoamaProducer(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_LINK_TOPIC_NAME)
                 , "kafka.server.");
         helperConsumer = new MoamaConsumer(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_HELPER_TOPIC_NAME)
@@ -33,9 +37,11 @@ public class CrawlerManager implements Reconfigurable  {
         numOfThreads = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_NUMBER_OF_THREADS));
         startNewThreadDelay = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_START_NEW_THREAD_DELAY_MS));
     }
+    public void run(){
+        run(numOfThreads);
+    }
 
-    public void run() {
-        crawlerThreadList = new LinkedList<>();
+    public void run(int numOfThreads) {
         for (int i = 0; i < numOfThreads; i++) {
             CrawlThread thread = new CrawlThread(true);
             thread.setPriority(crawlerThreadPriority);
@@ -69,5 +75,10 @@ public class CrawlerManager implements Reconfigurable  {
     public void reconfigure() {
         // TODO: 9/1/18 mohammadreza
     }
+
+    public LinkedList<Thread> getCrawlerThreadList() {
+        return crawlerThreadList;
+    }
+
 }
 

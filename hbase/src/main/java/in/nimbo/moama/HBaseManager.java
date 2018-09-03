@@ -67,7 +67,16 @@ public class HBaseManager {
                 domainToHBase.append(".");
             }
         }
-        return domainToHBase + "-" + urlSections[urlSections.length - 1];
+        String string = "";
+        try {
+            string = domainToHBase + "-" + urlSections[urlSections.length - 1];
+        }catch (Exception e){
+            System.out.println(link);
+            e.printStackTrace();
+            System.out.println();
+            System.out.println(e.getMessage());
+        }
+        return string;
     }
 
     public boolean isDuplicate(String url) {
