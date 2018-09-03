@@ -1,15 +1,23 @@
 package in.nimbo.moama.fetcher;
 
 import in.nimbo.moama.RSSs;
+import in.nimbo.moama.configmanager.ConfigManager;
+import in.nimbo.moama.template.SiteTemplates;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+import static in.nimbo.moama.newsutil.NewsPropertyType.NEWS_DATE_FORMAT;
+
 public class RSSParser {
+    private static String UNIQUE_DATE_FORMAT = ConfigManager.getInstance().getProperty(NEWS_DATE_FORMAT);
+
     public static List<NewsInfo> parse(String rss, String domain) throws IOException {
         System.out.println("pa rsing " + rss);
         List<NewsInfo> result = new ArrayList<>();
@@ -18,7 +26,13 @@ public class RSSParser {
             if (!isSeen(element)) {
                 String title = element.select("title").text();
                 System.err.println(title);
-                String date = element.select("pubDate").text();
+                String date = null;
+                try {
+                    date = uniqueDateFormat(SiteTemplates.getInstance().getTemplte(domain).getDateFormatString(),
+                            element.select("pubDate").text());
+                } catch (ParseException e) {
+                    System.out.println("failed to parse date");
+                }
                 System.err.println(date);
                 String url = element.select("link").text();
                 System.err.println(url);
@@ -27,6 +41,12 @@ public class RSSParser {
             }
         }
         return result;
+    }
+
+    static String uniqueDateFormat(String dateFormatString, String date) throws ParseException {
+        SimpleDateFormat newsFormat = new SimpleDateFormat(dateFormatString);
+        SimpleDateFormat uniqueFormat = new SimpleDateFormat(UNIQUE_DATE_FORMAT);
+        return uniqueFormat.format(newsFormat.parse(date));
     }
 
     private static boolean isSeen(Element element) {
