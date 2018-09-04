@@ -180,7 +180,6 @@ public class CrawlThread extends Thread {
     private Put createHbasePut(String pageLink, List<Link> outLink) {
         String pageRankColumn = ConfigManager.getInstance().getProperty(HBasePropertyType.HBASE_DUPCHECK_COLUMN);
         Put put = new Put(Bytes.toBytes(webDocumentHBaseManager.generateRowKeyFromUrl(pageLink)));
-        ;
         for (Link link : outLink) {
             put.addColumn(outLinksFamily.getBytes(), webDocumentHBaseManager.generateRowKeyFromUrl(
                     link.getUrl()).getBytes(), (link.getAnchorLink()).getBytes());

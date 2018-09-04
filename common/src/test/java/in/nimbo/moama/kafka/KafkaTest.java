@@ -1,6 +1,8 @@
 package in.nimbo.moama.kafka;
 
 import in.nimbo.moama.configmanager.ConfigManager;
+import in.nimbo.moama.configmanager.PropertyType;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -15,29 +17,31 @@ public class KafkaTest {
     public void testKafka() throws IOException {
         InputStream fileInputStream = KafkaTest.class.getResourceAsStream("/config.properties");
         ConfigManager.getInstance().load(fileInputStream, PROPERTIES);
-        MoamaConsumer moamaConsumer = new MoamaConsumer("test","");
-        MoamaProducer moamaProducer = new MoamaProducer("test","");
+        MoamaConsumer moamaConsumer = new MoamaConsumer("test","kafka.");
+        MoamaProducer moamaProducer = new MoamaProducer("test","kafka.");
         ArrayList<String> results = new ArrayList<>();
         List<String> links = new ArrayList<>();
-        for (int i = 1; i < 6; i++) {
-            for (int j = 0; j < 100; j++) {
+        for (int i = 1; i < 4; i++) {
+            for (int j = 1; j < 61; j++) {
                 links.add("https://wwww.testMessage" + i + "_" + j);
             }
-            results = moamaConsumer.getDocuments();
-            for(String result: results){
-                System.out.println(result);
-            }
             moamaProducer.pushNewURL(links.toArray(new String[0]));
+            moamaProducer.flush();
+            int lastSize = results.size();
             for (String link : moamaConsumer.getDocuments()) {
-                System.out.println(link);
+                System.out.println(i + " " + link);
                 results.add(link);
             }
+            Assert.assertEquals(30, results.size() - lastSize);
+            lastSize = results.size();
             System.out.println("First poll! " + i);
             for (String link :  moamaConsumer.getDocuments()) {
-                System.out.println(link);
+                System.out.println(i + " " + link);
                 results.add(link);
             }
+            Assert.assertEquals(30, results.size() - lastSize);
             System.out.println("Second poll! " + i);
+            moamaConsumer.getDocuments();
         }
     }
 }

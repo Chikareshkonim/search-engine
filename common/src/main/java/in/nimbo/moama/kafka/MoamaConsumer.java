@@ -11,7 +11,6 @@ import java.util.Collections;
 
 public class MoamaConsumer {
     private final KafkaConsumer<String, String> consumer;
-    private Logger errorLogger = Logger.getLogger(this.getClass());
 
     public MoamaConsumer(String topic,String rootAddress) {
         //TODO
