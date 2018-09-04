@@ -10,21 +10,23 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.json.JSONObject;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Set;
-
+import static org.junit.Assert.assertEquals;
 public class ElasticManagerTest {
     private RestHighLevelClient client;
     private IndexRequest indexRequest;
     private BulkRequest bulkRequest;
-
+    private ElasticManager elasticManager;
     @Before
     public void setUp() throws IOException {
         ConfigManager.getInstance().load(getClass().getResourceAsStream("/config.properties"), ConfigManager.FileType.PROPERTIES);
+        elasticManager = new ElasticManager();
     }
 
     @Test
@@ -83,13 +85,21 @@ public class ElasticManagerTest {
 
     @Test
     public void putTest(){
-        ElasticManager elasticManager = new ElasticManager();
         JSONObject document = new JSONObject();
         document.put("pageLink","me.com");
         document.put("content","gdsfghshgssjsjfsjsfj");
         document.put("title","yes");
         document.put("date","2015-01-01");
         elasticManager.put(document);
+    }
+    @Test
+    public void aggTest(){
+        try {
+
+            assertEquals("group",elasticManager.newsWordTrends("\"2015-02-14\"","\"2015-02-14\"").get(0));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

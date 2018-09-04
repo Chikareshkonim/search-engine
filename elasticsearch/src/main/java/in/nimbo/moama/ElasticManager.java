@@ -5,7 +5,10 @@ import in.nimbo.moama.metrics.IntMeter;
 import in.nimbo.moama.metrics.JMXManager;
 import in.nimbo.moama.util.ElasticPropertyType;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.nio.entity.NStringEntity;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.index.IndexRequest;
@@ -13,9 +16,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.termvectors.TermVectorsRequest;
 import org.elasticsearch.action.termvectors.TermVectorsResponse;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
-import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.*;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.Strings;
 import org.elasticsearch.common.settings.Settings;
@@ -30,14 +31,15 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 
@@ -63,9 +65,11 @@ public class ElasticManager {
     private static String clusterName;
     private static IntMeter elasticAdded =new IntMeter("elastic Added");
     private TransportClient transportClient ;
-
+    private RestClient restClient;
+    private static int NUMBER_OF_KEYWORDS;
     public ElasticManager() {
         transportClient = null;
+        NUMBER_OF_KEYWORDS = 5;
         elasticFlushSizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_SIZE_LIMIT));
         elasticFlushNumberLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_NUMBER_LIMIT));
         index = ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_PAGES_TABLE);
@@ -81,6 +85,7 @@ public class ElasticManager {
         RestClientBuilder restClientBuilder = RestClient.builder(new HttpHost(server1, Integer.parseInt(clientPort), "http"),
                 new HttpHost(server2, Integer.parseInt(clientPort), "http"),
                 new HttpHost(server3, Integer.parseInt(clientPort), "http"));
+        restClient = restClientBuilder.build();
         client = new RestHighLevelClient(restClientBuilder);
 
         indexRequest = new IndexRequest(index, "_doc");
@@ -88,38 +93,89 @@ public class ElasticManager {
     }
 
     //TODO
-    public void getTermVector() {
-        Settings settings = Settings.builder()
-                .put("cluster.name", clusterName).put("client.transport.sniff", true).build();
-        try {
-            transportClient = new PreBuiltTransportClient(settings)
-                    .addTransportAddress(new TransportAddress(InetAddress.getByName(server1), Integer.parseInt(vectorPort)));
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
+    public void getTermVector(String id) throws IOException {
+        Map<String, String> params = Collections.emptyMap();
+        String jsonString =
+                "{"
+                        + "\"fields\" : [\"text\"],"
+                        + "\"term_statistics\" : true,"
+                        + "\"field_statistics\" : true,"
+                        + "\"positions\" : false,"
+                        + "\"offsets\" : false,"
+                        + "\"filter\": {"
+                        + "\"max_num_terms\" : "
+                        + NUMBER_OF_KEYWORDS
+                        + "}"
+                        + "}";
+        HttpEntity entity = new NStringEntity(jsonString, ContentType.APPLICATION_JSON);
+        Response response =
+                restClient.performRequest("GET", "/" + index + "/_doc/" + id + "/_termvectors", params, entity);
+        // System.out.println(response.toString());
+        BufferedReader reader =
+                new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+        StringBuilder out = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            out.append(line);
         }
-        TermVectorsRequest termVectorsRequest = new TermVectorsRequest(test, "_doc", "1");
-        termVectorsRequest.fieldStatistics(true);
-        termVectorsRequest.termStatistics(true);
-        assert transportClient != null;
-        TermVectorsResponse termVectorsResponse = transportClient.termVectors(termVectorsRequest).actionGet();
-        try {
-            XContentBuilder builder = XContentFactory.jsonBuilder();
-            termVectorsResponse.toXContent(builder, ToXContent.EMPTY_PARAMS);
-            String data = Strings.toString(builder);
-            JSONObject json = new JSONObject(data);
-            System.out.println(json);
-        } catch (IOException e) {
-            //TODO
+        System.out.println(out.toString());
+        JSONObject jsonObject = new JSONObject(out.toString());
+        JSONObject jsonArray = jsonObject.getJSONObject("term_vectors").getJSONObject("text").getJSONObject("terms");
+        System.out.println(jsonArray.getJSONObject("lasttest1"));
+        for (String key : jsonArray.keySet()) {
+            System.out.println(key + "=" + jsonArray.get(key)); // to get the value
         }
     }
-    public void newsWordTrends(){
-        SearchResponse response = transportClient.prepareSearch().setQuery(QueryBuilders.matchAllQuery())
-                .addAggregation(
-                        AggregationBuilders.dateRange("data").addRange("","")
-                )
-                .get();
-        Terms trendTerms = response.getAggregations().get("date");
-        System.out.println(trendTerms);
+
+    public List<String> newsWordTrends(String toDate , String fromDate) throws IOException {
+        Map<String, String> params = Collections.emptyMap();
+        String jsonString ="{\n" +
+                "\t\"aggs\":{\n" +
+                "\t\t\"range\": {\n" +
+                "           \"date_range\": {\n" +
+                "               \"field\": \"date\",\n" +
+                "               \"format\": \"yyyy-mm-dd\",\n" +
+                "               \"ranges\": [\n" +
+                "                   { \"to\":"+ toDate+"},\n" +
+                "                   { \"from\":"+fromDate+"}\n" +
+                "               ],\n" +
+                "               \"keyed\": true\n" +
+                "            }\n" +
+                "            ,\n" +
+                "           \"aggs\":{\n" +
+                "\t\t\t\"categories\": {\n" +
+                "        \t\t\"terms\": {\n" +
+                "            \t\t\"field\": \"content\"\n" +
+                "        \t\t\t}\n" +
+                "        \t\t}\n" +
+                "        \t}\n" +
+                "\t\t}\n" +
+                "\t}\n" +
+                "}";
+        HttpEntity entity = new NStringEntity(jsonString, ContentType.APPLICATION_JSON);
+        Response response =
+                restClient.performRequest("POST","/test/_search",params,entity );
+        BufferedReader reader =
+                new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+        StringBuilder out = new StringBuilder();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            out.append(line);
+        }
+        JSONObject jsonObject = new JSONObject(out.toString());
+        JSONObject buckets = jsonObject.getJSONObject("aggregations").getJSONObject("range").getJSONObject("buckets");
+        Set<String> keys = buckets.keySet();
+        List<JSONArray> arrays = new LinkedList<>();
+        for (String key : keys) {
+            arrays.add(buckets.getJSONObject(key).getJSONObject("categories").getJSONArray("buckets"));
+        }
+        List<String> keywords = new LinkedList<>();
+        for (JSONArray array:arrays) {
+            for (Object anArray : array) {
+                keywords.add(((JSONObject) anArray).getString("key"));
+            }
+        }
+        return keywords;
     }
 
     public synchronized void put(JSONObject document) {

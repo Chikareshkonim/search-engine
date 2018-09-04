@@ -1,9 +1,6 @@
 package in.nimbo.moama.rankcalculator;
 
 
-import in.nimbo.moama.configmanager.ConfigManager;
-import in.nimbo.moama.configmanager.PropertyType;
-import in.nimbo.moama.util.ReferencePropertyType;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
@@ -28,7 +25,7 @@ import java.util.List;
 
 //TODO: set config file
 public class ReferenceCalculator {
-    private static final Logger errorLogger = Logger.getLogger(ReferenceCalculator.class);
+    private static final Logger logger = Logger.getLogger(ReferenceCalculator.class);
     private TableName webPageTable;
     private String contentFamily;
     private static String refrenceColumn;
@@ -73,18 +70,18 @@ public class ReferenceCalculator {
             jobConfig.setOutputFormatClass(TableOutputFormat.class);
             JavaPairRDD<ImmutableBytesWritable, Put> hbasePuts = toWrite.mapToPair(pair -> {
                 try {
-                        Put put = new Put(Bytes.toBytes(pair._1));
-                        put.addColumn(refrenceFamilyName.getBytes(), refrenceColumn.getBytes(), Bytes.toBytes(pair._2));
-                        return new Tuple2<>(new ImmutableBytesWritable(), put);
-                }catch (NullPointerException e){
-                    errorLogger.error(e.getMessage());
+                    Put put = new Put(Bytes.toBytes(pair._1));
+                    put.addColumn(refrenceFamilyName.getBytes(), refrenceColumn.getBytes(), Bytes.toBytes(pair._2));
+                    return new Tuple2<>(new ImmutableBytesWritable(), put);
+                }catch (Exception e){
+                    logger.error(e.getMessage());
                 }
                 return null;
             });
             hbasePuts.saveAsNewAPIHadoopDataset(jobConfig.getConfiguration());
-        } catch (IOException |NullPointerException e) {
+        } catch (Exception e) {
             //TODO : set logger
-            errorLogger.error(e.getMessage());
+            logger.error(e.getMessage());
         }
     }
 }
