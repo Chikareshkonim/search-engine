@@ -1,5 +1,8 @@
 package in.nimbo.moama.crawler.language;
 
+import com.cybozu.labs.langdetect.Detector;
+import com.cybozu.labs.langdetect.DetectorFactory;
+import com.cybozu.labs.langdetect.LangDetectException;
 import com.google.common.base.Optional;
 import com.optimaize.langdetect.DetectedLanguage;
 import com.optimaize.langdetect.LanguageDetector;
@@ -18,48 +21,33 @@ import java.util.List;
 
 
 public class LangDetector {
-    private static LangDetector langDetector=new LangDetector();
-    private List<LanguageProfile> languageProfiles;
-    private LanguageDetector languageDetector;
-
+    private static LangDetector ourInstance=new LangDetector();
     private LangDetector() {
     }
 
     public static LangDetector getInstance() {
-        return langDetector;
+        return ourInstance;
     }
     public void profileLoad() {
         try {
-            languageProfiles = new LanguageProfileReader().readAllBuiltIn();
-        } catch (IOException e) {
+            DetectorFactory.loadProfile(LanguageDetector.class.getResource("/profiles").getFile());
+        } catch (LangDetectException e) {
             e.printStackTrace();
         }
-        languageDetector = LanguageDetectorBuilder.create(NgramExtractors.standard())
-                .withProfiles(languageProfiles)
-                .build();
     }
 
-    public void languageCheck(String text) throws IllegalLanguageException {
+
+    public  void languageCheck(String text) throws IllegalLanguageException {
+        Detector detector;
         try {
-            TextObjectFactory textObjectFactory = CommonTextObjectFactories.forDetectingOnLargeText();
-            TextObject textObject = textObjectFactory.forText(text);
-            Optional<LdLocale> lang = languageDetector.detect(textObject);
-            if (!lang.get().getLanguage().equals("en"))
-                throw new IllegalLanguageException();
-        }catch (Exception e){
-            throw new IllegalLanguageException();
-        }
-    }
-    public void languageCheckHard(String text) throws IllegalLanguageException {
-        try {
-            TextObjectFactory textObjectFactory = CommonTextObjectFactories.forDetectingOnLargeText();
-            TextObject textObject = textObjectFactory.forText(text);
-            List<DetectedLanguage> lang = languageDetector.getProbabilities(textObject);
-            if (!(lang.get(0).getLocale().getLanguage().equals("en") && lang.get(0).getProbability() > 0.9)) {
+            detector = DetectorFactory.create();
+            detector.append(text);
+            if (!detector.detect().equals("en")) {
                 throw new IllegalLanguageException();
             }
-        }catch (Exception e){
+        } catch (LangDetectException e) {
             throw new IllegalLanguageException();
         }
     }
+
 }

@@ -51,6 +51,7 @@ public class CrawlThread extends Thread {
     private static IntMeter complete = new IntMeter("complete      ");
     private static IntMeter domainError = new IntMeter("domain Error   ");
     private static IntMeter ioUncheckException = new IntMeter("Unchecked io Exception");
+    private static IntMeter urlReceived=new IntMeter("url received");
     private static FloatMeter checkTime = new FloatMeter("check url Time ");
     private static FloatMeter parseTime = new FloatMeter("parse url Time ");
     private static FloatMeter hbaseTime = new FloatMeter("hbase put Time ");
@@ -65,7 +66,7 @@ public class CrawlThread extends Thread {
     private static int elasticSizeBulkLimit;
 
     static {
-        elasticSizeBulkLimit=Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_SIZE_LIMIT));
+        elasticSizeBulkLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_SIZE_LIMIT));
         hbaseSizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(HBasePropertyType.PUT_SIZE_LIMIT));
         outLinksFamily = ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_FAMILY_OUTLINKS);
         scoreFamily = ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_FAMILY_SCORE);
@@ -86,7 +87,6 @@ public class CrawlThread extends Thread {
     }
 
 
-
     public CrawlThread(boolean isRun) {
         this.isRun = isRun;
     }
@@ -95,10 +95,10 @@ public class CrawlThread extends Thread {
     public void run() {
         LinkedList<String> urlsOfThisThread = new LinkedList<>(linkConsumer.getDocuments());
         LinkedList<Put> webDocOfThisThread = new LinkedList<>();
-        LinkedList<Map<String, String>> elasticDocOfThisThread=new LinkedList<>();
+        LinkedList<Map<String, String>> elasticDocOfThisThread = new LinkedList<>();
 
         while (isRun) {
-            work(urlsOfThisThread, webDocOfThisThread,elasticDocOfThisThread);
+            work(urlsOfThisThread, webDocOfThisThread, elasticDocOfThisThread);
         }
         helperProducer.pushNewURL(urlsOfThisThread.toArray(new String[0]));
 
@@ -124,6 +124,9 @@ public class CrawlThread extends Thread {
                 Document document = Jsoup.parse(string);
                 documentTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
                 //////
+
+                duplicateChecker.weakConfirm(url);
+                urlReceived.increment();
                 tempTime = System.currentTimeMillis();
                 webDocument = parser.parse(document, url);
                 parseTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
@@ -145,8 +148,8 @@ public class CrawlThread extends Thread {
                 //////
                 tempTime = System.currentTimeMillis();
                 elasticDocOfThisThread.add(webDocument.elasticMap());
-                if (elasticDocOfThisThread.size()>elasticSizeBulkLimit)
-                elasticManager.myput(elasticDocOfThisThread);
+                if (elasticDocOfThisThread.size() > elasticSizeBulkLimit)
+                    elasticManager.myput(elasticDocOfThisThread);
                 elasticTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
                 //////
                 complete.increment();// TODO: 8/31/18
@@ -165,8 +168,8 @@ public class CrawlThread extends Thread {
             } catch (IOException e) {
                 logger.trace("Jsoup connection to " + url + " failed");
             } catch (URLException e) {
+                duplicateChecker.weakConfirm(url);
                 logger.trace("url exception", e);
-
             } catch (RuntimeException e) {
                 logger.error("important" + e.getMessage(), e);
                 throw e;

@@ -220,18 +220,20 @@ public class ElasticManager {
     public void myput(List<Map<String, String>> docs) {
         IndexRequest indexRequest = new IndexRequest(index, "_doc");
         BulkRequest bulkRequest = new BulkRequest();
-
+        for (Map<String, String> document : docs) {
+            indexRequest.source(document);
+            indexRequest.id(DigestUtils.md5Hex(document.get("pageLink")));
+            bulkRequest.add(indexRequest);
+            indexRequest = new IndexRequest(index, "_doc");
+        }
         try {
-            docs.forEach(document -> {
-                indexRequest.source(document);
-                indexRequest.id(DigestUtils.md5Hex(document.get("pageLink")));
-                bulkRequest.add(indexRequest);
-            });
             client.bulk(bulkRequest);
             elasticAdded.add(bulkRequest.numberOfActions());
             docs.clear();
 //                    jmxManager.markNewAddedToElastic();
         } catch (IOException e) {
+            System.out.println(e.getMessage());
+            e.printStackTrace();
             errorLogger.error("ERROR! Couldn't add the document for ", e);
         }
     }

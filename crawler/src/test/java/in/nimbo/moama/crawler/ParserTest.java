@@ -35,9 +35,11 @@ public class ParserTest {
 
     @Test
     public void parse2() throws IOException, IllegalLanguageException {
-        Document document = Jsoup.parse("<body><a href=\"salam.ir\">in the name of god</body>");
+        Document document = Jsoup.parse("<html><body><a href=\"/fa/contacts\" title=\"contacts\">hi to world am the" +
+                " best man who know you well</a></body></html>");
         WebDocument webDocument = Parser.getInstance().parse(document, "http://salam.ir/");
-        Assert.assertEquals(webDocument.getLinks().get(0), "salam.ir");
+        System.out.println(webDocument.getTextDoc());
+
     }
 
 }
