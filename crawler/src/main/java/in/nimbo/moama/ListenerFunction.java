@@ -33,7 +33,7 @@ public class ListenerFunction {
 
     @CLI(help ="tell tou about threads" )
     public static void thread(PrintStream out,Scanner scanner){
-        CrawlerManager.getInstance().getCrawlerThreadList().stream().map(Thread::isDaemon).map(e->e?0:1)
+        CrawlerManager.getInstance().getCrawlerThreadList().stream().map(Thread::isAlive).map(e->e?1:0)
                 .reduce((a,b)->a+b).map(e->"number of alive  thread "+e).ifPresent(out::println);
     }
     @CLI(help = "increase threads")

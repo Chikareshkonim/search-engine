@@ -76,15 +76,14 @@ public class Listener {
         out.println("print your next order");
         findAndCallMethod(out, scanner);
     }
-
+    
     private void run() {
         try (ServerSocket serverSocket = new ServerSocket(listenPort)) {
             while (isListening) {
-                try (Socket socket = serverSocket.accept()) {
-                    sleep(NEXT_TIME_LISTEN_MILLISECONDS);
-                    Scanner scanner = new Scanner(socket.getInputStream());
-                    PrintStream out = new PrintStream(socket.getOutputStream());
-                    new Thread(()->findAndCallMethod(out, scanner)).start();
+                Socket socket;
+                try {
+                    socket = serverSocket.accept();
+                    listenThread(socket);
                 } catch (IOException | InterruptedException ignored) {
                 }
             }
@@ -93,7 +92,18 @@ public class Listener {
         }
     }
 
-    public void setListening(boolean listening) {
-        isListening = listening;
+    private void listenThread(Socket socket) throws InterruptedException, IOException {
+        new Thread(() -> {
+            Scanner scanner = null;
+            try {
+                scanner = new Scanner(socket.getInputStream());
+                PrintStream out = new PrintStream(socket.getOutputStream());
+                findAndCallMethod(out, scanner);
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+        sleep(NEXT_TIME_LISTEN_MILLISECONDS);
     }
 }

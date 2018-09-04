@@ -20,17 +20,23 @@ public class ListenerTest {
         Scanner scanner = new Scanner(socket.getInputStream());
         PrintStream out=  new PrintStream(socket.getOutputStream());
         out.println("salam");
+
         Assert.assertEquals(scanner.nextLine(),"salam alaykom");
         Assert.assertEquals(scanner.nextLine(),"done");
         scanner.nextLine();
         out.println("salam");
         Assert.assertEquals(scanner.nextLine(),"salam alaykom");
+        scanner.nextLine();
+        scanner.nextLine();
+        out.println("help");
+        Assert.assertEquals("salam                    : 100 ta salam",scanner.nextLine());
         out.println("close");
         socket.getOutputStream();
     }
 
-    static class ListenTestFunctionClass{
 
+    static class ListenTestFunctionClass{
+        @CLI(help = "100 ta salam")
         public  static  void salam(PrintStream out, Scanner scanner){
             out.println("salam alaykom");
         }

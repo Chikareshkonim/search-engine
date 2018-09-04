@@ -10,11 +10,8 @@ import java.io.InputStream;
 
 public class App {
     public static void main(String[] args) throws IOException {
-        InputStream fileInputStream = CrawlerManager.class.getResourceAsStream("/crawler.properties");
-        ConfigManager configManager=ConfigManager.getInstance();
-        configManager.load(fileInputStream,ConfigManager.FileType.PROPERTIES);
         Initializer.initialize();
-        new Listener().listen(ListenerFunction.class);
+        new Listener().listen(ListenerFunction.class,2719);
         CrawlerManager.getInstance().run();
     }
 }

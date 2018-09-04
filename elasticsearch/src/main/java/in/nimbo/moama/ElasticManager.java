@@ -122,7 +122,7 @@ public class ElasticManager {
         System.out.println(trendTerms);
     }
 
-    public synchronized void put(JSONObject document, JMXManager jmxManager) {
+    public synchronized void put(JSONObject document) {
         try {
             XContentBuilder builder = XContentFactory.jsonBuilder();
             try {

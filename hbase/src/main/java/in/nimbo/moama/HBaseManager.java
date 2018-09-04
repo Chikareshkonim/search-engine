@@ -47,7 +47,7 @@ public class HBaseManager {
         }
     }
 
-    String generateRowKeyFromUrl(String link) {
+    public String generateRowKeyFromUrl(String link) {
         String domain;
         try {
             domain = new URL(link).getHost();

@@ -43,7 +43,7 @@ public class NewsFetcher implements Runnable {
                         NewsInfo newsInfo = list.removeFirst();
                         String text = NewsParser.parse(newsInfo.getDomain(), newsInfo.getUrl());
                         News news = new News(newsInfo, text);
-                        elasticManager.put(news.documentToJson(),null);
+                        elasticManager.put(news.documentToJson());
                         newsHBaseManager.put(news.documentToJson());
                         System.out.println(news.getNewsInfo().getUrl());
                     } catch (IOException e) {

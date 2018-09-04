@@ -89,7 +89,7 @@ public class ElasticManagerTest {
         document.put("content","gdsfghshgssjsjfsjsfj");
         document.put("title","yes");
         document.put("date","2015-01-01");
-        elasticManager.put(document,null);
+        elasticManager.put(document);
     }
 
 }

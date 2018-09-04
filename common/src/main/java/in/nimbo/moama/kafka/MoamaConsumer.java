@@ -14,7 +14,6 @@ public class MoamaConsumer {
     private Logger errorLogger = Logger.getLogger(this.getClass());
 
     public MoamaConsumer(String topic,String rootAddress) {
-        System.out.println("consumed");
         //TODO
         consumer = new KafkaConsumer<>(ConfigManager.getInstance().getProperties(rootAddress,true));
         consumer.subscribe(Collections.singletonList(topic));

@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NewsWebsiteHBaseManager extends HBaseManager{
+
     private final List<Put> puts;
     private String templateFamily;
     private String rssFamily;
@@ -20,6 +21,7 @@ public class NewsWebsiteHBaseManager extends HBaseManager{
         this.templateFamily = templateFamily;
         this.rssFamily = rssFamily;
         puts = new ArrayList<>();
+
     }
 
     public boolean createTable(List<JSONObject> jsons) {
