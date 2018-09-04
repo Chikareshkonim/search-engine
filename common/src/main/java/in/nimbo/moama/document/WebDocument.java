@@ -1,9 +1,12 @@
 package in.nimbo.moama.document;
 
+import org.apache.kafka.common.protocol.types.Field;
 import org.json.*;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class WebDocument {
     private String textDoc;
@@ -43,20 +46,11 @@ public class WebDocument {
         this.pageLink = pageLink;
     }
 
-    public JSONObject documentToJson(){
-        JSONObject jsonDocument = new JSONObject();
-        jsonDocument.put("content",this.textDoc);
-        jsonDocument.put("pageLink", pageLink);
-        JSONArray outLinks = new JSONArray();
-        JSONObject outLink;
-        for(Link link : this.getLinks()){
-            outLink = new JSONObject();
-            outLink.put("LinkUrl", link.getUrl());
-            outLink.put("LinkAnchor", link.getAnchorLink());
-            outLinks.put(outLink);
-        }
-        jsonDocument.put("outLinks", outLinks);
-        return jsonDocument;
+    public Map<String,String> elasticMap(){
+        Map<String,String> map=new LinkedHashMap<>();
+        map.put("content",this.textDoc);
+        map.put("pageLink", pageLink);
+        return map;
     }
 
 }

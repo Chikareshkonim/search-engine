@@ -11,6 +11,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -39,8 +40,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 
 public class ElasticManager {
@@ -200,8 +203,8 @@ public class ElasticManager {
                 indexRequest.id(DigestUtils.md5Hex(document.getString("pageLink")));
                 bulkRequest.add(indexRequest);
                 indexRequest = new IndexRequest(index, "_doc");
-                if ( bulkRequest.numberOfActions() >= elasticFlushSizeLimit) {
-                        client.bulk(bulkRequest);
+                if (bulkRequest.numberOfActions() >= elasticFlushSizeLimit) {
+                    client.bulk(bulkRequest);
                     elasticAdded.add(bulkRequest.numberOfActions());
                     bulkRequest = new BulkRequest();
 //                    jmxManager.markNewAddedToElastic();
@@ -211,6 +214,25 @@ public class ElasticManager {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public void myput(List<Map<String, String>> docs) {
+        IndexRequest indexRequest = new IndexRequest(index, "_doc");
+        BulkRequest bulkRequest = new BulkRequest();
+
+        try {
+            docs.forEach(document -> {
+                indexRequest.source(document);
+                indexRequest.id(DigestUtils.md5Hex(document.get("pageLink")));
+                bulkRequest.add(indexRequest);
+            });
+            client.bulk(bulkRequest);
+            elasticAdded.add(bulkRequest.numberOfActions());
+            docs.clear();
+//                    jmxManager.markNewAddedToElastic();
+        } catch (IOException e) {
+            errorLogger.error("ERROR! Couldn't add the document for ", e);
         }
     }
 

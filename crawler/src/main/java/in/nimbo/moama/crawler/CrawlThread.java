@@ -18,11 +18,11 @@ import in.nimbo.moama.metrics.FloatMeter;
 import in.nimbo.moama.metrics.IntMeter;
 import in.nimbo.moama.metrics.JMXManager;
 import in.nimbo.moama.util.CrawlerPropertyType;
+import in.nimbo.moama.util.ElasticPropertyType;
 import in.nimbo.moama.util.HBasePropertyType;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
-import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.UncheckedIOException;
 import org.jsoup.nodes.Document;
@@ -30,10 +30,7 @@ import org.jsoup.nodes.Document;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class CrawlThread extends Thread {
     private static JMXManager jmxManager;
@@ -65,8 +62,10 @@ public class CrawlThread extends Thread {
     private static String scoreFamily;
     private static String outLinksFamily;
     private static int hbaseSizeLimit;
+    private static int elasticSizeBulkLimit;
 
     static {
+        elasticSizeBulkLimit=Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_SIZE_LIMIT));
         hbaseSizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(HBasePropertyType.PUT_SIZE_LIMIT));
         outLinksFamily = ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_FAMILY_OUTLINKS);
         scoreFamily = ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_FAMILY_SCORE);
@@ -87,6 +86,7 @@ public class CrawlThread extends Thread {
     }
 
 
+
     public CrawlThread(boolean isRun) {
         this.isRun = isRun;
     }
@@ -95,15 +95,17 @@ public class CrawlThread extends Thread {
     public void run() {
         LinkedList<String> urlsOfThisThread = new LinkedList<>(linkConsumer.getDocuments());
         LinkedList<Put> webDocOfThisThread = new LinkedList<>();
+        LinkedList<Map<String, String>> elasticDocOfThisThread=new LinkedList<>();
+
         while (isRun) {
-            work(urlsOfThisThread, webDocOfThisThread);
+            work(urlsOfThisThread, webDocOfThisThread,elasticDocOfThisThread);
         }
         helperProducer.pushNewURL(urlsOfThisThread.toArray(new String[0]));
 
 
     }
 
-    private void work(LinkedList<String> urlsOfThisThread, LinkedList<Put> webDocOfThisThread) {
+    private void work(LinkedList<String> urlsOfThisThread, LinkedList<Put> webDocOfThisThread, LinkedList<Map<String, String>> elasticDocOfThisThread) {
         if (urlsOfThisThread.size() < minOfEachQueue) {
             urlsOfThisThread.addAll(linkConsumer.getDocuments());
         } else {
@@ -142,8 +144,9 @@ public class CrawlThread extends Thread {
                 hbaseTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
                 //////
                 tempTime = System.currentTimeMillis();
-                JSONObject json = webDocument.documentToJson();
-                elasticManager.put(json);
+                elasticDocOfThisThread.add(webDocument.elasticMap());
+                if (elasticDocOfThisThread.size()>elasticSizeBulkLimit)
+                elasticManager.myput(elasticDocOfThisThread);
                 elasticTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
                 //////
                 complete.increment();// TODO: 8/31/18
