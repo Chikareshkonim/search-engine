@@ -6,8 +6,10 @@ import in.nimbo.moama.metrics.JMXManager;
 import in.nimbo.moama.util.ElasticPropertyType;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.HttpHost;
+import org.apache.kafka.common.protocol.types.Field;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -37,8 +39,10 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 
 public class ElasticManager {
@@ -61,8 +65,8 @@ public class ElasticManager {
     private static String clientPort;
     private static String vectorPort;
     private static String clusterName;
-    private static IntMeter elasticAdded =new IntMeter("elastic Added");
-    private TransportClient transportClient ;
+    private static IntMeter elasticAdded = new IntMeter("elastic Added");
+    private TransportClient transportClient;
 
     public ElasticManager() {
         transportClient = null;
@@ -112,10 +116,11 @@ public class ElasticManager {
             //TODO
         }
     }
-    public void newsWordTrends(){
+
+    public void newsWordTrends() {
         SearchResponse response = transportClient.prepareSearch().setQuery(QueryBuilders.matchAllQuery())
                 .addAggregation(
-                        AggregationBuilders.dateRange("data").addRange("","")
+                        AggregationBuilders.dateRange("data").addRange("", "")
                 )
                 .get();
         Terms trendTerms = response.getAggregations().get("date");
@@ -144,8 +149,8 @@ public class ElasticManager {
                 indexRequest.id(DigestUtils.md5Hex(document.getString("pageLink")));
                 bulkRequest.add(indexRequest);
                 indexRequest = new IndexRequest(index, "_doc");
-                if ( bulkRequest.numberOfActions() >= elasticFlushSizeLimit) {
-                        client.bulk(bulkRequest);
+                if (bulkRequest.numberOfActions() >= elasticFlushSizeLimit) {
+                    client.bulk(bulkRequest);
                     elasticAdded.add(bulkRequest.numberOfActions());
                     bulkRequest = new BulkRequest();
 //                    jmxManager.markNewAddedToElastic();
@@ -155,6 +160,25 @@ public class ElasticManager {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public void myput(List<Map<String, String>> docs) {
+        IndexRequest indexRequest = new IndexRequest(index, "_doc");
+        BulkRequest bulkRequest = new BulkRequest();
+
+        try {
+            docs.forEach(document -> {
+                indexRequest.source(document);
+                indexRequest.id(DigestUtils.md5Hex(document.get("pageLink")));
+                bulkRequest.add(indexRequest);
+            });
+            client.bulk(bulkRequest);
+            elasticAdded.add(bulkRequest.numberOfActions());
+            docs.clear();
+//                    jmxManager.markNewAddedToElastic();
+        } catch (IOException e) {
+            errorLogger.error("ERROR! Couldn't add the document for ", e);
         }
     }
 
