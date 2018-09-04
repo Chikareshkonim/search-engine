@@ -29,8 +29,10 @@ public class LangDetector {
         return ourInstance;
     }
     public void profileLoad() {
+
         try {
-            DetectorFactory.loadProfile(LanguageDetector.class.getResource("/profiles").getFile());
+            System.out.println(System.getProperty("user.dir"));
+            DetectorFactory.loadProfile(System.getProperty("user.dir")+"/crawler/src/main/resources/profiles");
         } catch (LangDetectException e) {
             e.printStackTrace();
         }
@@ -41,6 +43,7 @@ public class LangDetector {
         Detector detector;
         try {
             detector = DetectorFactory.create();
+            detector.setMaxTextLength(24);
             detector.append(text);
             if (!detector.detect().equals("en")) {
                 throw new IllegalLanguageException();

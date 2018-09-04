@@ -18,6 +18,7 @@ public class Listener {
     private int listenPort = DEFAULT_LISTEN_PORT;
     private Class functionClass;
     private boolean isListening = true;
+    private String lastFunc;
 
     private String findMethodName(String input) {
         String[] strings = input.toLowerCase().split(" +");
@@ -37,9 +38,12 @@ public class Listener {
                 if (funcName.equals("close")) {
                     close(out, scanner);
                     return;
+                }else if (funcName.equals("\u001B[a")){
+                    funcName=lastFunc;
                 }
                 method = functionClass.getMethod(funcName, PrintStream.class, Scanner.class);
                 method.invoke(null, out, scanner);
+                lastFunc=funcName;
                 endMethod(out, scanner);
             } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
                 e.printStackTrace(out);

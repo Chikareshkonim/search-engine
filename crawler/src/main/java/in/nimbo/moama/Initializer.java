@@ -5,12 +5,14 @@ import in.nimbo.moama.crawler.CrawlerManager;
 import in.nimbo.moama.crawler.Parser;
 import in.nimbo.moama.crawler.language.LangDetector;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 public class Initializer {
     public static void initialize() throws IOException {
-        InputStream fileInputStream = CrawlerManager.class.getResourceAsStream("/crawler.properties");
+        InputStream fileInputStream = new FileInputStream(System.getProperty("user.dir")+
+                "/crawler/src/main/resources/crawler.properties");
         ConfigManager configManager=ConfigManager.getInstance();
         configManager.load(fileInputStream,ConfigManager.FileType.PROPERTIES);
         LangDetector langDetector = LangDetector.getInstance();
