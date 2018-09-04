@@ -2,7 +2,6 @@ package in.nimbo.moama;
 
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.metrics.IntMeter;
-import in.nimbo.moama.metrics.JMXManager;
 import in.nimbo.moama.util.ElasticPropertyType;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.HttpEntity;
@@ -15,43 +14,30 @@ import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.action.termvectors.TermVectorsRequest;
-import org.elasticsearch.action.termvectors.TermVectorsResponse;
 import org.elasticsearch.client.*;
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.xcontent.ToXContent;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
-import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-
-import org.elasticsearch.search.aggregations.AggregationBuilders;
 
 public class ElasticManager {
 
     private RestHighLevelClient client;
     private String index;
     private String test;
-    private Logger errorLogger = Logger.getLogger(ElasticManager.class);
+    private Logger logger = Logger.getLogger(ElasticManager.class);
     private IndexRequest indexRequest;
     private BulkRequest bulkRequest;
     private static int added = 0;
@@ -70,6 +56,7 @@ public class ElasticManager {
     private TransportClient transportClient ;
     private RestClient restClient;
     private static int NUMBER_OF_KEYWORDS;
+
     public ElasticManager() {
         transportClient = null;
         NUMBER_OF_KEYWORDS = 5;
@@ -96,23 +83,22 @@ public class ElasticManager {
     }
 
     //TODO
-    public void getTermVector(String id) throws IOException {
+    public void getTermVector(String ids) throws IOException {
         Map<String, String> params = Collections.emptyMap();
-        String jsonString =
-                "{"
-                        + "\"fields\" : [\"text\"],"
-                        + "\"term_statistics\" : true,"
-                        + "\"field_statistics\" : true,"
-                        + "\"positions\" : false,"
-                        + "\"offsets\" : false,"
-                        + "\"filter\": {"
-                        + "\"max_num_terms\" : "
-                        + NUMBER_OF_KEYWORDS
-                        + "}"
-                        + "}";
+        String jsonString = "{\n" +
+                "\t\"ids\" : ["+ids+"],\n" +
+                "\t\"parameters\": {\n" +
+                "\t\"fields\" : [\"content\"],\n" +
+                "   \"offsets\" : true ,\n" +
+                "   \"payloads\" : true,\n" +
+                "   \"positions\" : true,\n" +
+                "   \"term_statistics\": true,\n" +
+                "   \"field_statistics\": true\n" +
+                "\t}\n" +
+                "   }";
         HttpEntity entity = new NStringEntity(jsonString, ContentType.APPLICATION_JSON);
         Response response =
-                restClient.performRequest("GET", "/" + index + "/_doc/" + id + "/_termvectors", params, entity);
+                restClient.performRequest("POST", "/" + index + "/_doc/_mtermvectors", params, entity);
         // System.out.println(response.toString());
         BufferedReader reader =
                 new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
@@ -123,41 +109,28 @@ public class ElasticManager {
         }
         System.out.println(out.toString());
         JSONObject jsonObject = new JSONObject(out.toString());
-        JSONObject jsonArray = jsonObject.getJSONObject("term_vectors").getJSONObject("text").getJSONObject("terms");
-        System.out.println(jsonArray.getJSONObject("lasttest1"));
-        for (String key : jsonArray.keySet()) {
-            System.out.println(key + "=" + jsonArray.get(key)); // to get the value
-        }
+
+//        JSONObject jsonArray = jsonObject.getJSONObject("term_vectors").getJSONObject("content").getJSONObject("terms");
+//        for (String key : jsonArray.keySet()) {
+//            System.out.println(key + "=" + jsonArray.get(key)); // to get the value
+//        }
     }
 
-    public List<String> newsWordTrends(String toDate , String fromDate) throws IOException {
+    public List<String> newsWordTrends(String date ) throws IOException {
         Map<String, String> params = Collections.emptyMap();
         String jsonString ="{\n" +
-                "\t\"aggs\":{\n" +
-                "\t\t\"range\": {\n" +
-                "           \"date_range\": {\n" +
-                "               \"field\": \"date\",\n" +
-                "               \"format\": \"yyyy-mm-dd\",\n" +
-                "               \"ranges\": [\n" +
-                "                   { \"to\":"+ toDate+"},\n" +
-                "                   { \"from\":"+fromDate+"}\n" +
-                "               ],\n" +
-                "               \"keyed\": true\n" +
-                "            }\n" +
-                "            ,\n" +
-                "           \"aggs\":{\n" +
-                "\t\t\t\"categories\": {\n" +
-                "        \t\t\"terms\": {\n" +
-                "            \t\t\"field\": \"content\"\n" +
-                "        \t\t\t}\n" +
-                "        \t\t}\n" +
-                "        \t}\n" +
-                "\t\t}\n" +
-                "\t}\n" +
+                "    \"query\" : {\n" +
+                "        \"terms\" : {\"date\" : [ \"2015-02-14\" ]}\n" +
+                "    },\n" +
+                "    \"aggregations\" : {\n" +
+                "        \"test\" : {\n" +
+                "            \"terms\" : { \"field\" : \"content\" }\n" +
+                "        }\n" +
+                "    }\n" +
                 "}";
         HttpEntity entity = new NStringEntity(jsonString, ContentType.APPLICATION_JSON);
         Response response =
-                restClient.performRequest("POST","/test/_search",params,entity );
+                restClient.performRequest("POST","/"+index+"/_search?size=0",params,entity );
         BufferedReader reader =
                 new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
         StringBuilder out = new StringBuilder();
@@ -165,6 +138,7 @@ public class ElasticManager {
         while ((line = reader.readLine()) != null) {
             out.append(line);
         }
+        System.out.println(line);
         JSONObject jsonObject = new JSONObject(out.toString());
         JSONObject buckets = jsonObject.getJSONObject("aggregations").getJSONObject("range").getJSONObject("buckets");
         Set<String> keys = buckets.keySet();
@@ -194,7 +168,7 @@ public class ElasticManager {
                             }
                         } catch (IOException e) {
                             e.printStackTrace();
-                            errorLogger.error("ERROR! couldn't add " + document.get(key) + " to elastic");
+                            logger.error("ERROR! couldn't add " + document.get(key) + " to elastic");
                         }
                     });
                 }
@@ -210,7 +184,7 @@ public class ElasticManager {
 //                    jmxManager.markNewAddedToElastic();
                 }
             } catch (IOException e) {
-                errorLogger.error("ERROR! Couldn't add the document for " + document.get("pageLink"));
+                logger.error("ERROR! Couldn't add the document for " + document.get("pageLink"));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -234,7 +208,7 @@ public class ElasticManager {
         } catch (IOException e) {
             System.out.println(e.getMessage());
             e.printStackTrace();
-            errorLogger.error("ERROR! Couldn't add the document for ", e);
+            logger.error("ERROR! Couldn't add the document for ", e);
         }
     }
 

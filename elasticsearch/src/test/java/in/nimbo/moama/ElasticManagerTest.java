@@ -93,13 +93,17 @@ public class ElasticManagerTest {
         elasticManager.put(document);
     }
     @Test
-    public void aggTest(){
+    public void aggTest() throws IOException {
+            assertEquals("group",
+                    elasticManager.newsWordTrends("\"2015-02-14\"")
+                            .get(0));
+    }
+    @Test
+    public void getTermvectorTest(){
         try {
-
-            assertEquals("group",elasticManager.newsWordTrends("\"2015-02-14\"","\"2015-02-14\"").get(0));
+            elasticManager.getTermVector("\"1\",\"2\"");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
 }
