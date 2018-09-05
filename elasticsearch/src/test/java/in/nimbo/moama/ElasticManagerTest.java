@@ -99,11 +99,7 @@ public class ElasticManagerTest {
                             .get(0));
     }
     @Test
-    public void getTermvectorTest(){
-        try {
+    public void getTermvectorTest() throws IOException {
             elasticManager.getTermVector("\"1\",\"2\"");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }

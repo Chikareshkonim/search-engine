@@ -138,19 +138,11 @@ public class ElasticManager {
         while ((line = reader.readLine()) != null) {
             out.append(line);
         }
-        System.out.println(line);
         JSONObject jsonObject = new JSONObject(out.toString());
-        JSONObject buckets = jsonObject.getJSONObject("aggregations").getJSONObject("range").getJSONObject("buckets");
-        Set<String> keys = buckets.keySet();
-        List<JSONArray> arrays = new LinkedList<>();
-        for (String key : keys) {
-            arrays.add(buckets.getJSONObject(key).getJSONObject("categories").getJSONArray("buckets"));
-        }
+        JSONArray buckets = jsonObject.getJSONObject("aggregations").getJSONObject(index).getJSONArray("buckets");
         List<String> keywords = new LinkedList<>();
-        for (JSONArray array:arrays) {
-            for (Object anArray : array) {
-                keywords.add(((JSONObject) anArray).getString("key"));
-            }
+        for (Object bucket : buckets) {
+            keywords.add(((JSONObject)bucket).getString("key"));
         }
         return keywords;
     }

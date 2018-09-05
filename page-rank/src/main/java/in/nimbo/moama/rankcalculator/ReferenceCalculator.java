@@ -47,22 +47,26 @@ public class ReferenceCalculator {
         hbaseConf.set(TableInputFormat.INPUT_TABLE, String.valueOf(webPageTable));
         hbaseConf.set(TableInputFormat.SCAN_COLUMN_FAMILY, contentFamily);
     }
-    public void calculate(){
-        JavaPairRDD<String,Integer> input = getFromHBase();
-        JavaPairRDD<String,Integer> result = input.reduceByKey((value1,value2)-> value1+value2);
+
+    public void calculate() {
+        JavaPairRDD<String, Integer> input = getFromHBase();
+        JavaPairRDD<String, Integer> result = input.reduceByKey((value1, value2) -> value1 + value2);
         writeToHBase(result);
 
     }
+
     private JavaPairRDD<String, Integer> getFromHBase() {
         JavaPairRDD<ImmutableBytesWritable, Result> data = sparkContext.newAPIHadoopRDD(hbaseConf, TableInputFormat.class,
                 ImmutableBytesWritable.class, Result.class);
-        return data.flatMapToPair(pair->{
-            List<Tuple2<String,Integer>> resultList = new ArrayList<>();
+        return data.flatMapToPair(pair -> {
+            List<Tuple2<String, Integer>> resultList = new ArrayList<>();
             List<Cell> cells = pair._2.listCells();
-            cells.forEach(cell -> resultList.add(new Tuple2<>(Bytes.toString(CellUtil.cloneQualifier(cell)),1)));
+            if (!cells.isEmpty())
+                cells.forEach(cell -> resultList.add(new Tuple2<>(Bytes.toString(CellUtil.cloneQualifier(cell)), 1)));
             return resultList.iterator();
         });
     }
+
     private void writeToHBase(JavaPairRDD<String, Integer> toWrite) {
         try {
             Job jobConfig = Job.getInstance(hbaseConf);
@@ -73,7 +77,7 @@ public class ReferenceCalculator {
                     Put put = new Put(Bytes.toBytes(pair._1));
                     put.addColumn(refrenceFamilyName.getBytes(), refrenceColumn.getBytes(), Bytes.toBytes(pair._2));
                     return new Tuple2<>(new ImmutableBytesWritable(), put);
-                }catch (Exception e){
+                } catch (Exception e) {
                     logger.error(e.getMessage());
                 }
                 return null;
