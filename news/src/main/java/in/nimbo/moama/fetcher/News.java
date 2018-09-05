@@ -2,6 +2,9 @@ package in.nimbo.moama.fetcher;
 
 import org.json.JSONObject;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class News {
     private NewsInfo newsInfo;
     private String content;
@@ -32,5 +35,14 @@ public class News {
         jsonDocument.put("title", newsInfo.getTitle());
         jsonDocument.put("date", newsInfo.getDate());
         return jsonDocument;
+    }
+
+    public Map<String, String> getDocument() {
+        Map<String, String> result = new HashMap<>();
+        result.put("pageLink", newsInfo.getUrl());
+        result.put("content", content);
+        result.put("title", newsInfo.getTitle());
+        result.put("date", newsInfo.getDate());
+        return result;
     }
 }

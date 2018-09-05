@@ -15,7 +15,6 @@ public class RSSReader implements Runnable {
     @Override
     public void run() {
         while (true) {
-            System.out.println("reading rss...");
             RSSs.getInstance().getRssToDomainMap().entrySet().stream().parallel().forEach(entry -> {
                 if (RSSs.getInstance().isPolite(entry.getValue())) {
                     try {

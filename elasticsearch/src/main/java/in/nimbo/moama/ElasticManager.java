@@ -11,11 +11,13 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.*;
+import org.elasticsearch.client.Response;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
@@ -199,7 +201,7 @@ public class ElasticManager {
             elasticAdded.add(bulkRequest.numberOfActions());
             jmxManager.markNewAddedToElastic(bulkRequest.numberOfActions());
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
             logger.error("ERROR! Couldn't add the document for ", e);
         }
     }

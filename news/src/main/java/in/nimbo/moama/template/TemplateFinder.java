@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 
 public class TemplateFinder {
     public static void main(String[] args) throws IOException {
-        System.out.println(findTemplate("http://www.asriran.com/fa/rss/1", "link"));
+        System.out.println(findTemplate("https://www.huffingtonpost.com/section/world-news/feed", "link"));
     }
 
     public static Template findTemplate(String rss, String newsTag) throws IOException {

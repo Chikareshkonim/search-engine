@@ -14,7 +14,7 @@ public class RSSs {
     private static final int MAX_CAPACITY = Integer.parseInt(ConfigManager.getInstance().getProperty(CACHE_MAX_CAPACITY));
     private static final int INITIAL_POLITE_CAPACITY = 1000;
     private static final int MAX_POLITE_CAPACITY = 100;
-    private static final long POLITE_WAIT_TIME = 30;
+    private static final long POLITE_WAIT_TIME = 30 * 1000;
     private HBaseManager hBaseManager = new HBaseManager(ConfigManager.getInstance().getProperty(NEWS_PAGES_TABLE),
             ConfigManager.getInstance().getProperty(HBASE_VISITED_FAMILY));
 

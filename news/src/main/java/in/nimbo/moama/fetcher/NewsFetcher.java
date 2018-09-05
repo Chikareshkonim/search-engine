@@ -2,10 +2,11 @@ package in.nimbo.moama.fetcher;
 
 import in.nimbo.moama.ElasticManager;
 import in.nimbo.moama.NewsHBaseManager;
+import in.nimbo.moama.RSSs;
 import in.nimbo.moama.configmanager.ConfigManager;
 
 import java.io.IOException;
-import java.util.LinkedList;
+import java.util.*;
 
 import static in.nimbo.moama.newsutil.NewsPropertyType.*;
 
@@ -31,7 +32,6 @@ public class NewsFetcher implements Runnable {
             Thread thread = new Thread(() -> {
                 LinkedList<NewsInfo> list = new LinkedList<>();
                 while (true) {
-                    System.out.println("fetching news");
                     if (list.size() < 1) {
                         try {
                             list.addAll(newsQueue.getUrls());
@@ -41,11 +41,17 @@ public class NewsFetcher implements Runnable {
                     }
                     try {
                         NewsInfo newsInfo = list.removeFirst();
-                        String text = NewsParser.parse(newsInfo.getDomain(), newsInfo.getUrl());
-                        News news = new News(newsInfo, text);
-                        elasticManager.put(news.documentToJson());
-                        newsHBaseManager.put(news.documentToJson());
-                        System.out.println(news.getNewsInfo().getUrl());
+                        if (RSSs.getInstance().isPolite(newsInfo.getDomain())) {
+                            String text = NewsParser.parse(newsInfo.getDomain(), newsInfo.getUrl());
+                            News news = new News(newsInfo, text);
+                            if (!RSSs.getInstance().isSeen(news.getNewsInfo().getUrl())) {
+                                elasticManager.myput(Collections.singletonList(news.getDocument()));
+                                newsHBaseManager.put(news.documentToJson());
+                            }
+                            System.out.println("completed " + news.getNewsInfo().getUrl());
+                        } else {
+                            list.addLast(newsInfo);
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

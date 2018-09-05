@@ -10,13 +10,12 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.json.JSONObject;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Set;
+import java.util.*;
+
 import static org.junit.Assert.assertEquals;
 public class ElasticManagerTest {
     private RestHighLevelClient client;
@@ -85,12 +84,14 @@ public class ElasticManagerTest {
 
     @Test
     public void putTest(){
-        JSONObject document = new JSONObject();
-        document.put("pageLink","me.com");
-        document.put("content","gdsfghshgssjsjfsjsfj");
+        Map<String, String> document = new HashMap<>();
+        document.put("pageLink","naive.com");
+        document.put("content","gdshgssjsjfsjsfj");
         document.put("title","yes");
-        document.put("date","2015-01-01");
-        elasticManager.put(document);
+        document.put("date","Sun, 02 Sep 2018 10:33:34 +0430");
+        List<Map<String, String>> list = new ArrayList<>();
+        list.add(document);
+        elasticManager.myput(list);
     }
     @Test
     public void aggTest() throws IOException {
