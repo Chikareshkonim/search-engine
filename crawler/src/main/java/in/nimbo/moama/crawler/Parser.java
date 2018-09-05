@@ -43,7 +43,7 @@ public class Parser {
     }
 
     public WebDocument parse(Document document ,String url) throws IllegalLanguageException, IOException {
-//        jmxManager.markNewUrlReceived();
+        jmxManager.markNewUrlReceived();
         long tempTime = System.currentTimeMillis();
         String text = document.text();
         WebDocument webDocument = new WebDocument();
@@ -52,14 +52,14 @@ public class Parser {
         checkLanguage(document, text);
         languagePassed.increment();
         langDetectTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
-//        jmxManager.markNewLanguagePassed();
+        jmxManager.markNewLanguagePassed();
         Link[] links = UrlHandler.getLinks(document.getElementsByTag("a"), new URL(url).getHost());
         webDocument.setTextDoc(text);
         webDocument.setTitle(document.title());
         webDocument.setPageLink(url);
         webDocument.setLinks(new ArrayList<>(Arrays.asList(links)));
         crawledPage.increment();
-//        jmxManager.markNewCrawledPage();
+        jmxManager.markNewCrawledPage();
 
         return webDocument;
     }

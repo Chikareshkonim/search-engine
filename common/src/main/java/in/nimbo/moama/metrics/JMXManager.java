@@ -43,21 +43,20 @@ public class JMXManager extends Meter {
         numberOfDomainError.mark();
     }
 
-    public void markNewCrawledPage(){
-        numberOfCrawledPage.mark();
-    }
+    public void markNewCrawledPage(){ numberOfCrawledPage.mark(); }
 
     public void markNewLanguagePassed(){
         numberOfLanguagePassed.mark();
     }
 
-    public void markNewAddedToElastic(){
-        numberOfPagesAddedToElastic.mark();
+    public void markNewAddedToElastic(long number){
+        numberOfPagesAddedToElastic.mark(number);
     }
 
-    public void markNewAddedToHBase(){
-        numberOfPagesAddedToHBase.mark();
+    public void markNewAddedToHBase(long number){
+        numberOfPagesAddedToHBase.mark(number);
     }
+
     public void markNewComplete(){
         numberOfComplete.mark();
     }

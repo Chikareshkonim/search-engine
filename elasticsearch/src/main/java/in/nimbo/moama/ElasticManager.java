@@ -2,6 +2,7 @@ package in.nimbo.moama;
 
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.metrics.IntMeter;
+import in.nimbo.moama.metrics.JMXManager;
 import in.nimbo.moama.util.ElasticPropertyType;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.HttpEntity;
@@ -56,6 +57,7 @@ public class ElasticManager {
     private TransportClient transportClient ;
     private RestClient restClient;
     private static int NUMBER_OF_KEYWORDS;
+    private JMXManager jmxManager = JMXManager.getInstance();
 
     public ElasticManager() {
         transportClient = null;
@@ -120,7 +122,7 @@ public class ElasticManager {
         Map<String, String> params = Collections.emptyMap();
         String jsonString ="{\n" +
                 "    \"query\" : {\n" +
-                "        \"terms\" : {\"date\" : [ \"2015-02-14\" ]}\n" +
+                "        \"terms\" : {\"date\" : [ "+date+" ]}\n" +
                 "    },\n" +
                 "    \"aggregations\" : {\n" +
                 "        \"test\" : {\n" +
@@ -196,7 +198,7 @@ public class ElasticManager {
             client.bulk(bulkRequest);
             elasticAdded.add(bulkRequest.numberOfActions());
             docs.clear();
-//                    jmxManager.markNewAddedToElastic();
+            jmxManager.markNewAddedToElastic(bulkRequest.numberOfActions());
         } catch (IOException e) {
             System.out.println(e.getMessage());
             e.printStackTrace();

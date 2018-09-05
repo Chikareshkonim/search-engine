@@ -42,8 +42,8 @@ public class WebDocumentHBaseManager extends HBaseManager {
             t.put(webDocOfThisThread);
             numberOfPagesAddedToHBase.add(webDocOfThisThread.size());
             webDocOfThisThread.clear();
-            jmxManager.markNewAddedToHBase();
             size = 0;
+            jmxManager.markNewAddedToHBase(webDocOfThisThread.size());
         } catch (IOException e) {
             e.printStackTrace();
             errorLogger.error("couldn't put  into HBase!", e);
