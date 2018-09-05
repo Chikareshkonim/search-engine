@@ -84,6 +84,7 @@ public class ElasticManager {
         bulkRequest = new BulkRequest();
     }
 
+
     //TODO
     public void getTermVector(String ids) throws IOException {
         Map<String, String> params = Collections.emptyMap();
@@ -101,7 +102,6 @@ public class ElasticManager {
         HttpEntity entity = new NStringEntity(jsonString, ContentType.APPLICATION_JSON);
         Response response =
                 restClient.performRequest("POST", "/" + index + "/_doc/_mtermvectors", params, entity);
-        // System.out.println(response.toString());
         BufferedReader reader =
                 new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
         StringBuilder out = new StringBuilder();
@@ -122,7 +122,7 @@ public class ElasticManager {
         Map<String, String> params = Collections.emptyMap();
         String jsonString ="{\n" +
                 "    \"query\" : {\n" +
-                "        \"terms\" : {\"date\" : [ "+date+" ]}\n" +
+                "        \"terms\" : {\"date\" : [ "+date+"]}\n" +
                 "    },\n" +
                 "    \"aggregations\" : {\n" +
                 "        \"test\" : {\n" +
@@ -146,6 +146,7 @@ public class ElasticManager {
         for (Object bucket : buckets) {
             keywords.add(((JSONObject)bucket).getString("key"));
         }
+        logger.error("teeeeeeeeeeeeeeeeeessssssttttt");
         return keywords;
     }
 
@@ -161,7 +162,6 @@ public class ElasticManager {
                                 builder.field(key, document.get(key));
                             }
                         } catch (IOException e) {
-                            e.printStackTrace();
                             logger.error("ERROR! couldn't add " + document.get(key) + " to elastic");
                         }
                     });
@@ -201,7 +201,6 @@ public class ElasticManager {
             jmxManager.markNewAddedToElastic(bulkRequest.numberOfActions());
         } catch (IOException e) {
             System.out.println(e.getMessage());
-            e.printStackTrace();
             logger.error("ERROR! Couldn't add the document for ", e);
         }
     }

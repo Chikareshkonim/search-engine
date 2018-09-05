@@ -34,7 +34,7 @@ import java.util.*;
 
 public class CrawlThread extends Thread {
     private static JMXManager jmxManager;
-    private static Logger logger = Logger.getLogger(CrawlThread.class);
+    private static final Logger LOGGER = Logger.getLogger(CrawlThread.class);
     private final boolean isRun;
     private static final Parser parser;
     private static final MoamaProducer helperProducer;
@@ -159,19 +159,19 @@ public class CrawlThread extends Thread {
             } catch (UncheckedIOException e) {
                 duplicateChecker.weakConfirm(url);
                 ioUncheckException.increment();
-                logger.info(e.getMessage(), e);
+                LOGGER.info(e.getMessage(), e);
             } catch (IllegalArgumentException e) {
-                logger.trace("IllegalArgumentException");
+                LOGGER.trace("IllegalArgumentException");
             } catch (MalformedURLException e) {
                 duplicateChecker.weakConfirm(url);
-                logger.warn(url + " is malformed!");
+                LOGGER.warn(url + " is malformed!");
             } catch (IOException e) {
-                logger.trace("Jsoup connection to " + url + " failed");
+                LOGGER.trace("Jsoup connection to " + url + " failed");
             } catch (URLException e) {
                 duplicateChecker.weakConfirm(url);
-                logger.trace("url exception", e);
+                LOGGER.trace("url exception", e);
             } catch (RuntimeException e) {
-                logger.error("important" + e.getMessage(), e);
+                LOGGER.error("important" + e.getMessage(), e);
                 throw e;
             }
         }
