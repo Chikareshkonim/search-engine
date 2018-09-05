@@ -15,7 +15,6 @@ public class CrawlerManager implements Reconfigurable  {
     private static final Logger errorLogger = Logger.getLogger(CrawlerManager.class);
     private final MoamaProducer mainProducer;
     private final MoamaConsumer helperConsumer;
-
     private static int crawlerThreadPriority;
     private static int shuffleSize;
     private LinkedList<Thread> crawlerThreadList = new LinkedList<>();

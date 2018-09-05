@@ -43,7 +43,6 @@ public class LangDetector {
         Detector detector;
         try {
             detector = DetectorFactory.create();
-            detector.setMaxTextLength(24);
             detector.append(text);
             if (!detector.detect().equals("en")) {
                 throw new IllegalLanguageException();

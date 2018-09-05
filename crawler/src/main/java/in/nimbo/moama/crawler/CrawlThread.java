@@ -148,8 +148,10 @@ public class CrawlThread extends Thread {
                 //////
                 tempTime = System.currentTimeMillis();
                 elasticDocOfThisThread.add(webDocument.elasticMap());
-                if (elasticDocOfThisThread.size() > elasticSizeBulkLimit)
+                if (elasticDocOfThisThread.size() > elasticSizeBulkLimit){
                     elasticManager.myput(elasticDocOfThisThread);
+                    elasticDocOfThisThread.clear();
+                }
                 elasticTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
                 //////
                 complete.increment();// TODO: 8/31/18

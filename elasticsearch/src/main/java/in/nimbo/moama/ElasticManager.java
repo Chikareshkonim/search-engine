@@ -197,7 +197,6 @@ public class ElasticManager {
         try {
             client.bulk(bulkRequest);
             elasticAdded.add(bulkRequest.numberOfActions());
-            docs.clear();
             jmxManager.markNewAddedToElastic(bulkRequest.numberOfActions());
         } catch (IOException e) {
             System.out.println(e.getMessage());
