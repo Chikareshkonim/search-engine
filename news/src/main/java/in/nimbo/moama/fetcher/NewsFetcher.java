@@ -19,6 +19,7 @@ public class NewsFetcher implements Runnable {
     private ElasticManager elasticManager;
     private static final int FETCHER_THREADS = Integer.parseInt(ConfigManager.getInstance().getProperty(NUMBER_OF_FETCHER_THREADS));
     private static final int FETCHER_PRIORITY = Integer.parseInt(ConfigManager.getInstance().getProperty(FETCHER_THREAD_PRIORITY));
+    private static final int SLEEP_TIME = Integer.parseInt(ConfigManager.getInstance().getProperty(NEWS_FETCHER_WAIT));
     private static FloatMeter floatMeter = new FloatMeter("NewsFetcherTime");
 
     public NewsFetcher(NewsURLQueue<NewsInfo> newsQueue) {
@@ -36,7 +37,7 @@ public class NewsFetcher implements Runnable {
                 LinkedList<NewsInfo> list = new LinkedList<>();
                 while (true) {
                     try {
-                        Thread.sleep(10);
+                        Thread.sleep(SLEEP_TIME);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -64,7 +65,7 @@ public class NewsFetcher implements Runnable {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    floatMeter.add((System.currentTimeMillis() - initTime) / 1000);
+                    floatMeter.add((float) (System.currentTimeMillis() - initTime) / 1000);
                 }
             });
             thread.setPriority(FETCHER_PRIORITY);
