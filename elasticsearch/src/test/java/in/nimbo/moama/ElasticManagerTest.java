@@ -17,11 +17,13 @@ import java.io.IOException;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+
 public class ElasticManagerTest {
     private RestHighLevelClient client;
     private IndexRequest indexRequest;
     private BulkRequest bulkRequest;
     private ElasticManager elasticManager;
+
     @Before
     public void setUp() throws IOException {
         ConfigManager.getInstance().load(getClass().getResourceAsStream("/config.properties"), ConfigManager.FileType.PROPERTIES);
@@ -29,10 +31,10 @@ public class ElasticManagerTest {
     }
 
     @Test
-    public void testElastic(){
+    public void testElastic() {
         client = new RestHighLevelClient(
                 RestClient.builder(new HttpHost("46.4.120.138", 9200, "http")));
-        indexRequest = new IndexRequest("newspages","_doc");
+        indexRequest = new IndexRequest("newspages", "_doc");
         bulkRequest = new BulkRequest();
         WebDocument documentTest = new WebDocument();
         documentTest.setPageLink("http://b.com");
@@ -40,10 +42,10 @@ public class ElasticManagerTest {
         documentTest.setTitle("woww");
         documentTest.setLinks(new ArrayList<>());
         JSONObject document = new JSONObject();
-        document.put("url","f.com");
-        document.put("content","");
-        document.put("title","yes");
-        document.put("date","2015-01-01");
+        document.put("url", "f.com");
+        document.put("content", "");
+        document.put("title", "yes");
+        document.put("date", "2015-01-01");
         System.out.println(document);
         try {
             XContentBuilder builder = XContentFactory.jsonBuilder();
@@ -59,48 +61,55 @@ public class ElasticManagerTest {
                             }
                         } catch (IOException e) {
                             e.printStackTrace();
-                            System.out.println("ERROR");                        }
+                            System.out.println("ERROR");
+                        }
                     });
                 }
                 System.out.println(builder.toString());
                 builder.endObject();
                 indexRequest.source(builder);
                 bulkRequest.add(indexRequest);
-                indexRequest = new IndexRequest("test","_doc");
+                indexRequest = new IndexRequest("test", "_doc");
                 if (bulkRequest.estimatedSizeInBytes() >= 1 ||
                         bulkRequest.numberOfActions() >= 1) {
-                        System.out.println(bulkRequest.numberOfActions());
-                        client.bulk(bulkRequest);
-                        bulkRequest = new BulkRequest();
-                        System.out.println("added                     ");
+                    System.out.println(bulkRequest.numberOfActions());
+                    client.bulk(bulkRequest);
+                    bulkRequest = new BulkRequest();
+                    System.out.println("added                     ");
 //                    jmxManager.markNewAddedToElastic();
-                    }
-                } catch (IOException e) {
-                System.out.println("ERROR");            }
+                }
+            } catch (IOException e) {
+                System.out.println("ERROR");
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     @Test
-    public void putTest(){
+    public void putTest() {
         Map<String, String> document = new HashMap<>();
-        document.put("pageLink","naive.com");
-        document.put("content","gdshgssjsjfsjsfj");
-        document.put("title","yes");
-        document.put("date","Sun, 02 Sep 2018 10:33:34 +0430");
+        document.put("pageLink", "naive.com");
+        document.put("content", "gdshgssjsjfsjsfj");
+        document.put("title", "yes");
+        document.put("date", "Sun, 02 Sep 2018 10:33:34 +0430");
         List<Map<String, String>> list = new ArrayList<>();
         list.add(document);
         elasticManager.myput(list);
     }
+
     @Test
     public void aggTest() throws IOException {
-            assertEquals("group",
-                    elasticManager.newsWordTrends("\"2015-02-14\"")
-                            .get(0));
+        assertEquals("group",
+                elasticManager.newsWordTrends("Sun, 02 Sep 2018")
+                        .get(0));
     }
+
     @Test
     public void getTermvectorTest() throws IOException {
-            elasticManager.getTermVector("\"1\",\"2\"");
+        ArrayList<String> test = new ArrayList<>();
+        test.add("1");
+        test.add("2");
+        elasticManager.getTermVector(test.toString());
     }
 }

@@ -84,6 +84,7 @@ public class ElasticManager {
 
         indexRequest = new IndexRequest(index, "_doc");
         bulkRequest = new BulkRequest();
+
     }
 
 
@@ -91,7 +92,7 @@ public class ElasticManager {
     public Map<String, Map<String, Double>> getTermVector(String ids) throws IOException {
         Map<String, String> params = Collections.emptyMap();
         String jsonString = "{\n" +
-                "\t\"ids\" : [" + ids + "],\n" +
+                "\t\"ids\" : " + ids + ",\n" +
                 "\t\"parameters\": {\n" +
                 "\t\"fields\" : [\"content\"],\n" +
                 "   \"offsets\" : true ,\n" +
@@ -123,14 +124,28 @@ public class ElasticManager {
 
     public List<String> newsWordTrends(String date) throws IOException {
         Map<String, String> params = Collections.emptyMap();
-        String jsonString = "{\n" +
-                "    \"query\" : {\n" +
-                "        \"terms\" : {\"date\" : [ " + date + "]}\n" +
-                "    },\n" +
-                "    \"aggregations\" : {\n" +
-                "        \"test\" : {\n" +
-                "            \"terms\" : { \"field\" : \"content\" }\n" +
+        String jsonString = "{\"size\":0,\n" +
+                "    \t\"aggs\":{\n" +
+                "    \t\t\"range\":{\n" +
+                "    \t\"date_range\": {\n" +
+                "                \"field\": \"date\",\n" +
+                "                \"format\": \"EEE, dd MMM yyyy\",\n" +
+                "                \"ranges\": [\n" +
+                "                    { \"to\": \""+date+"\" },\n" +
+                "                    { \"from\": \""+date+"\" }\n" +
+                "                ],\n" +
+                "                \"keyed\": true\n" +
+                "            }\n" +
+                "    \t\n" +
+                "    \t\t\t,\n" +
+                "    \t\"aggs\":{\n" +
+                "        \""+index+"\" : {\n" +
+                "            \"terms\" : { \"field\" : \"content\" \n" +
+                "            \t,\"size\":5\n" +
+                "            }\n" +
                 "        }\n" +
+                "    \t}\t\n" +
+                "    \t\t}\n" +
                 "    }\n" +
                 "}";
         HttpEntity entity = new NStringEntity(jsonString, ContentType.APPLICATION_JSON);
@@ -143,6 +158,7 @@ public class ElasticManager {
         while ((line = reader.readLine()) != null) {
             out.append(line);
         }
+        System.out.println(out.toString());
         JSONObject jsonObject = new JSONObject(out.toString());
         JSONArray buckets = jsonObject.getJSONObject("aggregations").getJSONObject(index).getJSONArray("buckets");
         List<String> keywords = new LinkedList<>();
