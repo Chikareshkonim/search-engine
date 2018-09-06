@@ -5,6 +5,9 @@ import in.nimbo.moama.fetcher.NewsFetcher;
 import in.nimbo.moama.fetcher.NewsInfo;
 import in.nimbo.moama.fetcher.NewsURLQueue;
 import in.nimbo.moama.fetcher.RSSReader;
+import in.nimbo.moama.listener.Function;
+import in.nimbo.moama.listener.Listener;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 
@@ -16,17 +19,19 @@ import static in.nimbo.moama.newsutil.NewsPropertyType.*;
  *
  */
 public class App {
+    private static final Logger LOGGER = Logger.getLogger(App.class);
 
     public static void main(String[] args) throws IOException {
         ConfigManager.getInstance().load(App.class.getResourceAsStream("/news.properties"), PROPERTIES);
+        new Listener().listen(Function.class, Integer.parseInt(ConfigManager.getInstance().getProperty(NEWS_LISTENER_PORT)));
         if (createTable()) {
             int newsCapacity = Integer.parseInt(ConfigManager.getInstance().getProperty(NEWS_QUEUE_CAPACITY));
             NewsURLQueue<NewsInfo> news = new Queue<>(newsCapacity);
             RSSReader reader = new RSSReader(news);
-            System.out.println("created rss reader");
+            LOGGER.trace("websites table is up");
             new Thread(reader).start();
             NewsFetcher fetcher = new NewsFetcher(news);
-            System.out.println("created news fetcher");
+            LOGGER.trace("created news fetchers");
             new Thread(fetcher).start();
         } else {
             System.out.println("Failed to create table!");

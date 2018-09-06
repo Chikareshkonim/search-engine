@@ -52,6 +52,7 @@ public class CrawlThread extends Thread {
     private static IntMeter domainError = new IntMeter("domain Error   ");
     private static IntMeter ioUncheckException = new IntMeter("Unchecked io Exception");
     private static IntMeter urlReceived=new IntMeter("url received");
+
     private static FloatMeter checkTime = new FloatMeter("check url Time ");
     private static FloatMeter parseTime = new FloatMeter("parse url Time ");
     private static FloatMeter hbaseTime = new FloatMeter("hbase put Time ");

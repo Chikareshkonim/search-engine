@@ -2,10 +2,8 @@ package in.nimbo.moama.crawler.domainvalidation;
 
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.util.CrawlerPropertyType;
-import org.apache.log4j.Logger;
 
 public class DomainFrequencyHandler {
-    private static Logger errorLogger = Logger.getLogger("error");
     private static final DomainFrequencyHandler ourInstance=new DomainFrequencyHandler();
     private static int politeTime;
     private static int hashPrime;

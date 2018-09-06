@@ -1,6 +1,7 @@
 package in.nimbo.moama.listener;
 
 import in.nimbo.moama.RSSs;
+import in.nimbo.moama.metrics.Metrics;
 import in.nimbo.moama.template.SiteTemplates;
 import in.nimbo.moama.template.Template;
 import in.nimbo.moama.template.TemplateFinder;
@@ -11,9 +12,9 @@ import java.util.LinkedList;
 import java.util.Scanner;
 
 public class Function {
-    @CLI(help = "for test")
+    @CLI(help = "status")
     public static void stat(PrintStream out,Scanner scanner){
-        out.println("stat called");
+        Metrics.stat(out::println);
     }
 
     @CLI(help = "give you last news of each site")

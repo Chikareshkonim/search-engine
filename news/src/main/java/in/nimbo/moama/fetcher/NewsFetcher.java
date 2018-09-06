@@ -4,9 +4,11 @@ import in.nimbo.moama.ElasticManager;
 import in.nimbo.moama.NewsHBaseManager;
 import in.nimbo.moama.RSSs;
 import in.nimbo.moama.configmanager.ConfigManager;
+import in.nimbo.moama.metrics.FloatMeter;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedList;
 
 import static in.nimbo.moama.newsutil.NewsPropertyType.*;
 
@@ -17,6 +19,7 @@ public class NewsFetcher implements Runnable {
     private ElasticManager elasticManager;
     private static final int FETCHER_THREADS = Integer.parseInt(ConfigManager.getInstance().getProperty(NUMBER_OF_FETCHER_THREADS));
     private static final int FETCHER_PRIORITY = Integer.parseInt(ConfigManager.getInstance().getProperty(FETCHER_THREAD_PRIORITY));
+    private static FloatMeter floatMeter = new FloatMeter("NewsFetcherTime");
 
     public NewsFetcher(NewsURLQueue<NewsInfo> newsQueue) {
         this.newsQueue = newsQueue;
@@ -32,6 +35,12 @@ public class NewsFetcher implements Runnable {
             Thread thread = new Thread(() -> {
                 LinkedList<NewsInfo> list = new LinkedList<>();
                 while (true) {
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    long initTime = System.currentTimeMillis();
                     if (list.size() < 1) {
                         try {
                             list.addAll(newsQueue.getUrls());
@@ -55,7 +64,7 @@ public class NewsFetcher implements Runnable {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    // FIXME: 8/15/18
+                    floatMeter.add((System.currentTimeMillis() - initTime) / 1000);
                 }
             });
             thread.setPriority(FETCHER_PRIORITY);
