@@ -2,6 +2,8 @@ package in.nimbo.moama;
 
 import com.google.protobuf.ServiceException;
 import in.nimbo.moama.configmanager.ConfigManager;
+import in.nimbo.moama.metrics.IntMeter;
+import in.nimbo.moama.metrics.JMXManager;
 import in.nimbo.moama.util.HBasePropertyType;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -14,6 +16,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 public class HBaseManager {
     TableName tableName;
@@ -23,7 +26,8 @@ public class HBaseManager {
     static int sizeLimit = 0;
     final ArrayList<Put> puts;
     Connection connection;
-
+    private JMXManager jmxManager = JMXManager.getInstance();
+    private static IntMeter numberOfPagesAddedToHBase = new IntMeter("Hbase Added       ");
     public HBaseManager(String tableName, String duplicateCheckFamily) {
         configuration = HBaseConfiguration.create();
         configuration.addResource(getClass().getResourceAsStream("/hbase-site.xml"));
@@ -47,6 +51,30 @@ public class HBaseManager {
         }
     }
 
+    public void put(List<Put> webDocOfThisThread) {
+        HTable t = null;
+        try {
+            t = (HTable) connection.getTable(tableName);
+            t.put(webDocOfThisThread);
+            numberOfPagesAddedToHBase.add(webDocOfThisThread.size());
+            webDocOfThisThread.clear();
+            jmxManager.markNewAddedToHBase(webDocOfThisThread.size());
+        } catch (IOException e) {
+            e.printStackTrace();
+            errorLogger.error("couldn't put  into HBase!", e);
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+            errorLogger.error("HBase error" + e.getMessage(), e);
+        } finally {
+            try {
+                if (t != null) {
+                    t.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
     public String generateRowKeyFromUrl(String link) {
         String domain;
         try {

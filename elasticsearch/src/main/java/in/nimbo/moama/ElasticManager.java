@@ -55,8 +55,8 @@ public class ElasticManager {
     private static String clientPort;
     private static String vectorPort;
     private static String clusterName;
-    private static IntMeter elasticAdded =new IntMeter("elastic Added");
-    private TransportClient transportClient ;
+    private static IntMeter elasticAdded = new IntMeter("elastic Added");
+    private TransportClient transportClient;
     private RestClient restClient;
     private static int NUMBER_OF_KEYWORDS;
     private JMXManager jmxManager = JMXManager.getInstance();
@@ -88,10 +88,10 @@ public class ElasticManager {
 
 
     //TODO
-    public void getTermVector(String ids) throws IOException {
+    public Map<String, Map<String, Double>> getTermVector(String ids) throws IOException {
         Map<String, String> params = Collections.emptyMap();
         String jsonString = "{\n" +
-                "\t\"ids\" : ["+ids+"],\n" +
+                "\t\"ids\" : [" + ids + "],\n" +
                 "\t\"parameters\": {\n" +
                 "\t\"fields\" : [\"content\"],\n" +
                 "   \"offsets\" : true ,\n" +
@@ -118,13 +118,14 @@ public class ElasticManager {
 //        for (String key : jsonArray.keySet()) {
 //            System.out.println(key + "=" + jsonArray.get(key)); // to get the value
 //        }
+        return null;
     }
 
-    public List<String> newsWordTrends(String date ) throws IOException {
+    public List<String> newsWordTrends(String date) throws IOException {
         Map<String, String> params = Collections.emptyMap();
-        String jsonString ="{\n" +
+        String jsonString = "{\n" +
                 "    \"query\" : {\n" +
-                "        \"terms\" : {\"date\" : [ "+date+"]}\n" +
+                "        \"terms\" : {\"date\" : [ " + date + "]}\n" +
                 "    },\n" +
                 "    \"aggregations\" : {\n" +
                 "        \"test\" : {\n" +
@@ -134,7 +135,7 @@ public class ElasticManager {
                 "}";
         HttpEntity entity = new NStringEntity(jsonString, ContentType.APPLICATION_JSON);
         Response response =
-                restClient.performRequest("POST","/"+index+"/_search?size=0",params,entity );
+                restClient.performRequest("POST", "/" + index + "/_search?size=0", params, entity);
         BufferedReader reader =
                 new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
         StringBuilder out = new StringBuilder();
@@ -146,9 +147,8 @@ public class ElasticManager {
         JSONArray buckets = jsonObject.getJSONObject("aggregations").getJSONObject(index).getJSONArray("buckets");
         List<String> keywords = new LinkedList<>();
         for (Object bucket : buckets) {
-            keywords.add(((JSONObject)bucket).getString("key"));
+            keywords.add(((JSONObject) bucket).getString("key"));
         }
-        logger.error("teeeeeeeeeeeeeeeeeessssssttttt");
         return keywords;
     }
 

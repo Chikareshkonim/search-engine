@@ -21,7 +21,6 @@ import java.util.List;
 
 public class WebDocumentHBaseManager extends HBaseManager {
     private static Logger errorLogger = Logger.getLogger("error");
-    private static IntMeter numberOfPagesAddedToHBase = new IntMeter("Hbase Added       ");
     private String outLinksFamily;
     private String scoreFamily;
     private static int size = 0;
@@ -34,33 +33,6 @@ public class WebDocumentHBaseManager extends HBaseManager {
         this.outLinksFamily = outLinksFamily;
         this.scoreFamily = scoreFamily;
     }
-
-    public void put(List<Put> webDocOfThisThread) {
-        HTable t = null;
-        try {
-            t = (HTable) connection.getTable(tableName);
-            t.put(webDocOfThisThread);
-            numberOfPagesAddedToHBase.add(webDocOfThisThread.size());
-            webDocOfThisThread.clear();
-            size = 0;
-            jmxManager.markNewAddedToHBase(webDocOfThisThread.size());
-        } catch (IOException e) {
-            e.printStackTrace();
-            errorLogger.error("couldn't put  into HBase!", e);
-        } catch (RuntimeException e) {
-            e.printStackTrace();
-            errorLogger.error("HBase error" + e.getMessage(), e);
-        } finally {
-            try {
-                if (t != null) {
-                    t.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
 
     public int getReference(String url) {
         Get get = new Get(Bytes.toBytes(url));
