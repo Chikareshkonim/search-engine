@@ -89,8 +89,8 @@ public class ElasticManager {
     }
 
 
-    //TODO
-    public Map<String, Map<String, Double>> getTermVector(String ids) throws IOException {
+    //TODO set url instead of ids
+    public Map<String, Map<String, Double>> getTermVector(String ids ) throws IOException {
         Map<String, Map<String, Double>> resualt = new HashMap<>();
         Map<String, String> params = Collections.emptyMap();
         String jsonString = "{\n" +
@@ -101,26 +101,30 @@ public class ElasticManager {
                 "   \"payloads\" : true,\n" +
                 "   \"positions\" : true,\n" +
                 "   \"term_statistics\": true,\n" +
-                "   \"field_statistics\": true\n" +
+                "   \"field_statistics\": true,\n" +
+                "\"filter\" : {\n" +
+                "        \"max_num_terms\" : 5,\n" +
+                "                \"min_term_freq\" : 3,\n" +
+                "                \"min_doc_freq\" : 5\n" +
+                "    }" +
                 "\t}\n" +
                 "   }";
         HttpEntity entity = new NStringEntity(jsonString, ContentType.APPLICATION_JSON);
         Response response =
                 restClient.performRequest("POST", "/" + index + "/_doc/_mtermvectors", params, entity);
         JSONArray docs = new JSONObject(EntityUtils.toString(response.getEntity())).getJSONArray("docs");
-        System.out.println(docs);
         for (Object doc : docs) {
             Map<String, Double> keys = new HashMap<>();
             JSONObject terms = ((JSONObject) doc).getJSONObject("term_vectors").getJSONObject("content").getJSONObject("terms");
-            terms.keySet().forEach(key -> keys.put(key, calculateTfIdf(terms.getInt("term_freq"),terms.getInt("doc_freq"))));
-            resualt.put(((JSONObject) doc).getString("id"), keys);
+            terms.keySet().forEach(key -> keys.put(key, calculateTfIdf(terms.getJSONObject(key).getInt("term_freq"),terms.getJSONObject(key).getInt("doc_freq"))));
+            resualt.put(((JSONObject) doc).getString("_id"), keys);
         }
         return resualt;
     }
 
     private Double calculateTfIdf(int term_freq, int doc_freq) {
-        //todo
-        return 1.0;
+        //todo write formula
+        return term_freq*(1.0/doc_freq);
     }
 
     public List<String> newsWordTrends(String date) throws IOException {

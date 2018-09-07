@@ -111,7 +111,6 @@ public class ElasticManagerTest {
         JSONArray test = new JSONArray();
         test.put("e04102ef6b844805d8d8ef79070a7c6e");
         test.put("fa3ddd0d9534d0679a14b8eb3e0dace8");
-        System.out.println(test.toString());
-        elasticManager.getTermVector(test.toString());
+        System.out.println(elasticManager.getTermVector(test.toString()));
     }
 }
