@@ -1,10 +1,8 @@
 package in.nimbo.moama;
 
 import com.google.protobuf.ServiceException;
-import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.metrics.IntMeter;
 import in.nimbo.moama.metrics.JMXManager;
-import in.nimbo.moama.util.HBasePropertyType;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
@@ -15,29 +13,27 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 
 public class HBaseManager {
     TableName tableName;
     String duplicateCheckFamily;
-    static Logger errorLogger = Logger.getLogger(HBaseManager.class);
+    private static final Logger LOGGER = Logger.getLogger(HBaseManager.class);
     Configuration configuration;
-    static int sizeLimit = 0;
-    final ArrayList<Put> puts;
     Connection connection;
     private JMXManager jmxManager = JMXManager.getInstance();
     private static IntMeter numberOfPagesAddedToHBase = new IntMeter("Hbase Added       ");
+    private HTable table;
+
     public HBaseManager(String tableName, String duplicateCheckFamily) {
         configuration = HBaseConfiguration.create();
         configuration.addResource(getClass().getResourceAsStream("/hbase-site.xml"));
         this.tableName = TableName.valueOf(tableName);
         this.duplicateCheckFamily = duplicateCheckFamily;
-        sizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(HBasePropertyType.PUT_SIZE_LIMIT));
-        puts = new ArrayList<>();
         try {
             connection = ConnectionFactory.createConnection(configuration);
         } catch (IOException e) {
+            //TODO
             e.printStackTrace();
         }
         boolean status = false;
@@ -46,35 +42,29 @@ public class HBaseManager {
                 HBaseAdmin.checkHBaseAvailable(configuration);
                 status = true;
             } catch (ServiceException | IOException e) {
-                errorLogger.error(e.getMessage());
+                LOGGER.error(e.getMessage());
             }
+        }
+        try {
+            table = (HTable) connection.getTable(this.tableName);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
     public void put(List<Put> webDocOfThisThread) {
-        HTable t = null;
         try {
-            t = (HTable) connection.getTable(tableName);
-            t.put(webDocOfThisThread);
+            table.put(webDocOfThisThread);
             numberOfPagesAddedToHBase.add(webDocOfThisThread.size());
             webDocOfThisThread.clear();
             jmxManager.markNewAddedToHBase(webDocOfThisThread.size());
         } catch (IOException e) {
-            e.printStackTrace();
-            errorLogger.error("couldn't put  into HBase!", e);
+            LOGGER.error("couldn't put  into HBase!", e);
         } catch (RuntimeException e) {
-            e.printStackTrace();
-            errorLogger.error("HBase error" + e.getMessage(), e);
-        } finally {
-            try {
-                if (t != null) {
-                    t.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            LOGGER.error("HBase error" + e.getMessage(), e);
         }
     }
+
     public String generateRowKeyFromUrl(String link) {
         String domain;
         try {
@@ -98,7 +88,8 @@ public class HBaseManager {
         String string = "";
         try {
             string = domainToHBase + "-" + urlSections[urlSections.length - 1];
-        }catch (Exception e){
+        } catch (Exception e) {
+            //TODO
             System.out.println(link);
             e.printStackTrace();
             System.out.println();
@@ -110,22 +101,12 @@ public class HBaseManager {
     public boolean isDuplicate(String url) {
         Get get = new Get(Bytes.toBytes(generateRowKeyFromUrl(url)));
         get.addFamily(duplicateCheckFamily.getBytes());
-        Table t = null;
-        try  {
-            t = connection.getTable(tableName);
-            if (t.exists(get)) {
-                t.close();
+        try {
+            if (table.exists(get)) {
                 return true;
             }
         } catch (IOException e) {
-            errorLogger.error("HBase service unavailable");
-        }finally {
-            try {
-                assert t != null;
-                t.close();
-            } catch (IOException e) {
-                errorLogger.error("table is not open");
-            }
+            LOGGER.error("HBase service unavailable");
         }
         return false;
     }

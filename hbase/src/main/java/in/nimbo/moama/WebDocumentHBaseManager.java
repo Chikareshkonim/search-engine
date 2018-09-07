@@ -57,7 +57,7 @@ public class WebDocumentHBaseManager extends HBaseManager {
     }
 
     public boolean createTable() {
-        try (Connection connection = ConnectionFactory.createConnection(configuration)) {
+        try {
             Admin admin = connection.getAdmin();
             HTableDescriptor hTableDescriptor = new HTableDescriptor(tableName);
             hTableDescriptor.addFamily(new HColumnDescriptor(outLinksFamily));
@@ -65,7 +65,6 @@ public class WebDocumentHBaseManager extends HBaseManager {
             if (!admin.tableExists(tableName))
                 admin.createTable(hTableDescriptor);
             admin.close();
-            connection.close();
             return true;
         } catch (IOException e) {
             errorLogger.error(e.getMessage());

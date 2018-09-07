@@ -108,9 +108,10 @@ public class ElasticManager {
         Response response =
                 restClient.performRequest("POST", "/" + index + "/_doc/_mtermvectors", params, entity);
         JSONArray docs = new JSONObject(EntityUtils.toString(response.getEntity())).getJSONArray("docs");
+        System.out.println(docs);
         for (Object doc : docs) {
             Map<String, Double> keys = new HashMap<>();
-            JSONObject terms = ((JSONObject) doc).getJSONObject("termvectors").getJSONObject("content").getJSONObject("terms");
+            JSONObject terms = ((JSONObject) doc).getJSONObject("term_vectors").getJSONObject("content").getJSONObject("terms");
             terms.keySet().forEach(key -> keys.put(key, calculateTfIdf(terms.getInt("term_freq"),terms.getInt("doc_freq"))));
             resualt.put(((JSONObject) doc).getString("id"), keys);
         }
@@ -119,7 +120,7 @@ public class ElasticManager {
 
     private Double calculateTfIdf(int term_freq, int doc_freq) {
         //todo
-        return null;
+        return 1.0;
     }
 
     public List<String> newsWordTrends(String date) throws IOException {

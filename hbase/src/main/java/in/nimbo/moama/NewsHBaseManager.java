@@ -23,24 +23,5 @@ public class NewsHBaseManager extends HBaseManager {
         this.visitedFamily = visitedFamily;
     }
 
-    public void put(JSONObject document) {
-        String url = (String) document.get("pageLink");
-        Put put = new Put(Bytes.toBytes(generateRowKeyFromUrl(url)));
-        put.addColumn(duplicateCheckFamily.getBytes(), visitedFamily.getBytes(), new byte[0]);
-        puts.add(put);
-        size++;
-        if (size >= sizeLimit) {
-            try(Connection connection = ConnectionFactory.createConnection(configuration)) {
-                Table table = connection.getTable(tableName);
-                table.put(puts);
-                puts.clear();
-                table.close();
-                size = 0;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
 
 }
