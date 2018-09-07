@@ -5,11 +5,11 @@ import in.nimbo.moama.NewsHBaseManager;
 import in.nimbo.moama.RSSs;
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.metrics.FloatMeter;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.LinkedList;
+import java.util.*;
 
 import static in.nimbo.moama.newsutil.NewsPropertyType.*;
 
@@ -58,8 +58,7 @@ public class NewsFetcher implements Runnable {
                             String text = NewsParser.parse(newsInfo.getDomain(), newsInfo.getUrl());
                             News news = new News(newsInfo, text);
                             if (!RSSs.getInstance().isSeen(news.getNewsInfo().getUrl())) {
-                                elasticManager.myput(Collections.singletonList(news.getDocument()));
-                                newsHBaseManager.put(news.documentToJson());
+                                addToDBs(Collections.singletonList(news));
                             }
                             LOGGER.trace("Completed: " + news.getNewsInfo().getUrl());
                         } else {
@@ -74,5 +73,20 @@ public class NewsFetcher implements Runnable {
             thread.setPriority(FETCHER_PRIORITY);
             thread.start();
         }
+    }
+
+    private void addToDBs(List<News> newsList) {
+        List<Put> puts = new ArrayList<>();
+        List<Map<String, String>> docs = new ArrayList<>();
+        newsList.forEach(news -> {
+            Put put = new Put(newsHBaseManager.generateRowKeyFromUrl(news.getNewsInfo().getUrl()).getBytes());
+            ConfigManager configManager = ConfigManager.getInstance();
+            put.addColumn(configManager.getProperty(HBASE_VISITED_FAMILY).getBytes(),
+                    configManager.getProperty(HBASE_VISITED_FAMILY).getBytes(), new byte[0]);
+            docs.add(news.getDocument());
+            puts.add(put);
+        });
+        elasticManager.myput(docs);
+        newsHBaseManager.put(puts);
     }
 }
