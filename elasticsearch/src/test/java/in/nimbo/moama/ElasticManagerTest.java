@@ -9,6 +9,7 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
@@ -107,9 +108,10 @@ public class ElasticManagerTest {
 
     @Test
     public void getTermvectorTest() throws IOException {
-        ArrayList<String> test = new ArrayList<>();
-        test.add("1");
-        test.add("2");
+        JSONArray test = new JSONArray();
+        test.put("e04102ef6b844805d8d8ef79070a7c6e");
+        test.put("fa3ddd0d9534d0679a14b8eb3e0dace8");
+        System.out.println(test.toString());
         elasticManager.getTermVector(test.toString());
     }
 }

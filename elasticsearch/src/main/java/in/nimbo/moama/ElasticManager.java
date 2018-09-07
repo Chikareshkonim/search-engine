@@ -9,6 +9,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
+import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.index.IndexRequest;
@@ -90,6 +91,7 @@ public class ElasticManager {
 
     //TODO
     public Map<String, Map<String, Double>> getTermVector(String ids) throws IOException {
+        Map<String, Map<String, Double>> resualt = new HashMap<>();
         Map<String, String> params = Collections.emptyMap();
         String jsonString = "{\n" +
                 "\t\"ids\" : " + ids + ",\n" +
@@ -105,20 +107,18 @@ public class ElasticManager {
         HttpEntity entity = new NStringEntity(jsonString, ContentType.APPLICATION_JSON);
         Response response =
                 restClient.performRequest("POST", "/" + index + "/_doc/_mtermvectors", params, entity);
-        BufferedReader reader =
-                new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-        StringBuilder out = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            out.append(line);
+        JSONArray docs = new JSONObject(EntityUtils.toString(response.getEntity())).getJSONArray("docs");
+        for (Object doc : docs) {
+            Map<String, Double> keys = new HashMap<>();
+            JSONObject terms = ((JSONObject) doc).getJSONObject("termvectors").getJSONObject("content").getJSONObject("terms");
+            terms.keySet().forEach(key -> keys.put(key, calculateTfIdf(terms.getInt("term_freq"),terms.getInt("doc_freq"))));
+            resualt.put(((JSONObject) doc).getString("id"), keys);
         }
-        System.out.println(out.toString());
-        JSONObject jsonObject = new JSONObject(out.toString());
+        return resualt;
+    }
 
-//        JSONObject jsonArray = jsonObject.getJSONObject("term_vectors").getJSONObject("content").getJSONObject("terms");
-//        for (String key : jsonArray.keySet()) {
-//            System.out.println(key + "=" + jsonArray.get(key)); // to get the value
-//        }
+    private Double calculateTfIdf(int term_freq, int doc_freq) {
+        //todo
         return null;
     }
 
@@ -131,15 +131,15 @@ public class ElasticManager {
                 "                \"field\": \"date\",\n" +
                 "                \"format\": \"EEE, dd MMM yyyy\",\n" +
                 "                \"ranges\": [\n" +
-                "                    { \"to\": \""+date+"\" },\n" +
-                "                    { \"from\": \""+date+"\" }\n" +
+                "                    { \"to\": \"" + date + "\" },\n" +
+                "                    { \"from\": \"" + date + "\" }\n" +
                 "                ],\n" +
                 "                \"keyed\": true\n" +
                 "            }\n" +
                 "    \t\n" +
                 "    \t\t\t,\n" +
                 "    \t\"aggs\":{\n" +
-                "        \""+index+"\" : {\n" +
+                "        \"" + index + "\" : {\n" +
                 "            \"terms\" : { \"field\" : \"content\" \n" +
                 "            \t,\"size\":5\n" +
                 "            }\n" +
