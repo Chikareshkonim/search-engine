@@ -2,6 +2,7 @@ package in.nimbo.moama.template;
 
 import in.nimbo.moama.NewsWebsiteHBaseManager;
 import in.nimbo.moama.configmanager.ConfigManager;
+import org.apache.log4j.Logger;
 import org.json.JSONObject;
 
 import java.util.LinkedHashMap;
@@ -11,6 +12,8 @@ import static in.nimbo.moama.newsutil.NewsPropertyType.*;
 
 public class SiteTemplates {
     private static SiteTemplates ourInstance = new SiteTemplates();
+    private static final Logger LOGGER = Logger.getLogger(SiteTemplates.class);
+
 
     public static SiteTemplates getInstance() {
         return ourInstance;
@@ -26,16 +29,12 @@ public class SiteTemplates {
         return siteTemplates;
     }
 
-    public Template getTemplte(String domain) {
+    public Template getTemplate(String domain) {
         return siteTemplates.get(domain);
     }
 
-    public void saveTemplate() {
-        // TODO: 8/18/18  
-    }
-
     public void loadTemplates() {
-        System.out.println("loading templates");
+        LOGGER.info("loading templates...");
         ConfigManager configManager = ConfigManager.getInstance();
         NewsWebsiteHBaseManager hBaseManager = new NewsWebsiteHBaseManager(configManager.getProperty(NEWS_WEBSITE_TABLE)
                 , configManager.getProperty(HBASE_TEMPLATE_FAMILY), configManager.getProperty(HBASE_RSS_FAMILY));
@@ -46,6 +45,6 @@ public class SiteTemplates {
                     json.getString("dateFormat"), json.getString("newsTag"));
             siteTemplates.put(domain, template);
         });
-        System.out.println("loaded templates successfully");
+        LOGGER.info("templates loaded successfully");
     }
 }

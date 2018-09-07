@@ -1,6 +1,7 @@
 package in.nimbo.moama;
 
 import in.nimbo.moama.fetcher.NewsURLQueue;
+import org.apache.log4j.Logger;
 
 import java.util.Collections;
 import java.util.List;
@@ -8,6 +9,8 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 public class Queue<T> implements NewsURLQueue<T> {
     private ArrayBlockingQueue<T> queue;
+    private static final Logger LOGGER = Logger.getLogger(Queue.class);
+
 
     public Queue(int capacity) {
         queue = new ArrayBlockingQueue<>(capacity);
@@ -24,7 +27,7 @@ public class Queue<T> implements NewsURLQueue<T> {
             try {
                 queue.put(url);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                LOGGER.error("Exception adding " + url + " to queue", e);
             }
         });
     }

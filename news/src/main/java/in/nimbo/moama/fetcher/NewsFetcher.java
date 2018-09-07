@@ -5,6 +5,7 @@ import in.nimbo.moama.NewsHBaseManager;
 import in.nimbo.moama.RSSs;
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.metrics.FloatMeter;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -21,6 +22,8 @@ public class NewsFetcher implements Runnable {
     private static final int FETCHER_PRIORITY = Integer.parseInt(ConfigManager.getInstance().getProperty(FETCHER_THREAD_PRIORITY));
     private static final int SLEEP_TIME = Integer.parseInt(ConfigManager.getInstance().getProperty(NEWS_FETCHER_WAIT));
     private static FloatMeter floatMeter = new FloatMeter("NewsFetcherTime");
+    private static final Logger LOGGER = Logger.getLogger(NewsFetcher.class);
+
 
     public NewsFetcher(NewsURLQueue<NewsInfo> newsQueue) {
         this.newsQueue = newsQueue;
@@ -39,14 +42,14 @@ public class NewsFetcher implements Runnable {
                     try {
                         Thread.sleep(SLEEP_TIME);
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        LOGGER.error("Interrupt exception at NewsFetcher", e);
                     }
                     long initTime = System.currentTimeMillis();
                     if (list.size() < 1) {
                         try {
                             list.addAll(newsQueue.getUrls());
                         } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            LOGGER.error("Interrupt exception at NewsFetcher", e);
                         }
                     }
                     try {
@@ -58,12 +61,12 @@ public class NewsFetcher implements Runnable {
                                 elasticManager.myput(Collections.singletonList(news.getDocument()));
                                 newsHBaseManager.put(news.documentToJson());
                             }
-                            System.out.println("completed " + news.getNewsInfo().getUrl());
+                            LOGGER.trace("Completed: " + news.getNewsInfo().getUrl());
                         } else {
                             list.addLast(newsInfo);
                         }
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        LOGGER.error("IOException at NewsFetcher", e);
                     }
                     floatMeter.add((float) (System.currentTimeMillis() - initTime) / 1000);
                 }

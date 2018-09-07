@@ -1,6 +1,7 @@
 package in.nimbo.moama.template;
 
 import in.nimbo.moama.Util;
+import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -16,10 +17,6 @@ import java.util.stream.Stream;
 
 
 public class TemplateFinder {
-    public static void main(String[] args) throws IOException {
-        System.out.println(findTemplate("https://www.huffingtonpost.com/section/world-news/feed", "link"));
-    }
-
     public static Template findTemplate(String rss, String newsTag) throws IOException {
         Document rssDoc = Jsoup.connect(rss).get();
         Document goodPage = findMaxTextPage(rssDoc, newsTag);
@@ -75,6 +72,8 @@ class MyElement implements Comparable<MyElement> {
 }
 
 class DateFormatFinder {
+    private static final Logger LOGGER = Logger.getLogger(DateFormatFinder.class);
+
 
     private static final String[] formats =
             {
@@ -103,6 +102,7 @@ class DateFormatFinder {
                 new SimpleDateFormat(format).parse(date);
                 return true;
             } catch (ParseException e) {
+                LOGGER.error("ParseException at DateFormatFinder", e);
                 return false;
             }
         }).findFirst().get();

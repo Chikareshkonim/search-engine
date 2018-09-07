@@ -3,6 +3,7 @@ package in.nimbo.moama.fetcher;
 import in.nimbo.moama.RSSs;
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.template.SiteTemplates;
+import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -17,6 +18,8 @@ import static in.nimbo.moama.newsutil.NewsPropertyType.NEWS_DATE_FORMAT;
 
 public class RSSParser {
     private static String UNIQUE_DATE_FORMAT = ConfigManager.getInstance().getProperty(NEWS_DATE_FORMAT);
+    private static final Logger LOGGER = Logger.getLogger(RSSParser.class);
+
 
     public static List<NewsInfo> parse(String rss, String domain) throws IOException {
         List<NewsInfo> result = new ArrayList<>();
@@ -24,19 +27,17 @@ public class RSSParser {
         for (Element element : document.getElementsByTag("item")) {
             if (!isSeen(element)) {
                 String title = element.select("title").text();
-                System.err.println(title);
                 String date = null;
                 try {
-                    date = uniqueDateFormat(SiteTemplates.getInstance().getTemplte(domain).getDateFormatString(),
+                    date = uniqueDateFormat(SiteTemplates.getInstance().getTemplate(domain).getDateFormatString(),
                             element.select("pubDate").text());
                 } catch (ParseException e) {
-                    System.out.println("failed to parse date");
+                    LOGGER.error("ParseException at RSSParser", e);
                 }
-                System.err.println(date);
                 String url = element.select("link").text();
-                System.err.println(url);
                 NewsInfo newsInfo = new NewsInfo(title, date, url, domain);
                 result.add(newsInfo);
+                LOGGER.trace("Aded to queue: " + newsInfo);
             }
         }
         return result;

@@ -1,6 +1,7 @@
 package in.nimbo.moama;
 
 import in.nimbo.moama.configmanager.ConfigManager;
+import org.apache.log4j.Logger;
 import org.json.JSONObject;
 
 import java.util.LinkedHashMap;
@@ -17,6 +18,8 @@ public class RSSs {
     private static final long POLITE_WAIT_TIME = Long.parseLong(ConfigManager.getInstance().getProperty(NEWS_POLITENESS_WAIT));
     private HBaseManager hBaseManager = new HBaseManager(ConfigManager.getInstance().getProperty(NEWS_PAGES_TABLE),
             ConfigManager.getInstance().getProperty(HBASE_VISITED_FAMILY));
+    private static final Logger LOGGER = Logger.getLogger(RSSs.class);
+
 
     private static RSSs ourInstance = new RSSs();
 
@@ -61,17 +64,12 @@ public class RSSs {
     }
 
     public void loadRSSs(){
-        // TODO: 8/17/18
-        System.out.println("loading RSSs");
+        LOGGER.info("loading rss...");
         ConfigManager configManager = ConfigManager.getInstance();
         NewsWebsiteHBaseManager websiteHBaseManager = new NewsWebsiteHBaseManager(configManager.getProperty(NEWS_WEBSITE_TABLE),
                 configManager.getProperty(HBASE_TEMPLATE_FAMILY), configManager.getProperty(HBASE_RSS_FAMILY));
         List<JSONObject> rssList = websiteHBaseManager.getRSSList();
         rssList.forEach(json -> rssToDomainMap.put(json.getString("rss"), json.getString("domain")));
-        System.out.println("RSSs loaded successfully");
-    }
-
-    public void saveRSSs(){
-        // TODO: 8/17/18
+        LOGGER.info("rss loaded successfully");
     }
 }

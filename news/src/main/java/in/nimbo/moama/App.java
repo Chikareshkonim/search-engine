@@ -12,7 +12,8 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 
 import static in.nimbo.moama.configmanager.ConfigManager.FileType.PROPERTIES;
-import static in.nimbo.moama.newsutil.NewsPropertyType.*;
+import static in.nimbo.moama.newsutil.NewsPropertyType.NEWS_LISTENER_PORT;
+import static in.nimbo.moama.newsutil.NewsPropertyType.NEWS_QUEUE_CAPACITY;
 
 /**
  * Hello world!
@@ -22,26 +23,18 @@ public class App {
     private static final Logger LOGGER = Logger.getLogger(App.class);
 
     public static void main(String[] args) throws IOException {
+        LOGGER.trace("news started");
         ConfigManager.getInstance().load(App.class.getResourceAsStream("/news.properties"), PROPERTIES);
+        LOGGER.info("configs loaded");
         new Listener().listen(Function.class, Integer.parseInt(ConfigManager.getInstance().getProperty(NEWS_LISTENER_PORT)));
-        if (createTable()) {
-            int newsCapacity = Integer.parseInt(ConfigManager.getInstance().getProperty(NEWS_QUEUE_CAPACITY));
-            NewsURLQueue<NewsInfo> news = new Queue<>(newsCapacity);
-            RSSReader reader = new RSSReader(news);
-            LOGGER.trace("websites table is up");
-            new Thread(reader).start();
-            NewsFetcher fetcher = new NewsFetcher(news);
-            LOGGER.trace("created news fetchers");
-            new Thread(fetcher).start();
-        } else {
-            System.out.println("Failed to create table!");
-        }
-    }
-
-    private static boolean createTable() {
-        ConfigManager configManager = ConfigManager.getInstance();
-        NewsWebsiteHBaseManager webHBaseManager = new NewsWebsiteHBaseManager(configManager.getProperty(NEWS_WEBSITE_TABLE),
-                configManager.getProperty(HBASE_TEMPLATE_FAMILY), configManager.getProperty(HBASE_RSS_FAMILY));
-        return webHBaseManager.createTable(null);
+        LOGGER.info("listener started");
+        int newsCapacity = Integer.parseInt(ConfigManager.getInstance().getProperty(NEWS_QUEUE_CAPACITY));
+        NewsURLQueue<NewsInfo> news = new Queue<>(newsCapacity);
+        RSSReader reader = new RSSReader(news);
+        LOGGER.trace("created rss reader");
+        new Thread(reader).start();
+        NewsFetcher fetcher = new NewsFetcher(news);
+        LOGGER.trace("created news fetcher");
+        new Thread(fetcher).start();
     }
 }

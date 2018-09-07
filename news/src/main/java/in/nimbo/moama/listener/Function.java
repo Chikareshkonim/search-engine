@@ -25,7 +25,6 @@ public class Function {
 
     @CLI(help = "give you trend words in last Hour(for news)")
     public static void newsTrendWordInLastHour(PrintStream out, Scanner scanner) {
-        System.out.println("salam");
         // TODO: 8/16/18
     }
 
@@ -118,8 +117,6 @@ public class Function {
     }
     @CLI(help = "this method will save templates and RSSs in json file")
     public  static  void  saveAll(PrintStream out,Scanner scanner){
-        SiteTemplates.getInstance().saveTemplate();
-        RSSs.getInstance().saveRSSs();
     }
 
     @CLI(help = "this method will load templates and RSSs from json file ")
