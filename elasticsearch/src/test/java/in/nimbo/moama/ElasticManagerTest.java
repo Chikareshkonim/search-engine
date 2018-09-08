@@ -110,8 +110,8 @@ public class ElasticManagerTest {
     @Test
     public void getTermvectorTest() throws IOException {
         ArrayList<String> test = new ArrayList<>();
-        test.add("naive.com");
-        test.add("amir.ir");
+        test.add("http://alumnimap.univie.ac.at/");
+        test.add("http://www.lyricsfreak.com/d/dusty+springfield/rus:the+windmills+of+your+mind_20043868.html");
         System.out.println(elasticManager.getTermVector(test));
     }
 
