@@ -5,6 +5,7 @@ import in.nimbo.moama.NewsHBaseManager;
 import in.nimbo.moama.RSSs;
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.metrics.FloatMeter;
+import in.nimbo.moama.metrics.IntMeter;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.log4j.Logger;
 
@@ -18,6 +19,8 @@ public class NewsFetcher implements Runnable {
     private NewsURLQueue<NewsInfo> newsQueue;
     private NewsHBaseManager newsHBaseManager;
     private ElasticManager elasticManager;
+    private static final IntMeter HBASE_NEWS_COUNTER = new IntMeter("hbase news counter");
+    private static final IntMeter ELASTIC_NEWS_COUNTER = new IntMeter("elastic news counter");
     private static final int FETCHER_THREADS = Integer.parseInt(ConfigManager.getInstance().getProperty(NUMBER_OF_FETCHER_THREADS));
     private static final int FETCHER_PRIORITY = Integer.parseInt(ConfigManager.getInstance().getProperty(FETCHER_THREAD_PRIORITY));
     private static final int SLEEP_TIME = Integer.parseInt(ConfigManager.getInstance().getProperty(NEWS_FETCHER_WAIT));
@@ -87,6 +90,8 @@ public class NewsFetcher implements Runnable {
             puts.add(put);
         });
         elasticManager.put(docs);
+        ELASTIC_NEWS_COUNTER.increment();
         newsHBaseManager.put(puts);
+        HBASE_NEWS_COUNTER.increment();
     }
 }
