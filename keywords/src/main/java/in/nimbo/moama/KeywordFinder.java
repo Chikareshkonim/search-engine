@@ -2,9 +2,11 @@ package in.nimbo.moama;
 
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.kafka.MoamaConsumer;
+import in.nimbo.moama.util.KeywordPropertyType;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
+import org.elasticsearch.common.recycler.Recycler;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -17,11 +19,16 @@ public class KeywordFinder implements Runnable{
     private MoamaConsumer consumer;
     private HBaseManager hbaseManager;
     private String keysFamily;
+    private String tableName;
+    private String crawledTopic;
     //TODO set configs
-    public KeywordFinder(ConfigManager configManager) {
+    public KeywordFinder() {
+        keysFamily = ConfigManager.getInstance().getProperty(KeywordPropertyType.HBASE_FAMILY);
+        tableName = ConfigManager.getInstance().getProperty(KeywordPropertyType.HBASE_TABLE);
+        crawledTopic = ConfigManager.getInstance().getProperty(KeywordPropertyType.CRAWLED_TOPIC);
         elasticManager = new ElasticManager();
-        hbaseManager = new HBaseManager("terms",null);
-        consumer = new MoamaConsumer("crawled","kafka");
+        hbaseManager = new HBaseManager(tableName,null);
+        consumer = new MoamaConsumer(crawledTopic,"kafka.");
     }
 
     @Override
