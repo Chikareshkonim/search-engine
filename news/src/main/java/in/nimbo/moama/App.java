@@ -15,10 +15,7 @@ import static in.nimbo.moama.configmanager.ConfigManager.FileType.PROPERTIES;
 import static in.nimbo.moama.newsutil.NewsPropertyType.NEWS_LISTENER_PORT;
 import static in.nimbo.moama.newsutil.NewsPropertyType.NEWS_QUEUE_CAPACITY;
 
-/**
- * Hello world!
- *
- */
+
 public class App {
     private static final Logger LOGGER = Logger.getLogger(App.class);
 
