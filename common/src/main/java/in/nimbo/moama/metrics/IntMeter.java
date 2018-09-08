@@ -2,6 +2,7 @@ package in.nimbo.moama.metrics;
 
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.jmx.JmxReporter;
 
 public final class  IntMeter implements Metered {
     private static final String RATE_NUM_OF = "rate/num of ";
@@ -10,6 +11,11 @@ public final class  IntMeter implements Metered {
     private Meter jmx;
     private String name;
     private static MetricRegistry metrics = new MetricRegistry();
+    private static JmxReporter reporter = JmxReporter.forRegistry(metrics).build();
+
+    static{
+        reporter.start();
+    }
 
     public IntMeter(String name) {
         jmx = metrics.meter(name);
