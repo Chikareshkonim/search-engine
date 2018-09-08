@@ -2,15 +2,28 @@ package in.nimbo.moama.listener;
 
 import org.junit.Test;
 
-import static java.lang.Thread.sleep;
+import java.io.IOException;
+import java.net.Socket;
+import java.util.Formatter;
+import java.util.Scanner;
+
+import static org.junit.Assert.assertEquals;
 
 public class FunctionTest {
 
 
     @Test
-    public void lastNews() throws InterruptedException {
+    public void lastNews() throws InterruptedException, IOException {
         new Listener().listen(Function.class,4767);
-        sleep(50000);
+        Socket socket = new Socket("localhost", 4767);
+        Formatter formatter = new Formatter(socket.getOutputStream());
+        Scanner scanner = new Scanner(socket.getInputStream());
+        formatter.format("check\n");
+        formatter.flush();
+        assertEquals("You are connected", scanner.nextLine());
+        formatter.close();
+        scanner.close();
+        socket.close();
     }
 
     @Test

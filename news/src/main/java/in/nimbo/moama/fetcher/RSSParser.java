@@ -37,7 +37,7 @@ public class RSSParser {
                 String url = element.select("link").text();
                 NewsInfo newsInfo = new NewsInfo(title, date, url, domain);
                 result.add(newsInfo);
-                LOGGER.trace("Aded to queue: " + newsInfo);
+                LOGGER.trace("Added to queue: " + newsInfo);
             }
         }
         return result;

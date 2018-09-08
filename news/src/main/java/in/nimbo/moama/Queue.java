@@ -37,7 +37,4 @@ public class Queue<T> implements NewsURLQueue<T> {
         return queue.size();
     }
 
-    public ArrayBlockingQueue<T> getQueue() {
-        return queue;
-    }
 }

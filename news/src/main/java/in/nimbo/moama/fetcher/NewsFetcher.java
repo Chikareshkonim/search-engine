@@ -5,10 +5,11 @@ import in.nimbo.moama.NewsHBaseManager;
 import in.nimbo.moama.RSSs;
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.metrics.FloatMeter;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.LinkedList;
+import java.util.*;
 
 import static in.nimbo.moama.newsutil.NewsPropertyType.*;
 
@@ -17,10 +18,12 @@ public class NewsFetcher implements Runnable {
     private NewsURLQueue<NewsInfo> newsQueue;
     private NewsHBaseManager newsHBaseManager;
     private ElasticManager elasticManager;
-    private static final int FETCHER_THREADS = ConfigManager.getInstance().getIntProperty(NUMBER_OF_FETCHER_THREADS);
-    private static final int FETCHER_PRIORITY = ConfigManager.getInstance().getIntProperty(FETCHER_THREAD_PRIORITY);
-    private static final int SLEEP_TIME = ConfigManager.getInstance().getIntProperty(NEWS_FETCHER_WAIT);
+    private static final int FETCHER_THREADS = Integer.parseInt(ConfigManager.getInstance().getProperty(NUMBER_OF_FETCHER_THREADS));
+    private static final int FETCHER_PRIORITY = Integer.parseInt(ConfigManager.getInstance().getProperty(FETCHER_THREAD_PRIORITY));
+    private static final int SLEEP_TIME = Integer.parseInt(ConfigManager.getInstance().getProperty(NEWS_FETCHER_WAIT));
     private static FloatMeter floatMeter = new FloatMeter("NewsFetcherTime");
+    private static final Logger LOGGER = Logger.getLogger(NewsFetcher.class);
+
 
     public NewsFetcher(NewsURLQueue<NewsInfo> newsQueue) {
         this.newsQueue = newsQueue;
@@ -39,14 +42,14 @@ public class NewsFetcher implements Runnable {
                     try {
                         Thread.sleep(SLEEP_TIME);
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        LOGGER.error("Interrupt exception at NewsFetcher", e);
                     }
                     long initTime = System.currentTimeMillis();
                     if (list.size() < 1) {
                         try {
                             list.addAll(newsQueue.getUrls());
                         } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            LOGGER.error("Interrupt exception at NewsFetcher", e);
                         }
                     }
                     try {
@@ -55,15 +58,14 @@ public class NewsFetcher implements Runnable {
                             String text = NewsParser.parse(newsInfo.getDomain(), newsInfo.getUrl());
                             News news = new News(newsInfo, text);
                             if (!RSSs.getInstance().isSeen(news.getNewsInfo().getUrl())) {
-                                elasticManager.put(Collections.singletonList(news.getDocument()));
-                                newsHBaseManager.put(news.documentToJson());
+                                addToDBs(Collections.singletonList(news));
                             }
-                            System.out.println("completed " + news.getNewsInfo().getUrl());
+                            LOGGER.trace("Completed: " + news.getNewsInfo().getUrl());
                         } else {
                             list.addLast(newsInfo);
                         }
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        LOGGER.error("IOException at NewsFetcher", e);
                     }
                     floatMeter.add((float) (System.currentTimeMillis() - initTime) / 1000);
                 }
@@ -71,5 +73,20 @@ public class NewsFetcher implements Runnable {
             thread.setPriority(FETCHER_PRIORITY);
             thread.start();
         }
+    }
+
+    private void addToDBs(List<News> newsList) {
+        List<Put> puts = new ArrayList<>();
+        List<Map<String, String>> docs = new ArrayList<>();
+        newsList.forEach(news -> {
+            Put put = new Put(newsHBaseManager.generateRowKeyFromUrl(news.getNewsInfo().getUrl()).getBytes());
+            ConfigManager configManager = ConfigManager.getInstance();
+            put.addColumn(configManager.getProperty(HBASE_VISITED_FAMILY).getBytes(),
+                    configManager.getProperty(HBASE_VISITED_FAMILY).getBytes(), new byte[0]);
+            docs.add(news.getDocument());
+            puts.add(put);
+        });
+        elasticManager.put(docs);
+        newsHBaseManager.put(puts);
     }
 }

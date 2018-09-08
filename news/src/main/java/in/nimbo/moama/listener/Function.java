@@ -12,6 +12,11 @@ import java.util.LinkedList;
 import java.util.Scanner;
 
 public class Function {
+    @CLI(help = "check connection")
+    public static void check(PrintStream out, Scanner scanner) {
+        out.println("You are connected");
+    }
+
     @CLI(help = "status")
     public static void stat(PrintStream out,Scanner scanner){
         Metrics.stat(out::println);
