@@ -13,7 +13,6 @@ public class MoamaConsumer {
     private final KafkaConsumer<String, String> consumer;
 
     public MoamaConsumer(String topic,String rootAddress) {
-        //TODO
         consumer = new KafkaConsumer<>(ConfigManager.getInstance().getProperties(rootAddress,true));
         consumer.subscribe(Collections.singletonList(topic));
     }

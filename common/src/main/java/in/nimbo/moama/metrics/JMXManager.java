@@ -4,6 +4,8 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.jmx.JmxReporter;
 
+import javax.management.ObjectName;
+
 public class JMXManager extends Meter {
     private static JMXManager ourInstance = new JMXManager();
     private MetricRegistry metrics = new MetricRegistry();
@@ -19,10 +21,12 @@ public class JMXManager extends Meter {
 
 
     public static JMXManager getInstance(){
+
         return ourInstance;
     }
 
     private JMXManager(){
+
         JmxReporter reporter = JmxReporter.forRegistry(metrics).build();
         reporter.start();
     }

@@ -4,16 +4,23 @@ import org.jsoup.nodes.Document;
 
 import java.io.IOException;
 
-public class Util {
+import static java.lang.Thread.sleep;
+
+public class Utils {
     public static Document getPage(String link){
         try {
             return Jsoup.connect(link).validateTLSCertificates(true).get();
         } catch (IOException e) {
             e.printStackTrace();
-
         }
         return new Document("  ");
 
     }
 
+    public static void delay(int delay) {
+        try {
+            sleep(delay);
+        } catch (InterruptedException ignored) {
+        }
+    }
 }

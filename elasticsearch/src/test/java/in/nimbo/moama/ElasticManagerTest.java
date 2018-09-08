@@ -17,8 +17,8 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.*;
 
+import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertEquals;
-
 public class ElasticManagerTest {
     private RestHighLevelClient client;
     private IndexRequest indexRequest;
@@ -35,6 +35,7 @@ public class ElasticManagerTest {
     public void testElastic() {
         client = new RestHighLevelClient(
                 RestClient.builder(new HttpHost("46.4.120.138", 9200, "http")));
+        indexRequest = new IndexRequest("test","_doc");
         indexRequest = new IndexRequest("newspages", "_doc");
         bulkRequest = new BulkRequest();
         WebDocument documentTest = new WebDocument();
@@ -43,10 +44,10 @@ public class ElasticManagerTest {
         documentTest.setTitle("woww");
         documentTest.setLinks(new ArrayList<>());
         JSONObject document = new JSONObject();
-        document.put("url", "f.com");
-        document.put("content", "");
-        document.put("title", "yes");
-        document.put("date", "2015-01-01");
+        document.put("url","f.com");
+        document.put("content","");
+        document.put("title","yes");
+        document.put("date","2015-01-01");
         System.out.println(document);
         try {
             XContentBuilder builder = XContentFactory.jsonBuilder();
@@ -90,13 +91,13 @@ public class ElasticManagerTest {
     @Test
     public void putTest() {
         Map<String, String> document = new HashMap<>();
-        document.put("pageLink", "naive.com");
-        document.put("content", "gdshgssjsjfsjsfj");
-        document.put("title", "yes");
-        document.put("date", "Sun, 02 Sep 2018 10:33:34 +0430");
+        document.put("pageLink","naive.com");
+        document.put("content","gdshgssjsjfsjsfj");
+        document.put("title","yes");
+        document.put("date","Sun, 02 Sep 2018 10:33:34 +0430");
         List<Map<String, String>> list = new ArrayList<>();
         list.add(document);
-        elasticManager.myput(list);
+        elasticManager.put(list);
     }
 
     @Test
@@ -112,5 +113,18 @@ public class ElasticManagerTest {
         test.put("e04102ef6b844805d8d8ef79070a7c6e");
         test.put("fa3ddd0d9534d0679a14b8eb3e0dace8");
         System.out.println(elasticManager.getTermVector(test.toString()));
+    }
+
+    @Test
+    public void put() throws InterruptedException {
+        IndexRequest indexRequest = new IndexRequest("test", "_doc");
+        Map<String, String> document = new HashMap<>();
+        document.put("pageLink","Livhk");
+        document.put("content","gdshgssjsjfsjsfj");
+        document.put("title","yes");
+        document.put("date","2015-12-14");
+
+        indexRequest.source(document);
+
     }
 }

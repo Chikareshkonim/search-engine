@@ -2,7 +2,6 @@ package in.nimbo.moama.metrics;
 
 public final class  IntMeter implements Metered {
     private static final String RATE_NUM_OF = "rate/num of ";
-
     private int value;
     private int lastValue;
     private String name;

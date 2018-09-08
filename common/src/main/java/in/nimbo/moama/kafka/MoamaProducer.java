@@ -12,14 +12,10 @@ import java.net.URL;
 public class MoamaProducer {
     private final String topic;
     private final Producer<String, String> producer;
-    private final Logger errorLogger = Logger.getLogger(this.getClass());
+    private static final Logger LOGGER = Logger.getLogger(MoamaProducer.class);
     public MoamaProducer(String topic, String rootAddress) {
-        //TODO
         this.topic = topic;
         producer = new KafkaProducer<>(ConfigManager.getInstance().getProperties(rootAddress,true));
-    }
-    public void pushDocument(String document){
-        producer.send(new ProducerRecord<>(topic,"", document));
     }
     public void pushNewURL(String... links) {
         for (String url : links) {
@@ -27,7 +23,7 @@ public class MoamaProducer {
                 String key = new URL(url).getHost();
                 producer.send(new ProducerRecord<>(topic, key, url));
             } catch (MalformedURLException e) {
-                errorLogger.error("Wrong Exception" + url);
+                LOGGER.error("Wrong Exception" +url,e);
             }
         }
     }

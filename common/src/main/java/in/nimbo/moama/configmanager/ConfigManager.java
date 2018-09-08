@@ -43,17 +43,32 @@ public class ConfigManager {
         return properties.getProperty(type.toString());
     }
 
+    public int getIntProperty(PropertyType type) {
+        return Integer.parseInt(properties.getProperty(type.toString()));
+    }
+    public long getLongProperty(PropertyType type) {
+        return Long.parseLong(properties.getProperty(type.toString()));
+    }
+    public double getDoubleProperty(PropertyType type) {
+        return Double.parseDouble(properties.getProperty(type.toString()));
+    }
+
+
     public String getProperty(PropertyType type, String extendRoot) {
         return properties.getProperty(extendRoot + type.toString());
     }
 
     public void refresh() {
     }
-    public Properties getProperties(String root, boolean cutRoot) {
+
+    public Properties getProperties(PropertyType root, boolean mustCutRoot) {
+        return getProperties(root.toString(), mustCutRoot);
+    }
+
+    public Properties getProperties(String root, boolean mustCutRoot) {
         Properties tempProperties = new Properties();
         properties.entrySet().stream().filter(entry -> ((String) entry.getKey()).startsWith(root))
-                .forEach(entry -> tempProperties.setProperty(
-                        ((String) entry.getKey()).substring(cutRoot ? root.length() : 0), (String) entry.getValue()));
+                .forEach(entry -> tempProperties.setProperty(((String) entry.getKey()).substring(mustCutRoot ? root.length() : 0), (String) entry.getValue()));
         return tempProperties;
     }
 

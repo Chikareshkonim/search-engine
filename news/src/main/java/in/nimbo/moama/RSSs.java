@@ -11,11 +11,11 @@ import static in.nimbo.moama.newsutil.NewsPropertyType.*;
 
 
 public class RSSs {
-    private static final int INITIAL_CAPACITY = Integer.parseInt(ConfigManager.getInstance().getProperty(CACHE_INITIAL_CAPACITY));
-    private static final int MAX_CAPACITY = Integer.parseInt(ConfigManager.getInstance().getProperty(CACHE_MAX_CAPACITY));
+    private static final int INITIAL_CAPACITY = ConfigManager.getInstance().getIntProperty(CACHE_INITIAL_CAPACITY);
+    private static final int MAX_CAPACITY = ConfigManager.getInstance().getIntProperty(CACHE_MAX_CAPACITY);
     private static final int INITIAL_POLITE_CAPACITY = 1000;
     private static final int MAX_POLITE_CAPACITY = 100;
-    private static final long POLITE_WAIT_TIME = Long.parseLong(ConfigManager.getInstance().getProperty(NEWS_POLITENESS_WAIT));
+    private static final long POLITE_WAIT_TIME = ConfigManager.getInstance().getLongProperty(NEWS_POLITENESS_WAIT);
     private HBaseManager hBaseManager = new HBaseManager(ConfigManager.getInstance().getProperty(NEWS_PAGES_TABLE),
             ConfigManager.getInstance().getProperty(HBASE_VISITED_FAMILY));
     private static final Logger LOGGER = Logger.getLogger(RSSs.class);

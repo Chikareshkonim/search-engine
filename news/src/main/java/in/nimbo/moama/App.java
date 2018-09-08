@@ -26,9 +26,9 @@ public class App {
         LOGGER.trace("news started");
         ConfigManager.getInstance().load(App.class.getResourceAsStream("/news.properties"), PROPERTIES);
         LOGGER.info("configs loaded");
-        new Listener().listen(Function.class, Integer.parseInt(ConfigManager.getInstance().getProperty(NEWS_LISTENER_PORT)));
+        new Listener().listen(Function.class, ConfigManager.getInstance().getIntProperty(NEWS_LISTENER_PORT));
         LOGGER.info("listener started");
-        int newsCapacity = Integer.parseInt(ConfigManager.getInstance().getProperty(NEWS_QUEUE_CAPACITY));
+        int newsCapacity = ConfigManager.getInstance().getIntProperty(NEWS_QUEUE_CAPACITY);
         NewsURLQueue<NewsInfo> news = new Queue<>(newsCapacity);
         RSSReader reader = new RSSReader(news);
         LOGGER.trace("created rss reader");

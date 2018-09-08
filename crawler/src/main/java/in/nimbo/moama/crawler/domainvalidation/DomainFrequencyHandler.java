@@ -16,8 +16,8 @@ public class DomainFrequencyHandler {
 
     private DomainFrequencyHandler() {
 
-        politeTime = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_POLITE_TIME));
-        hashPrime = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_DOMAIN_CHECKER_HASH_PRIME));
+        politeTime = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_POLITE_TIME);
+        hashPrime = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_DOMAIN_CHECKER_HASH_PRIME);
         domainHashTableTime = new long[hashPrime];
     }
 

@@ -1,13 +1,17 @@
 package in.nimbo.moama.listener;
 
+import scala.Char;
+
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static java.lang.Thread.sleep;
@@ -31,23 +35,23 @@ public class Listener {
         String funcName = findMethodName(scanner.nextLine());
         if (funcName.equals("help")) {
             help(out, scanner);
-            endMethod(out, scanner);
+            endRequest(out, scanner);
         } else {
             Method method;
             try {
                 if (funcName.equals("close")) {
                     close(out, scanner);
                     return;
-                }else if (funcName.equals("\u001B[a")){
-                    funcName=lastFunc;
+                } else if (funcName.equals("\u001B[a")) {
+                    funcName = lastFunc;
                 }
                 method = functionClass.getMethod(funcName, PrintStream.class, Scanner.class);
                 method.invoke(null, out, scanner);
-                lastFunc=funcName;
-                endMethod(out, scanner);
+                lastFunc = funcName;
+                endRequest(out, scanner);
             } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
-                e.printStackTrace(out);
-                out.println(funcName);
+                out.println(e.getClass().getName());
+                endRequest(out, scanner);
             }
         }
     }
@@ -71,16 +75,27 @@ public class Listener {
 
 
     public void help(PrintStream out, Scanner scanner) {
-        Arrays.stream(functionClass.getMethods()).filter(method -> method.getAnnotation(CLI.class) != null).forEach(
-                method -> out.printf("%-25s: %-10s\n", method.getName(), method.getAnnotation(CLI.class).help()));
+        Arrays.stream(functionClass.getMethods())
+                .filter(method -> method.getAnnotation(CLI.class) != null)
+                .forEach(method -> out.printf("%-25s: %-10s\n", funcToOrder(method.getName()), method.getAnnotation(CLI.class).help()));
     }
 
-    private void endMethod(PrintStream out, Scanner scanner) {
+    private String funcToOrder(String funcName) {
+        return funcName.chars()
+                .flatMap(e -> {
+                    if (Character.isLowerCase(e)) return IntStream.of(e);
+                    else return IntStream.of(' ', e);
+                })
+                .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
+                .toString().toLowerCase();
+    }
+
+    private void endRequest(PrintStream out, Scanner scanner) {
         out.println("done");
         out.println("print your next order");
         findAndCallMethod(out, scanner);
     }
-    
+
     private void run() {
         try (ServerSocket serverSocket = new ServerSocket(listenPort)) {
             while (isListening) {
@@ -98,7 +113,7 @@ public class Listener {
 
     private void listenThread(Socket socket) throws InterruptedException, IOException {
         new Thread(() -> {
-            Scanner scanner = null;
+            Scanner scanner;
             try {
                 scanner = new Scanner(socket.getInputStream());
                 PrintStream out = new PrintStream(socket.getOutputStream());

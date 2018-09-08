@@ -1,5 +1,6 @@
 package in.nimbo.moama;
 
+import in.nimbo.moama.crawler.CrawlThread;
 import in.nimbo.moama.crawler.CrawlerManager;
 import in.nimbo.moama.crawler.domainvalidation.HashDuplicateChecker;
 import in.nimbo.moama.listener.CLI;
@@ -7,6 +8,7 @@ import in.nimbo.moama.metrics.Metrics;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.LinkedList;
 import java.util.Scanner;
 
 public class ListenerFunction {
@@ -25,27 +27,47 @@ public class ListenerFunction {
         out.println("save duplicate called");
         HashDuplicateChecker.getInstance().saveHashTable();
     }
+
     @CLI(help = "show you statistic of this process")
     public static void stat(PrintStream out, Scanner scanner) {
         Metrics.stat(out::println);
     }
 
 
-    @CLI(help ="tell tou about threads" )
-    public static void thread(PrintStream out,Scanner scanner){
-        CrawlerManager.getInstance().getCrawlerThreadList().stream().map(Thread::isAlive).map(e->e?1:0)
-                .reduce((a,b)->a+b).map(e->"number of alive  thread "+e).ifPresent(out::println);
+    @CLI(help = "tell tou about threads")
+    public static void thread(PrintStream out, Scanner scanner) {
+        LinkedList<CrawlThread> threadList = CrawlerManager.getInstance().getCrawlerThreadList();
+        threadList.stream().map(Thread::isAlive).map(e -> e ? 1 : 0)
+                .reduce((a, b) -> a + b).map(e -> "number of alive  thread " + e).ifPresent(out::println);
+        threadList.stream()
+                .filter(crawlThread -> !crawlThread.isAlive())
+                .peek(CrawlThread::end)
+                .forEach(threadList::remove);
     }
+
     @CLI(help = "increase threads")
-    public static void increaseThread(PrintStream out,Scanner scanner){
+    public static void increaseThread(PrintStream out, Scanner scanner) {
+        out.println("how many thread you want to increase?");
         CrawlerManager.getInstance().run(Integer.parseInt(scanner.nextLine()));
     }
+
+    @CLI(help = "decrease threads")
+    public static void decreaseThread(PrintStream out, Scanner scanner) {
+        out.println("how many thread you want to decrease?");
+        thread(out, scanner);
+        LinkedList<CrawlThread> threadList = CrawlerManager.getInstance().getCrawlerThreadList();
+        threadList.stream()
+                .limit(Integer.parseInt(scanner.nextLine()))
+                .peek(CrawlThread::off)
+                .forEach(threadList::remove);
+    }
+
     @CLI(help = "call gc")
-    public static void gc(PrintStream out,Scanner scanner) {
+    public static void gc(PrintStream out, Scanner scanner) {
         System.gc();
     }
 
-    @CLI(help = "exit program" )
+    @CLI(help = "exit program")
     public static void exit(PrintStream out, Scanner scanner) {
         saveDuplicate(out, scanner);
         out.println("done");

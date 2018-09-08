@@ -12,6 +12,7 @@ public final class FloatMeter implements Metered{
     }
 
     public void add(float value) {
+
         this.value += value;
     }
 

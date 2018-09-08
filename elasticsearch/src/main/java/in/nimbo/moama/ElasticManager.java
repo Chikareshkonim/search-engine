@@ -11,83 +11,138 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
 import org.apache.http.util.EntityUtils;
 import org.apache.log4j.Logger;
-import org.elasticsearch.action.bulk.BulkRequest;
-import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.bulk.*;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.Response;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
-import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.*;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.common.unit.ByteSizeUnit;
+import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class ElasticManager {
 
+    private final List<String> servers;
+    private int bulkCountNumberLimit;
+    private int bulkSizeMB;
+    private long bulkTimeInterval;
+    private int bulkConcurrentRequest;
+    private int bulkRetriesToPut;
     private RestHighLevelClient client;
     private String index;
-    private String test;
     private Logger logger = Logger.getLogger(ElasticManager.class);
-    private IndexRequest indexRequest;
-    private BulkRequest bulkRequest;
-    private static int added = 0;
-    private static final Integer sync = 0;
-    private static int elasticFlushSizeLimit = 0;
-    private static int elasticFlushNumberLimit = 0;
-    private static String textColumn;
-    private static String linkColumn;
-    private static String server1;
-    private static String server2;
-    private static String server3;
-    private static String clientPort;
-    private static String vectorPort;
-    private static String clusterName;
-    private static IntMeter elasticAdded = new IntMeter("elastic Added");
+    private int clientPort;
+    private int vectorPort;
+    private String clusterName;
     private TransportClient transportClient;
     private RestClient restClient;
-    private static int NUMBER_OF_KEYWORDS;
+    private static int numberOfKeywords;
+
     private JMXManager jmxManager = JMXManager.getInstance();
+    private BulkProcessor bulkProcessor;
+    private String textColumn;
+    private String linkColumn;
 
     public ElasticManager() {
-        transportClient = null;
-        NUMBER_OF_KEYWORDS = 5;
-        elasticFlushSizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_SIZE_LIMIT));
-        elasticFlushNumberLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_NUMBER_LIMIT));
-        index = ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_PAGES_TABLE);
-        test = ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_TEST_TABLE);
-        textColumn = ConfigManager.getInstance().getProperty(ElasticPropertyType.TEXT_COLUMN);
-        linkColumn = ConfigManager.getInstance().getProperty(ElasticPropertyType.LINK_COLUMN);
-        server1 = ConfigManager.getInstance().getProperty(ElasticPropertyType.SERVER_1);
-        server2 = ConfigManager.getInstance().getProperty(ElasticPropertyType.SERVER_2);
-        server3 = ConfigManager.getInstance().getProperty(ElasticPropertyType.SERVER_3);
-        clientPort = ConfigManager.getInstance().getProperty(ElasticPropertyType.CLIENT_PORT);
-        vectorPort = ConfigManager.getInstance().getProperty(ElasticPropertyType.VECTOR_PORT);
-        clusterName = ConfigManager.getInstance().getProperty(ElasticPropertyType.CLUSTER_NAME);
-        RestClientBuilder restClientBuilder = RestClient.builder(new HttpHost(server1, Integer.parseInt(clientPort), "http"),
-                new HttpHost(server2, Integer.parseInt(clientPort), "http"),
-                new HttpHost(server3, Integer.parseInt(clientPort), "http"));
+        reconfigure();
+        Settings settings = Settings.builder().put("cluster.name", clusterName)
+                .put("client.transport.sniff", true).build();
+        servers = ConfigManager.getInstance().getProperties(ElasticPropertyType.SERVERS, true).entrySet()
+                .stream().map(server -> (String) server.getValue()).collect(Collectors.toList());
+        HttpHost[] hosts = servers.stream().map(server -> new HttpHost(server, clientPort, "http"))
+                .toArray(HttpHost[]::new);
+
+        TransportAddress[] transportAddresses = servers.stream().map(server -> {
+            try {
+                return new TransportAddress(InetAddress.getByName(server), vectorPort);
+            } catch (UnknownHostException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }).filter(Objects::nonNull).toArray(TransportAddress[]::new);
+
+        RestClientBuilder restClientBuilder = RestClient.builder(hosts);
         restClient = restClientBuilder.build();
         client = new RestHighLevelClient(restClientBuilder);
 
-        indexRequest = new IndexRequest(index, "_doc");
-        bulkRequest = new BulkRequest();
-
+        transportClient = new PreBuiltTransportClient(settings).addTransportAddresses(transportAddresses);
+        bulkProcessor = buildBulkProcessor();
     }
 
+    private BulkProcessor buildBulkProcessor() {
+        return BulkProcessor.builder(transportClient, new BulkProcessor.Listener() {
+            private IntMeter bulkAfterSuccess = new IntMeter("elastic bulkAfterSuccess");
+            private IntMeter bulkAdded = new IntMeter("elastic bulkAdded");
+            private IntMeter bulkAfterFailure = new IntMeter("elastic bulkAfterFailure");
+
+            @Override
+            public void beforeBulk(long executionId, BulkRequest request) {
+                bulkAdded.increment();
+            }
+
+            @Override
+            public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
+                bulkAfterSuccess.increment();
+                if (response.hasFailures()) {
+                    logger.error("We have failures");
+                    for (BulkItemResponse bulkItemResponse : response.getItems()) {
+                        if (bulkItemResponse.isFailed()) {
+                            logger.error(bulkItemResponse.getId() + " failed with message: " + bulkItemResponse.getFailureMessage());
+                        }
+                    }
+                }
+
+            }
+
+            @Override
+            public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
+                bulkAfterFailure.increment();
+                failure.printStackTrace();
+                logger.error("An exception occurred while indexing", failure);
+
+            }
+        })
+                .setBulkActions(bulkCountNumberLimit)
+                .setBulkSize(new ByteSizeValue(bulkSizeMB, ByteSizeUnit.MB))
+                .setFlushInterval(TimeValue.timeValueSeconds(bulkTimeInterval))
+                .setConcurrentRequests(bulkConcurrentRequest)
+                .setBackoffPolicy(BackoffPolicy.exponentialBackoff(TimeValue.timeValueMillis(100), bulkRetriesToPut))
+                .build();
+    }
+
+    private void reconfigure() {
+        bulkCountNumberLimit = ConfigManager.getInstance().getIntProperty(ElasticPropertyType.BULK_ACTION_NUMBER_LIMIT);
+        bulkSizeMB = ConfigManager.getInstance().getIntProperty(ElasticPropertyType.BULK_SIZE_MB_LIMIT);
+        bulkTimeInterval = ConfigManager.getInstance().getLongProperty(ElasticPropertyType.BULK_TIME_INTERVALS_MS);
+        bulkConcurrentRequest = ConfigManager.getInstance().getIntProperty(ElasticPropertyType.BULK_CONCURRENT_REQUEST_NUMBER);
+        bulkRetriesToPut = ConfigManager.getInstance().getIntProperty(ElasticPropertyType.BULK_RETRIES_PUT);
+        clusterName = ConfigManager.getInstance().getProperty(ElasticPropertyType.CLUSTER_NAME);
+        numberOfKeywords = ConfigManager.getInstance().getIntProperty(ElasticPropertyType.ELASTIC_NUMBER_OF_KEYWORDS);
+        index = ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_PAGES_TABLE);
+        textColumn = ConfigManager.getInstance().getProperty(ElasticPropertyType.TEXT_COLUMN);
+        linkColumn = ConfigManager.getInstance().getProperty(ElasticPropertyType.LINK_COLUMN);
+        clientPort = ConfigManager.getInstance().getIntProperty(ElasticPropertyType.CLIENT_PORT);
+        vectorPort = ConfigManager.getInstance().getIntProperty(ElasticPropertyType.VECTOR_PORT);
+    }
 
     //TODO set url instead of ids
     public Map<String, Map<String, Double>> getTermVector(String ids ) throws IOException {
@@ -116,6 +171,8 @@ public class ElasticManager {
         for (Object doc : docs) {
             Map<String, Double> keys = new HashMap<>();
             JSONObject terms = ((JSONObject) doc).getJSONObject("term_vectors").getJSONObject("content").getJSONObject("terms");
+            terms.keySet().forEach(key -> keys.put(key, calculateTfIdf(terms.getInt("term_freq"), terms.getInt("doc_freq"))));
+            resualt.put(((JSONObject) doc).getString("id"), keys);
             terms.keySet().forEach(key -> keys.put(key, calculateTfIdf(terms.getJSONObject(key).getInt("term_freq"),terms.getJSONObject(key).getInt("doc_freq"))));
             resualt.put(((JSONObject) doc).getString("_id"), keys);
         }
@@ -173,58 +230,13 @@ public class ElasticManager {
         return keywords;
     }
 
-    public synchronized void put(JSONObject document) {
-        try {
-            XContentBuilder builder = XContentFactory.jsonBuilder();
-            try {
-                builder.startObject();
-                {
-                    document.keySet().forEach(key -> {
-                        try {
-                            if (!key.equals("outLinks")) {
-                                builder.field(key, document.get(key));
-                            }
-                        } catch (IOException e) {
-                            logger.error("ERROR! couldn't add " + document.get(key) + " to elastic");
-                        }
-                    });
-                }
-                builder.endObject();
-                indexRequest.source(builder);
-                indexRequest.id(DigestUtils.md5Hex(document.getString("pageLink")));
-                bulkRequest.add(indexRequest);
-                indexRequest = new IndexRequest(index, "_doc");
-                if (bulkRequest.numberOfActions() >= elasticFlushSizeLimit) {
-                    client.bulk(bulkRequest);
-                    elasticAdded.add(bulkRequest.numberOfActions());
-                    bulkRequest = new BulkRequest();
-//                    jmxManager.markNewAddedToElastic();
-                }
-            } catch (IOException e) {
-                logger.error("ERROR! Couldn't add the document for " + document.get("pageLink"));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
-    public void myput(List<Map<String, String>> docs) {
-        IndexRequest indexRequest = new IndexRequest(index, "_doc");
-        BulkRequest bulkRequest = new BulkRequest();
-        for (Map<String, String> document : docs) {
-            indexRequest.source(document);
-            indexRequest.id(DigestUtils.md5Hex(document.get("pageLink")));
-            bulkRequest.add(indexRequest);
-            indexRequest = new IndexRequest(index, "_doc");
-        }
-        try {
-            client.bulk(bulkRequest);
-            elasticAdded.add(bulkRequest.numberOfActions());
-            jmxManager.markNewAddedToElastic(bulkRequest.numberOfActions());
-        } catch (IOException e) {
-            e.printStackTrace();
-            logger.error("ERROR! Couldn't add the document for ", e);
-        }
+    public void put(List<Map<String, String>> docs) {
+        ConfigManager.getInstance().getProperty(ElasticPropertyType.BULK_ACTION_NUMBER_LIMIT);
+
+        docs.stream().map(document -> transportClient.prepareIndex(index, "_doc",
+                DigestUtils.md5Hex(document.get("pageLink"))).setSource(document).request())
+                .forEach(bulkProcessor::add);
     }
 
     public Map<String, Float> search(ArrayList<String> necessaryWords, ArrayList<String> preferredWords, ArrayList<String> forbiddenWords) {

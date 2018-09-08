@@ -9,10 +9,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 
 public class DuplicateHandler {
     private final LRUCache<String, Integer> lruCache;
-    private HashDuplicateChecker HashDuplicateChecker;
-    private static DuplicateHandler duplicateHandler = new DuplicateHandler();
-    private static final int initialCapacity = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.DUPLICATE_HANDLER_INITIAL_CAPACITY));
-    private static final int maxCapacity = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.DUPLICATE_HANDLER_MAX_CAPACITY));
+    private static final int initialCapacity = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.DUPLICATE_HANDLER_INITIAL_CAPACITY);
+    private static final int maxCapacity = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.DUPLICATE_HANDLER_MAX_CAPACITY);
     private static final DuplicateHandler ourInstance = new DuplicateHandler();
     private HBaseManager hBaseManager;
     private static IntMeter duplicateRejectByLru =new IntMeter("Duplicate Lru");

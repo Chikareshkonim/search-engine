@@ -27,14 +27,11 @@ public class UrlHandler {
                 .toArray(Link[]::new);
     }
 
-    public static void splitter(List<Link> links, ArrayList<String> internalLinks, ArrayList<String> externalLinks, String mainDomain) {
-        for (Link link : links) {
-            if (link.getDomain().equals(mainDomain)) {
-                internalLinks.add(link.getUrl());
-            } else {
-                externalLinks.add(link.getUrl());
-            }
-        }
+    public static void splitter(List<Link> links, List<Link> internalLinks, List<Link> externalLinks, String mainDomain) {
+        links.forEach(link -> {
+            if (link.getDomain().equals(mainDomain)) internalLinks.add(link);
+            else externalLinks.add(link);
+        });
     }
 }
 

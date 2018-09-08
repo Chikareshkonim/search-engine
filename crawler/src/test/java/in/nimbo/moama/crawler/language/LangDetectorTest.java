@@ -1,18 +1,19 @@
 package in.nimbo.moama.crawler.language;
 
-import com.optimaize.langdetect.LanguageDetector;
 import in.nimbo.moama.exception.IllegalLanguageException;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import java.io.File;
 
 public class LangDetectorTest {
 
     @BeforeClass
     public static void setUp() throws Exception {
-        LangDetector.getInstance().profileLoad();
+        String recourseAddress=new File(LangDetector.class.getProtectionDomain().getCodeSource().getLocation().toURI())
+                .getPath().concat("/../src/main/resources/");
+
+        LangDetector.getInstance().profileLoad(recourseAddress+"profiles");
     }
 
     @Test(expected = IllegalLanguageException.class)

@@ -35,7 +35,7 @@ import java.util.*;
 public class CrawlThread extends Thread {
     private static JMXManager jmxManager;
     private static final Logger LOGGER = Logger.getLogger(CrawlThread.class);
-    private final boolean isRun;
+    private boolean isRun=true;
     private static final Parser parser;
     private static final MoamaProducer helperProducer;
     private static final MoamaConsumer linkConsumer;
@@ -67,29 +67,24 @@ public class CrawlThread extends Thread {
     private static int elasticSizeBulkLimit;
 
     static {
-        elasticSizeBulkLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(ElasticPropertyType.ELASTIC_FLUSH_SIZE_LIMIT));
-        hbaseSizeLimit = Integer.parseInt(ConfigManager.getInstance().getProperty(HBasePropertyType.PUT_SIZE_LIMIT));
+        elasticSizeBulkLimit = ConfigManager.getInstance().getIntProperty(ElasticPropertyType.ELASTIC_FLUSH_SIZE_LIMIT);
+        hbaseSizeLimit = ConfigManager.getInstance().getIntProperty(HBasePropertyType.PUT_SIZE_LIMIT);
         outLinksFamily = ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_FAMILY_OUTLINKS);
         scoreFamily = ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_FAMILY_SCORE);
         hBaseTable = ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_TABLE);
         jmxManager = JMXManager.getInstance();
-        crawledProducer = new MoamaProducer(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_CRAWLED_TOPIC_NAME)
-                , "kafka.crawled.");
-        helperProducer = new MoamaProducer(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_HELPER_TOPIC_NAME)
-                , "kafka.helper.");
-        linkConsumer = new MoamaConsumer(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_LINK_TOPIC_NAME)
-                , "kafka.server.");
-        minOfEachQueue = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_MIN_OF_EACH_THREAD_QUEUE));
-        numOfInternalLinksToKafka = Integer.parseInt(ConfigManager.getInstance().getProperty(CrawlerPropertyType.CRAWLER_INTERNAL_LINK_ADD_TO_KAFKA));
+        crawledProducer = new MoamaProducer(ConfigManager.getInstance()
+                .getProperty(CrawlerPropertyType.CRAWLER_CRAWLED_TOPIC_NAME), "kafka.crawled.");
+        helperProducer = new MoamaProducer(ConfigManager.getInstance()
+                .getProperty(CrawlerPropertyType.CRAWLER_HELPER_TOPIC_NAME), "kafka.helper.");
+        linkConsumer = new MoamaConsumer(ConfigManager.getInstance()
+                .getProperty(CrawlerPropertyType.CRAWLER_LINK_TOPIC_NAME), "kafka.server.");
+        minOfEachQueue = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_MIN_OF_EACH_THREAD_QUEUE);
+        numOfInternalLinksToKafka = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_INTERNAL_LINK_ADD_TO_KAFKA);
         webDocumentHBaseManager = new WebDocumentHBaseManager(hBaseTable, outLinksFamily, scoreFamily);
         elasticManager = new ElasticManager();
         webDocumentHBaseManager.createTable();
         parser = Parser.getInstance();
-    }
-
-
-    public CrawlThread(boolean isRun) {
-        this.isRun = isRun;
     }
 
     @Override
@@ -97,16 +92,15 @@ public class CrawlThread extends Thread {
         LinkedList<String> urlsOfThisThread = new LinkedList<>(linkConsumer.getDocuments());
         LinkedList<Put> webDocOfThisThread = new LinkedList<>();
         LinkedList<Map<String, String>> elasticDocOfThisThread = new LinkedList<>();
-
         while (isRun) {
             work(urlsOfThisThread, webDocOfThisThread, elasticDocOfThisThread);
         }
         helperProducer.pushNewURL(urlsOfThisThread.toArray(new String[0]));
-
-
     }
 
-    private void work(LinkedList<String> urlsOfThisThread, LinkedList<Put> webDocOfThisThread, LinkedList<Map<String, String>> elasticDocOfThisThread) {
+    private void work(LinkedList<String> urlsOfThisThread, List<Put> webDocOfThisThread,
+                      List<Map<String, String>> elasticDocOfThisThread) {
+
         if (urlsOfThisThread.size() < minOfEachQueue) {
             urlsOfThisThread.addAll(linkConsumer.getDocuments());
         } else {
@@ -116,11 +110,13 @@ public class CrawlThread extends Thread {
                 long tempTime = System.currentTimeMillis();
                 checkLink(url);
                 checkTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+
                 //////
                 tempTime = System.currentTimeMillis();
                 String string = Jsoup.connect(url).validateTLSCertificates(false).execute().body();
                 fetchTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
                 //////
+
                 tempTime = System.currentTimeMillis();
                 Document document = Jsoup.parse(string);
                 documentTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
@@ -150,7 +146,7 @@ public class CrawlThread extends Thread {
                 tempTime = System.currentTimeMillis();
                 elasticDocOfThisThread.add(webDocument.elasticMap());
                 if (elasticDocOfThisThread.size() > elasticSizeBulkLimit){
-                    elasticManager.myput(elasticDocOfThisThread);
+                    elasticManager.put(elasticDocOfThisThread);
                     elasticDocOfThisThread.clear();
                 }
                 elasticTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
@@ -208,8 +204,8 @@ public class CrawlThread extends Thread {
     }
 
     private String[] normalizeOutLink(WebDocument webDocument) throws MalformedURLException {
-        ArrayList<String> externalLink = new ArrayList<>();
-        ArrayList<String> internalLink = new ArrayList<>();
+        List<Link> externalLink = new ArrayList<>();
+        List<Link> internalLink = new ArrayList<>();
         UrlHandler.splitter(webDocument.getLinks(), internalLink, externalLink, new URL(webDocument.getPageLink()).getHost());
         if (internalLink.size() > numOfInternalLinksToKafka) {
             Collections.shuffle(internalLink);
@@ -217,6 +213,19 @@ public class CrawlThread extends Thread {
         } else {
             externalLink.addAll(internalLink);
         }
-        return externalLink.toArray(new String[0]);
+        webDocument.setLinks(externalLink);
+        return externalLink.stream().map(Link::getUrl).toArray(String[]::new);
+    }
+
+    public boolean isRun() {
+        return isRun;
+    }
+
+    public void off() {
+        isRun = false;
+    }
+
+    public void end() {
+
     }
 }

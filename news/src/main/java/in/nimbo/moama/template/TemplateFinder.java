@@ -1,7 +1,6 @@
 package in.nimbo.moama.template;
 
-import in.nimbo.moama.Util;
-import org.apache.log4j.Logger;
+import in.nimbo.moama.Utils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -47,7 +46,7 @@ public class TemplateFinder {
     private static Document findMaxTextPage(Document rssDoc, String newsTag) {
         Stream<Element> stream = rssDoc.getElementsByTag("item").stream()
                 .flatMap(element -> element.getElementsByTag(newsTag).stream()).skip(4).limit(25);
-        return stream.parallel().map(Element::text).map(Util::getPage).max(Comparator.comparing(a -> a.text().length())).get();
+        return stream.parallel().map(Element::text).map(Utils::getPage).max(Comparator.comparing(a -> a.text().length())).get();
     }
 }
 
@@ -72,8 +71,6 @@ class MyElement implements Comparable<MyElement> {
 }
 
 class DateFormatFinder {
-    private static final Logger LOGGER = Logger.getLogger(DateFormatFinder.class);
-
 
     private static final String[] formats =
             {
@@ -102,7 +99,6 @@ class DateFormatFinder {
                 new SimpleDateFormat(format).parse(date);
                 return true;
             } catch (ParseException e) {
-                LOGGER.error("ParseException at DateFormatFinder", e);
                 return false;
             }
         }).findFirst().get();

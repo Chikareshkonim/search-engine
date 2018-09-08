@@ -19,7 +19,8 @@ public enum CrawlerPropertyType implements PropertyType {
     CRAWLER_LINK_TOPIC_NAME("crawler.links.topic.name"),
     DUPLICATE_HANDLER_MAX_CAPACITY("duplicate.handler.max.capacity"),
     DUPLICATE_HANDLER_INITIAL_CAPACITY("duplicate.handler.initial.capacity"),
-    CRAWLER_CRAWLED_TOPIC_NAME("crawler.crawled.topic.name");
+    CRAWLER_CRAWLED_TOPIC_NAME("crawler.crawled.topic.name"),
+    LISTENER_PORT("crawler.listener.port");
 
     private String type;
 

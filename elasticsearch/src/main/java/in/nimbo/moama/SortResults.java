@@ -1,14 +1,11 @@
 package in.nimbo.moama;
 
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class SortResults {
     public static Map<String, Float> sortByValues(Map<String, Float> map) {
         List<Map.Entry<String, Float>> list = new LinkedList<>(map.entrySet());
-        list.sort(new CompareResults());
+        list.sort(Comparator.comparing(Map.Entry::getValue));
         Map<String, Float> sortedHashMap = new LinkedHashMap<>();
         for (Map.Entry<String, Float> entry : list) {
             sortedHashMap.put(entry.getKey(), entry.getValue());

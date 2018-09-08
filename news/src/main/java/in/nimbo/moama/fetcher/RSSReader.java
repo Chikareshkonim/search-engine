@@ -13,7 +13,7 @@ public class RSSReader implements Runnable {
 
     private NewsURLQueue<NewsInfo> newsQueue;
     private FloatMeter floatMeter = new FloatMeter("RSSReaderTime");
-    private static final int SLEEP_TIME = Integer.parseInt(ConfigManager.getInstance().getProperty(NEWS_READER_WAIT));
+    private static final int SLEEP_TIME = ConfigManager.getInstance().getIntProperty(NEWS_READER_WAIT);
     private static final Logger LOGGER = Logger.getLogger(RSSReader.class);
 
 

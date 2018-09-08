@@ -7,11 +7,12 @@ import in.nimbo.moama.kafka.MoamaProducer;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.LinkedList;
 
 public class ConsumerMain {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, URISyntaxException {
         ConfigManager configManager = ConfigManager.getInstance();
         configManager.load(new FileInputStream("/home/mohammadreza/IdeaProjects/search-engine/crawler/src/main/resources/test.properties"), ConfigManager.FileType.PROPERTIES);
         Initializer.initialize();

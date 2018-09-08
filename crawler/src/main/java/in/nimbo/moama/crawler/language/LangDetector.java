@@ -3,21 +3,9 @@ package in.nimbo.moama.crawler.language;
 import com.cybozu.labs.langdetect.Detector;
 import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
-import com.google.common.base.Optional;
-import com.optimaize.langdetect.DetectedLanguage;
-import com.optimaize.langdetect.LanguageDetector;
-import com.optimaize.langdetect.LanguageDetectorBuilder;
-import com.optimaize.langdetect.i18n.LdLocale;
-import com.optimaize.langdetect.ngram.NgramExtractors;
-import com.optimaize.langdetect.profiles.LanguageProfile;
-import com.optimaize.langdetect.profiles.LanguageProfileReader;
-import com.optimaize.langdetect.text.CommonTextObjectFactories;
-import com.optimaize.langdetect.text.TextObject;
-import com.optimaize.langdetect.text.TextObjectFactory;
 import in.nimbo.moama.exception.IllegalLanguageException;
 
-import java.io.IOException;
-import java.util.List;
+import java.net.URISyntaxException;
 
 
 public class LangDetector {
@@ -28,11 +16,10 @@ public class LangDetector {
     public static LangDetector getInstance() {
         return ourInstance;
     }
-    public void profileLoad() {
+    public void profileLoad(String recourseAddress) throws URISyntaxException {
 
         try {
-            System.out.println(System.getProperty("user.dir"));
-            DetectorFactory.loadProfile(System.getProperty("user.dir")+"/crawler/src/main/resources/profiles");
+            DetectorFactory.loadProfile(recourseAddress);
         } catch (LangDetectException e) {
             e.printStackTrace();
         }

@@ -13,7 +13,6 @@ public class Console {
     ElasticManager elasticManager = new ElasticManager();
     WebDocumentHBaseManager webDocumentHBaseManager = new WebDocumentHBaseManager("pages", "outLinks", "score");
     String input = "";
-
     @Command(description = "Advanced Search- by necessary, forbidden and preferred statements")
     public void advancedSearch(){
         ArrayList<String> necessaryWords = new ArrayList<>();
