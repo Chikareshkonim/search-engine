@@ -29,8 +29,7 @@ public class App
         ConfigManager configManager = ConfigManager.getInstance();
         configManager.load(configInputStream, ConfigManager.FileType.PROPERTIES);
         KeywordFinder keywordFinder = new KeywordFinder();
-        while (true){
-            keywordFinder.run();
-        }
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+        executor.scheduleAtFixedRate(keywordFinder,0,1, TimeUnit.MILLISECONDS);
     }
 }
