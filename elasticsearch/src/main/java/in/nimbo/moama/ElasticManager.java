@@ -155,7 +155,12 @@ public class ElasticManager {
                 "   \"payloads\" : false,\n" +
                 "   \"positions\" : false,\n" +
                 "   \"term_statistics\": true,\n" +
-                "   \"field_statistics\": false\n" +
+                "   \"field_statistics\": false,\n" +
+                "\"filter\" : {\n" +
+                "        \"max_num_terms\" : 400,\n" +
+                "                \"min_term_freq\" : 3,\n" +
+                "                \"min_doc_freq\" : 5\n" +
+                "    }" +
                 "\t}\n" +
                 "   }";
         HttpEntity entity = new NStringEntity(jsonString, ContentType.APPLICATION_JSON);
