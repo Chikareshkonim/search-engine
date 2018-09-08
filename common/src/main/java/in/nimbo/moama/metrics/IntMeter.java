@@ -10,12 +10,7 @@ public final class  IntMeter implements Metered {
     private int lastValue;
     private Meter jmx;
     private String name;
-    private static MetricRegistry metrics = new MetricRegistry();
-    private static JmxReporter reporter = JmxReporter.forRegistry(metrics).build();
-
-    static{
-        reporter.start();
-    }
+    static MetricRegistry metrics = new MetricRegistry();
 
     public IntMeter(String name) {
         jmx = metrics.meter(name);

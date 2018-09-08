@@ -21,8 +21,7 @@ public class FloatMeterTest {    FloatMeter floatMeter;
 
     @Test
     public void increment() {
-        floatMeter.increment();
-        floatMeter.increment();
+        floatMeter.add(2);
         Assert.assertEquals(floatMeter.getValue(), 1002,0.001);
     }
 

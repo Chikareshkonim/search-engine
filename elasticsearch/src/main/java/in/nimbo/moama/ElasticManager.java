@@ -2,7 +2,6 @@ package in.nimbo.moama;
 
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.metrics.IntMeter;
-import in.nimbo.moama.metrics.JMXManager;
 import in.nimbo.moama.util.ElasticPropertyType;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.HttpEntity;
@@ -35,7 +34,6 @@ import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -57,7 +55,6 @@ public class ElasticManager {
     private RestClient restClient;
     private static int numberOfKeywords;
 
-    private JMXManager jmxManager = JMXManager.getInstance();
     private BulkProcessor bulkProcessor;
     private String textColumn;
     private String linkColumn;

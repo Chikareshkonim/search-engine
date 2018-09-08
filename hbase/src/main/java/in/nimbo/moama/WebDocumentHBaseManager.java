@@ -1,32 +1,18 @@
 package in.nimbo.moama;
 
-import in.nimbo.moama.configmanager.ConfigManager;
-import in.nimbo.moama.document.Link;
-import in.nimbo.moama.metrics.IntMeter;
-import in.nimbo.moama.metrics.JMXManager;
-import in.nimbo.moama.util.HBasePropertyType;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.log4j.Logger;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.LinkedList;
 import java.util.List;
 
 public class WebDocumentHBaseManager extends HBaseManager {
-    private static Logger errorLogger = Logger.getLogger("error");
     private String outLinksFamily;
     private String scoreFamily;
-    private static int size = 0;
-    private static int added = 0;
-    private JMXManager jmxManager = JMXManager.getInstance();
-    private static boolean mustPut = false;
 
     public WebDocumentHBaseManager(String tableName, String outLinksFamily, String scoreFamily) {
         super(tableName, scoreFamily);
@@ -67,7 +53,7 @@ public class WebDocumentHBaseManager extends HBaseManager {
             admin.close();
             return true;
         } catch (IOException e) {
-            errorLogger.error(e.getMessage());
+            LOGGER.error(e.getMessage());
             return false;
         }
     }

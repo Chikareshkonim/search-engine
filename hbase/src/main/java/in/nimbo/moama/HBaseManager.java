@@ -1,8 +1,6 @@
 package in.nimbo.moama;
 
 import com.google.protobuf.ServiceException;
-import in.nimbo.moama.metrics.IntMeter;
-import in.nimbo.moama.metrics.JMXManager;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
@@ -18,11 +16,9 @@ import java.util.List;
 public class HBaseManager {
     TableName tableName;
     String duplicateCheckFamily;
-    private static final Logger LOGGER = Logger.getLogger(HBaseManager.class);
+    protected static final Logger LOGGER = Logger.getLogger(HBaseManager.class);
     Configuration configuration;
     Connection connection;
-    private JMXManager jmxManager = JMXManager.getInstance();
-    private static IntMeter numberOfPagesAddedToHBase = new IntMeter("Hbase Added       ");
     private HTable table;
 
     public HBaseManager(String tableName, String duplicateCheckFamily) {
@@ -55,9 +51,7 @@ public class HBaseManager {
     public void put(List<Put> webDocOfThisThread) {
         try {
             table.put(webDocOfThisThread);
-            numberOfPagesAddedToHBase.add(webDocOfThisThread.size());
             webDocOfThisThread.clear();
-            jmxManager.markNewAddedToHBase(webDocOfThisThread.size());
         } catch (IOException e) {
             LOGGER.error("couldn't put  into HBase!", e);
         } catch (RuntimeException e) {

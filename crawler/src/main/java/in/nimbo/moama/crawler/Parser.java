@@ -1,6 +1,5 @@
 package in.nimbo.moama.crawler;
 
-import in.nimbo.moama.crawler.domainvalidation.DuplicateHandler;
 import in.nimbo.moama.document.Link;
 import in.nimbo.moama.UrlHandler;
 import in.nimbo.moama.document.WebDocument;
@@ -8,7 +7,6 @@ import in.nimbo.moama.crawler.language.LangDetector;
 import in.nimbo.moama.exception.IllegalLanguageException;
 import in.nimbo.moama.metrics.FloatMeter;
 import in.nimbo.moama.metrics.IntMeter;
-import in.nimbo.moama.metrics.JMXManager;
 import org.jsoup.nodes.Document;
 
 import java.io.IOException;
@@ -20,12 +18,13 @@ import java.util.Arrays;
 public class Parser {
     private static LangDetector langDetector;
     private static Parser ourInstance=new Parser();
-    private static JMXManager jmxManager=JMXManager.getInstance();
 
-    private static IntMeter crawledPage=new IntMeter("crawled Page");
-    private static IntMeter languagePassed=new IntMeter("language passed");
-    private static FloatMeter langDetectTime   = new FloatMeter("lang detect Time") ;
-    private static FloatMeter webdocCreateTime = new FloatMeter("webdoc create Time");
+    private static final IntMeter CRAWLED_PAGE_METER =new IntMeter("crawled page");
+    private static final IntMeter LANGUAGE_PASSED_METER =new IntMeter("language passed");
+    private static final IntMeter URL_RECEIVER_METER =new IntMeter("url received");
+
+    private static final FloatMeter langDetectTime   = new FloatMeter("lang detect Time") ;
+    private static final FloatMeter webdocCreateTime = new FloatMeter("webdoc create Time");
 
     public synchronized static Parser getInstance() {
         return ourInstance;
@@ -39,28 +38,31 @@ public class Parser {
     }
 
     public WebDocument parse(Document document ,String url) throws IllegalLanguageException, IOException {
-        jmxManager.markNewUrlReceived();
+        URL_RECEIVER_METER.increment();
         long tempTime = System.currentTimeMillis();
+        webdocCreateTime.beginTimer();
         String text = document.text();
         WebDocument webDocument = new WebDocument();
+        webdocCreateTime.stopTimer();
         webdocCreateTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
         tempTime = System.currentTimeMillis();
-        checkLanguage(document, text);
-        languagePassed.increment();
+        langDetectTime.beginTimer();
+        checkLanguage(text);
+        LANGUAGE_PASSED_METER.increment();
+        langDetectTime.stopTimer();
         langDetectTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
-        jmxManager.markNewLanguagePassed();
+        LANGUAGE_PASSED_METER.increment();
         Link[] links = UrlHandler.getLinks(document.getElementsByTag("a"), new URL(url).getHost());
         webDocument.setTextDoc(text);
         webDocument.setTitle(document.title());
         webDocument.setPageLink(url);
         webDocument.setLinks(new ArrayList<>(Arrays.asList(links)));
-        crawledPage.increment();
-        jmxManager.markNewCrawledPage();
-
+        CRAWLED_PAGE_METER.increment();
+        CRAWLED_PAGE_METER.increment();
         return webDocument;
     }
 
-    private void checkLanguage(Document document, String text) throws IllegalLanguageException {
+    private void checkLanguage(String text) throws IllegalLanguageException {
         langDetector.languageCheck(text);
     }
 }
