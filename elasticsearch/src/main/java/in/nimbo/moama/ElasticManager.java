@@ -147,7 +147,6 @@ public class ElasticManager {
         Map<String, Map<String, Double>> result = new HashMap<>();
         Map<String, String> params = Collections.emptyMap();
         JSONArray idsArray = new JSONArray(ids.stream().map(DigestUtils::md5Hex).toArray());
-        System.out.println(idsArray.toString());
         String jsonString = "{\n" +
                 "\t\"ids\" : " + idsArray.toString() + ",\n" +
                 "\t\"parameters\": {\n" +

@@ -37,15 +37,13 @@ public class KeywordFinder implements Runnable {
     public void run() {
         Map<String, Map<String, Double>> keywords = null;
         try {
-            System.out.println("start");
             ArrayList<String> urls = consumer.getDocuments();
             System.out.println(urls.toString());
             if (!urls.isEmpty())
-            keywords = elasticManager.getTermVector(urls);
+                keywords = elasticManager.getTermVector(urls);
             assert keywords != null;
             if (!keywords.values().isEmpty())
                 hbaseManager.put(createHBasePut(keywords));
-            System.out.println("added");
         } catch (Exception e) {
             LOGGER.error("can not get term vector", e);
         }
