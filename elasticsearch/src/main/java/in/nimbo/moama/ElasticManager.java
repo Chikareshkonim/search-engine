@@ -26,6 +26,7 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -47,7 +48,7 @@ public class ElasticManager {
     private int bulkRetriesToPut;
     private RestHighLevelClient client;
     private String index;
-    private Logger logger = Logger.getLogger(ElasticManager.class);
+    private Logger LOGGER = Logger.getLogger(ElasticManager.class);
     private int clientPort;
     private int vectorPort;
     private String clusterName;
@@ -100,10 +101,10 @@ public class ElasticManager {
             public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
                 bulkAfterSuccess.increment();
                 if (response.hasFailures()) {
-                    logger.error("We have failures");
+                    LOGGER.error("We have failures");
                     for (BulkItemResponse bulkItemResponse : response.getItems()) {
                         if (bulkItemResponse.isFailed()) {
-                            logger.error(bulkItemResponse.getId() + " failed with message: " + bulkItemResponse.getFailureMessage());
+                            LOGGER.error(bulkItemResponse.getId() + " failed with message: " + bulkItemResponse.getFailureMessage());
                         }
                     }
                 }
@@ -114,7 +115,7 @@ public class ElasticManager {
             public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
                 bulkAfterFailure.increment();
                 failure.printStackTrace();
-                logger.error("An exception occurred while indexing", failure);
+                LOGGER.error("An exception occurred while indexing", failure);
 
             }
         })
@@ -146,6 +147,7 @@ public class ElasticManager {
         Map<String, Map<String, Double>> result = new HashMap<>();
         Map<String, String> params = Collections.emptyMap();
         JSONArray idsArray = new JSONArray(ids.stream().map(DigestUtils::md5Hex).toArray());
+        System.out.println(idsArray.toString());
         String jsonString = "{\n" +
                 "\t\"ids\" : " + idsArray.toString() + ",\n" +
                 "\t\"parameters\": {\n" +
@@ -168,9 +170,13 @@ public class ElasticManager {
         JSONArray docs = new JSONObject(EntityUtils.toString(response.getEntity())).getJSONArray("docs");
         for (Object doc : docs) {
             Map<String, Double> keys = new HashMap<>();
-            JSONObject terms = ((JSONObject) doc).getJSONObject("term_vectors").getJSONObject("content").getJSONObject("terms");
-            terms.keySet().forEach(key -> keys.put(key, terms.getJSONObject(key).getDouble("score")));
-            result.put(((JSONObject) doc).getString("_id"), keys);
+            try {
+                JSONObject terms = ((JSONObject) doc).getJSONObject("term_vectors").getJSONObject("content").getJSONObject("terms");
+                terms.keySet().forEach(key -> keys.put(key, terms.getJSONObject(key).getDouble("score")));
+                result.put(((JSONObject) doc).getString("_id"), keys);
+            }catch (JSONException e){
+                LOGGER.error("doc does not have term vector",e);
+            }
         }
         return result;
     }
