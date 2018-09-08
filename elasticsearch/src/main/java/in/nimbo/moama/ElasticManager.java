@@ -173,7 +173,7 @@ public class ElasticManager {
             Map<String, Double> keys = new HashMap<>();
             JSONObject terms = ((JSONObject) doc).getJSONObject("term_vectors").getJSONObject("content").getJSONObject("terms");
             terms.keySet().forEach(key -> keys.put(key, calculateTfIdf(terms.getInt("term_freq"), terms.getInt("doc_freq"))));
-            resualt.put(((JSONObject) doc).getString("id"), keys);
+            result.put(((JSONObject) doc).getString("id"), keys);
             terms.keySet().forEach(key -> keys.put(key, calculateTfIdf(terms.getJSONObject(key).getInt("term_freq"),terms.getJSONObject(key).getInt("doc_freq"))));
             result.put(((JSONObject) doc).getString("_id"), keys);
         }
