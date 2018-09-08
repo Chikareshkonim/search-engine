@@ -51,6 +51,8 @@ public class Listener {
                 endRequest(out, scanner);
             } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
                 out.println(e.getClass().getName());
+                out.println("cause"+e.getCause());
+                e.printStackTrace(out);
                 endRequest(out, scanner);
             }
         }

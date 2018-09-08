@@ -15,7 +15,5 @@ public class App {
         new Listener().listen(ListenerFunction.class,ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.LISTENER_PORT));
         System.out.println("2s");
         CrawlerManager.getInstance().run();
-        System.out.println("3s");
-        CrawlerManager.getInstance().manageKafkaHelper();
     }
 }

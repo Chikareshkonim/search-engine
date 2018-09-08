@@ -27,12 +27,17 @@ import org.jsoup.UncheckedIOException;
 import org.jsoup.nodes.Document;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
+
 public class CrawlThread extends Thread {
     private static final Logger LOGGER = Logger.getLogger(CrawlThread.class);
+    private static final IntMeter FATAL_ERROR = new IntMeter("FATAL error");
+    public static LinkedList<String> fatalErrors = new LinkedList<>();
     private boolean isRun = true;
     private static final Parser parser;
     private static final MoamaProducer helperProducer;
@@ -45,7 +50,7 @@ public class CrawlThread extends Thread {
     private static final DuplicateHandler duplicateChecker = DuplicateHandler.getInstance();
     private static final DomainFrequencyHandler domainTimeHandler = DomainFrequencyHandler.getInstance();
 
-    private static final IntMeter DUPLICATE_METER = new IntMeter("duplicate url");
+    private static final IntMeter DUPLICATE_METER = new IntMeter("passed checking url");
     private static final IntMeter NEW_URL_METER = new IntMeter("new url");
     private static final IntMeter COMPLETE_METER = new IntMeter("complete url");
     private static final IntMeter DOMAIN_ERROR_METER = new IntMeter("domain Error");
@@ -178,6 +183,10 @@ public class CrawlThread extends Thread {
                 duplicateChecker.weakConfirm(url);
                 LOGGER.trace("url exception", e);
             } catch (RuntimeException e) {
+                FATAL_ERROR.increment();
+                StringWriter sw = new StringWriter();
+                e.printStackTrace(new PrintWriter(sw));
+                fatalErrors.add(sw.toString());
                 LOGGER.error("important" + e.getMessage(), e);
                 throw e;
             }
@@ -236,6 +245,9 @@ public class CrawlThread extends Thread {
         webDocumentHBaseManager.put(webDocOfThisThread);
         elasticManager.put(elasticDocOfThisThread);
         helperProducer.pushNewURL(urlsOfThisThread.toArray(new String[0]));
+    }
+    public static void exiting(){
         elasticManager.close();
     }
+
 }

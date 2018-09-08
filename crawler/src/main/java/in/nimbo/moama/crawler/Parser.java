@@ -47,13 +47,11 @@ public class Parser {
         checkLanguage(text);
         LANGUAGE_PASSED_METER.increment();
         langDetectTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
-        LANGUAGE_PASSED_METER.increment();
         Link[] links = UrlHandler.getLinks(document.getElementsByTag("a"), new URL(url).getHost());
         webDocument.setTextDoc(text);
         webDocument.setTitle(document.title());
         webDocument.setPageLink(url);
         webDocument.setLinks(new ArrayList<>(Arrays.asList(links)));
-        CRAWLED_PAGE_METER.increment();
         CRAWLED_PAGE_METER.increment();
         return webDocument;
     }

@@ -301,6 +301,7 @@ public class ElasticManager {
 
     public void close() {
         try {
+            bulkProcessor.flush();
             bulkProcessor.awaitClose(15,TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             LOGGER.fatal("cant close elastic",e);

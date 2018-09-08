@@ -55,7 +55,7 @@ public class CrawlerManager implements Reconfigurable  {
             thread.start();
             crawlThreads.add(thread);
         }
-//        manageKafkaHelper();
+        manageKafkaHelper();
     }
 
     public void manageKafkaHelper() {

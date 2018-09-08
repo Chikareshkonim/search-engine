@@ -68,13 +68,18 @@ public class ListenerFunction {
     public static void gc(PrintStream out, Scanner scanner) {
         System.gc();
     }
+    @CLI(help = "fatal errors")
+    public static void fatal(PrintStream out, Scanner scanner) {
+        CrawlThread.fatalErrors.forEach(out::println);
+    }
 
     @CLI(help = "exit program")
-    public static void exit(PrintStream out, Scanner scanner) throws InterruptedException {
+    public static void exit(PrintStream out, Scanner scanner) {
         thread(out, scanner);
         CrawlerManager.getInstance().setRun(false);
         CrawlerManager.getInstance().getCrawlerThreadList().forEach(CrawlThread::off);
-        sleep(30000);
+        CrawlThread.exiting();
+        Utils.delay(30000);
         System.exit(0);
     }
 
