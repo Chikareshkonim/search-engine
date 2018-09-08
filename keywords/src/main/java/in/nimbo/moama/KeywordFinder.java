@@ -38,7 +38,6 @@ public class KeywordFinder implements Runnable {
         Map<String, Map<String, Double>> keywords = null;
         try {
             ArrayList<String> urls = consumer.getDocuments();
-            System.out.println(urls.toString());
             if (!urls.isEmpty())
                 keywords = elasticManager.getTermVector(urls);
             assert keywords != null;
