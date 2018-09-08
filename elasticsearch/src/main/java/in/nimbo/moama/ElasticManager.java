@@ -106,7 +106,6 @@ public class ElasticManager {
                         if (bulkItemResponse.isFailed()) {
                             LOGGER.error(bulkItemResponse.getId() + " failed with message: " + bulkItemResponse.getFailureMessage());
                             bulkAfterFailure.increment();
-                            logger.error(bulkItemResponse.getId() + " failed with message: " + bulkItemResponse.getFailureMessage());
                         }
                     }
                 }
@@ -304,7 +303,7 @@ public class ElasticManager {
         try {
             bulkProcessor.awaitClose(15,TimeUnit.SECONDS);
         } catch (InterruptedException e) {
-            logger.fatal("cant close elastic",e);
+            LOGGER.fatal("cant close elastic",e);
         }
     }
 }
