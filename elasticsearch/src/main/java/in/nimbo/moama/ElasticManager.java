@@ -145,11 +145,12 @@ public class ElasticManager {
     }
 
     //TODO set url instead of ids
-    public Map<String, Map<String, Double>> getTermVector(String ids ) throws IOException {
-        Map<String, Map<String, Double>> resualt = new HashMap<>();
+    public Map<String, Map<String, Double>> getTermVector(ArrayList<String> ids ) throws IOException {
+        Map<String, Map<String, Double>> result = new HashMap<>();
         Map<String, String> params = Collections.emptyMap();
+        JSONArray idsArray = new JSONArray(ids.stream().map(String::hashCode).map(code -> Integer.toString(code)).toArray());
         String jsonString = "{\n" +
-                "\t\"ids\" : " + ids + ",\n" +
+                "\t\"ids\" : " + idsArray.toString() + ",\n" +
                 "\t\"parameters\": {\n" +
                 "\t\"fields\" : [\"content\"],\n" +
                 "   \"offsets\" : true ,\n" +
@@ -174,9 +175,9 @@ public class ElasticManager {
             terms.keySet().forEach(key -> keys.put(key, calculateTfIdf(terms.getInt("term_freq"), terms.getInt("doc_freq"))));
             resualt.put(((JSONObject) doc).getString("id"), keys);
             terms.keySet().forEach(key -> keys.put(key, calculateTfIdf(terms.getJSONObject(key).getInt("term_freq"),terms.getJSONObject(key).getInt("doc_freq"))));
-            resualt.put(((JSONObject) doc).getString("_id"), keys);
+            result.put(((JSONObject) doc).getString("_id"), keys);
         }
-        return resualt;
+        return result;
     }
 
     private Double calculateTfIdf(int term_freq, int doc_freq) {

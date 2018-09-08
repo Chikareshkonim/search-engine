@@ -1,9 +1,7 @@
 package in.nimbo.moama;
 
 import in.nimbo.moama.configmanager.ConfigManager;
-import in.nimbo.moama.document.Link;
 import in.nimbo.moama.kafka.MoamaConsumer;
-import in.nimbo.moama.util.HBasePropertyType;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
@@ -30,15 +28,14 @@ public class KeywordFinder implements Runnable{
     public void run() {
         Map<String, Map<String, Double>> keywords = null;
         try {
-            keywords = elasticManager.getTermVector(consumer.getDocuments().toString());
+            keywords = elasticManager.getTermVector(consumer.getDocuments());
         } catch (IOException e) {
-            LOGGER.error("can not get term vector");
-            LOGGER.debug("collecting method ", e);
+            LOGGER.error("can not get term vector",e);
         }
         assert keywords != null;
-        hbaseManager.put(createHbasePut(keywords));
+        hbaseManager.put(createHBasePut(keywords));
     }
-    private List<Put> createHbasePut(Map<String, Map<String, Double>> keywords) {
+    private List<Put> createHBasePut(Map<String, Map<String, Double>> keywords) {
         List<Put> puts= new LinkedList<>();
         keywords.forEach((link ,words) ->{
             Put put = new Put(Bytes.toBytes(hbaseManager.generateRowKeyFromUrl(link)));
