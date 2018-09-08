@@ -26,14 +26,6 @@ public final class FloatMeter implements Metered{
         Metrics.addMeter(this);
     }
 
-    public void beginTimer(){
-        context = timer.time();
-    }
-
-    public void stopTimer(){
-        context.stop();
-    }
-
 
     public void add(float value) {
         this.value += value;

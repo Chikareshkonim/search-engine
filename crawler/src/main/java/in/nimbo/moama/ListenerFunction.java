@@ -11,6 +11,8 @@ import java.io.PrintStream;
 import java.util.LinkedList;
 import java.util.Scanner;
 
+import static java.lang.Thread.sleep;
+
 public class ListenerFunction {
     @CLI(help = "load duplicate hash map")
     public static void loadDuplicate(PrintStream out, Scanner scanner) {
@@ -68,9 +70,11 @@ public class ListenerFunction {
     }
 
     @CLI(help = "exit program")
-    public static void exit(PrintStream out, Scanner scanner) {
-        saveDuplicate(out, scanner);
-        out.println("done");
+    public static void exit(PrintStream out, Scanner scanner) throws InterruptedException {
+        thread(out, scanner);
+        CrawlerManager.getInstance().setRun(false);
+        CrawlerManager.getInstance().getCrawlerThreadList().forEach(CrawlThread::off);
+        sleep(30000);
         System.exit(0);
     }
 

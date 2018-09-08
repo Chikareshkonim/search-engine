@@ -16,8 +16,7 @@ public class LangDetector {
     public static LangDetector getInstance() {
         return ourInstance;
     }
-    public void profileLoad(String recourseAddress) throws URISyntaxException {
-
+    public void profileLoad(String recourseAddress){
         try {
             DetectorFactory.loadProfile(recourseAddress);
         } catch (LangDetectException e) {

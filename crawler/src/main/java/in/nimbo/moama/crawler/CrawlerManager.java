@@ -47,28 +47,30 @@ public class CrawlerManager implements Reconfigurable  {
     }
 
     public void run(int numOfThreads) {
-        IntStream.range(0,numOfThreads).mapToObj(e->new CrawlThread())
-                .peek(thread->thread.setPriority(crawlerThreadPriority))
-                .peek(e->Utils.delay(startNewThreadDelay))
-                .peek(Thread::start)
-                .forEach(crawlerThreadList::add);
-        manageKafkaHelper();
+        LinkedList<CrawlThread> crawlThreads = crawlerThreadList;
+        for (int e = 0; e < numOfThreads; e++) {
+            CrawlThread thread = new CrawlThread();
+            thread.setPriority(crawlerThreadPriority);
+            Utils.delay(startNewThreadDelay);
+            thread.start();
+            crawlThreads.add(thread);
+        }
+//        manageKafkaHelper();
     }
 
-
-    private void manageKafkaHelper() {
+    public void manageKafkaHelper() {
         List<String> list = new LinkedList<>();
         while (isRun) {
             Utils.delay(500);
-            System.out.println("helperSize" + list.size());
             list.addAll(helperConsumer.getDocuments());
             if (list.size() > shuffleSize) {
                 Collections.shuffle(list);
                 mainProducer.pushNewURL(list.toArray(new String[0]));
                 list.clear();
-                System.out.println("shuffled");
             }
         }
+        Collections.shuffle(list);
+        mainProducer.pushNewURL(list.toArray(new String[0]));
     }
 
     @Override

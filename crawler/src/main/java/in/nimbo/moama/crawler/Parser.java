@@ -40,16 +40,12 @@ public class Parser {
     public WebDocument parse(Document document ,String url) throws IllegalLanguageException, IOException {
         URL_RECEIVER_METER.increment();
         long tempTime = System.currentTimeMillis();
-        webdocCreateTime.beginTimer();
         String text = document.text();
         WebDocument webDocument = new WebDocument();
-        webdocCreateTime.stopTimer();
         webdocCreateTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
         tempTime = System.currentTimeMillis();
-        langDetectTime.beginTimer();
         checkLanguage(text);
         LANGUAGE_PASSED_METER.increment();
-        langDetectTime.stopTimer();
         langDetectTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
         LANGUAGE_PASSED_METER.increment();
         Link[] links = UrlHandler.getLinks(document.getElementsByTag("a"), new URL(url).getHost());

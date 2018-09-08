@@ -93,16 +93,17 @@ public class ElasticManager {
 
             @Override
             public void beforeBulk(long executionId, BulkRequest request) {
-                bulkAdded.increment();
+                bulkAdded.add(request.numberOfActions());
             }
 
             @Override
             public void afterBulk(long executionId, BulkRequest request, BulkResponse response) {
-                bulkAfterSuccess.increment();
+                bulkAfterSuccess.add(request.numberOfActions());
                 if (response.hasFailures()) {
                     logger.error("We have failures");
                     for (BulkItemResponse bulkItemResponse : response.getItems()) {
                         if (bulkItemResponse.isFailed()) {
+                            bulkAfterFailure.increment();
                             logger.error(bulkItemResponse.getId() + " failed with message: " + bulkItemResponse.getFailureMessage());
                         }
                     }
@@ -112,7 +113,7 @@ public class ElasticManager {
 
             @Override
             public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
-                bulkAfterFailure.increment();
+                bulkAfterFailure.add(request.numberOfActions());
                 failure.printStackTrace();
                 logger.error("An exception occurred while indexing", failure);
 
@@ -291,5 +292,13 @@ public class ElasticManager {
             }
         }
         return searchResponse;
+    }
+
+    public void close() {
+        try {
+            bulkProcessor.awaitClose(15,TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            logger.fatal("cant close elastic",e);
+        }
     }
 }

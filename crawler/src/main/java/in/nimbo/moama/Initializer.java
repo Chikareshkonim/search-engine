@@ -12,7 +12,7 @@ import java.net.URISyntaxException;
 
 public class Initializer {
     public static void initialize() throws IOException, URISyntaxException {
-        String recourseAddress = getRootAddress();
+        String recourseAddress = getResourcesAddress();
         out.println("recourse Address is " +recourseAddress);
         FileInputStream configInputStream = new FileInputStream(recourseAddress + "crawler.properties");
         ConfigManager configManager = ConfigManager.getInstance();
@@ -23,7 +23,7 @@ public class Initializer {
         out.println("load langDetect finished");
     }
 
-    private static String getRootAddress() throws URISyntaxException {
+    private static String getResourcesAddress() throws URISyntaxException {
         String recourseAddress = new File(LangDetector.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getPath();
         if (recourseAddress.endsWith(".jar")) {
             recourseAddress = recourseAddress.substring(0, recourseAddress.lastIndexOf("/")).concat("/../src/main/resources/");

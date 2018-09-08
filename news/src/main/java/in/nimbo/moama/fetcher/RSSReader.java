@@ -16,7 +16,6 @@ public class RSSReader implements Runnable {
     private static final int SLEEP_TIME = ConfigManager.getInstance().getIntProperty(NEWS_READER_WAIT);
     private static final Logger LOGGER = Logger.getLogger(RSSReader.class);
 
-
     public RSSReader(NewsURLQueue<NewsInfo> newsQueue) {
         this.newsQueue = newsQueue;
     }
