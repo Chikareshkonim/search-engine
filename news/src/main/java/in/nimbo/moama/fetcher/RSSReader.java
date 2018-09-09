@@ -32,7 +32,6 @@ public class RSSReader implements Runnable {
             RSSs.getInstance().getRssToDomainMap().entrySet().stream().parallel().forEach(entry -> {
                 if (RSSs.getInstance().isPolite(entry.getValue())) {
                     try {
-                        System.out.println("went to parse " + entry.getKey());
                         newsQueue.addUrls(RSSParser.parse(entry.getKey(), entry.getValue()));
                     } catch (IOException e) {
                         LOGGER.error("IOException at RSSReader", e);
