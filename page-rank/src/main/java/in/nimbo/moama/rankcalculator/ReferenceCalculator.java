@@ -21,7 +21,9 @@ import scala.Tuple2;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 //TODO: set config file
 public class ReferenceCalculator {
@@ -52,18 +54,21 @@ public class ReferenceCalculator {
         JavaPairRDD<String, Integer> input = getFromHBase();
         JavaPairRDD<String, Integer> result = input.reduceByKey((value1, value2) -> value1 + value2);
         writeToHBase(result);
-
     }
 
     private JavaPairRDD<String, Integer> getFromHBase() {
         JavaPairRDD<ImmutableBytesWritable, Result> data = sparkContext.newAPIHadoopRDD(hbaseConf, TableInputFormat.class,
                 ImmutableBytesWritable.class, Result.class);
+
         return data.flatMapToPair(pair -> {
-            List<Tuple2<String, Integer>> resultList = new ArrayList<>();
             List<Cell> cells = pair._2.listCells();
             if (!cells.isEmpty())
-                cells.forEach(cell -> resultList.add(new Tuple2<>(Bytes.toString(CellUtil.cloneQualifier(cell)), 1)));
-            return resultList.iterator();
+                return cells.stream()
+                        .map(CellUtil::cloneQualifier)
+                        .map(Bytes::toString)
+                        .map(e -> new Tuple2<>(e, 1))
+                        .iterator();
+            return null;
         });
     }
 
@@ -73,14 +78,9 @@ public class ReferenceCalculator {
             jobConfig.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, String.valueOf(webPageTable));
             jobConfig.setOutputFormatClass(TableOutputFormat.class);
             JavaPairRDD<ImmutableBytesWritable, Put> hbasePuts = toWrite.mapToPair(pair -> {
-                try {
                     Put put = new Put(Bytes.toBytes(pair._1));
                     put.addColumn(refrenceFamilyName.getBytes(), refrenceColumn.getBytes(), Bytes.toBytes(pair._2));
                     return new Tuple2<>(new ImmutableBytesWritable(), put);
-                } catch (Exception e) {
-                    logger.error(e.getMessage());
-                }
-                return null;
             });
             hbasePuts.saveAsNewAPIHadoopDataset(jobConfig.getConfiguration());
         } catch (Exception e) {

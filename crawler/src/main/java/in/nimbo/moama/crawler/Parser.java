@@ -37,7 +37,7 @@ public class Parser {
         Parser.langDetector = langDetector;
     }
 
-    public WebDocument parse(Document document ,String url) throws IllegalLanguageException, IOException {
+    WebDocument parse(Document document, String url) throws IllegalLanguageException, IOException {
         URL_RECEIVER_METER.increment();
         long tempTime = System.currentTimeMillis();
         String text = document.text();

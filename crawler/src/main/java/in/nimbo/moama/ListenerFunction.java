@@ -78,8 +78,9 @@ public class ListenerFunction {
         thread(out, scanner);
         CrawlerManager.getInstance().setRun(false);
         CrawlerManager.getInstance().getCrawlerThreadList().forEach(CrawlThread::off);
+        Utils.delay(20000);
         CrawlThread.exiting();
-        Utils.delay(30000);
+        Utils.delay(20000);
         System.exit(0);
     }
 

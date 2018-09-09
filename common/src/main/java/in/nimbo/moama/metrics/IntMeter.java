@@ -28,7 +28,7 @@ public final class  IntMeter implements Metered {
         value++;
     }
 
-    public float rate(float delta) {
+    public double rate(double delta) {
         return (value - lastValue) / delta;
     }
 
@@ -36,7 +36,7 @@ public final class  IntMeter implements Metered {
         return value;
     }
 
-    public String stat(float delta) {
-        return RATE_NUM_OF + name + "\t" + (double) (value - lastValue) / delta + "\t" + (lastValue = value);
+    public String stat(double delta) {
+        return RATE_NUM_OF + name + "\t" + 1.0* (value - lastValue) / delta + "\t" + (lastValue = value);
     }
 }

@@ -34,6 +34,9 @@ public class DuplicateHandler {
         }
         return false;
     }
+    public boolean weakCheckDuplicate(String url) {
+        return lruCache.containsKey(url);
+    }
 
     public void weakConfirm(String url) {
         lruCache.put(url, 1);

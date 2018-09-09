@@ -5,17 +5,17 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.jmx.JmxReporter;
 
-public final class FloatMeter implements Metered{
+public final class FloatMeter implements Metered {
     private static final String RATE_NUM_OF = "rate/num of ";
-    private float value;
-    private float lastValue;
+    private double value;
+    private double lastValue;
     private String name;
     private Timer timer;
     private Timer.Context context;
     static MetricRegistry metrics = IntMeter.metrics;
     static JmxReporter reporter = JmxReporter.forRegistry(metrics).build();
 
-    static{
+    static {
         reporter.start();
     }
 
@@ -27,19 +27,19 @@ public final class FloatMeter implements Metered{
     }
 
 
-    public void add(float value) {
+    public void add(double value) {
         this.value += value;
     }
 
-    public float rate(float delta) {
+    public double rate(double delta) {
         return (value - lastValue) / delta;
     }
 
-    public float getValue() {
+    public double getValue() {
         return value;
     }
 
-    public String stat(float delta) {
-        return RATE_NUM_OF + name + "\t" + (value - lastValue) / delta + "\t" + (lastValue = value);
+    public String stat(double delta) {
+        return RATE_NUM_OF + name + "\t" + 1.0 * (value - lastValue) / delta + "\t" + (lastValue = value);
     }
 }

@@ -2,6 +2,7 @@ package in.nimbo.moama.crawler;
 
 import in.nimbo.moama.Utils;
 import in.nimbo.moama.configmanager.*;
+import in.nimbo.moama.crawler.domainvalidation.DuplicateHandler;
 import in.nimbo.moama.kafka.MoamaConsumer;
 import in.nimbo.moama.kafka.MoamaProducer;
 import in.nimbo.moama.util.CrawlerPropertyType;
@@ -10,11 +11,12 @@ import org.apache.log4j.Logger;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static java.lang.Thread.sleep;
 
-public class CrawlerManager implements Reconfigurable  {
+public class CrawlerManager implements Reconfigurable {
     private static final Logger LOGGER = Logger.getLogger(CrawlerManager.class);
     private final MoamaProducer mainProducer;
     private final MoamaConsumer helperConsumer;
@@ -23,10 +25,10 @@ public class CrawlerManager implements Reconfigurable  {
     private LinkedList<CrawlThread> crawlerThreadList = new LinkedList<>();
     private static int numOfThreads;
     private static int startNewThreadDelay;
-    private static CrawlerManager ourInstance=new CrawlerManager();
+    private static CrawlerManager ourInstance = new CrawlerManager();
 
 
-    private boolean isRun=true;
+    private boolean isRun = true;
 
     public static CrawlerManager getInstance() {
         return ourInstance;
@@ -42,7 +44,8 @@ public class CrawlerManager implements Reconfigurable  {
         numOfThreads = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_NUMBER_OF_THREADS);
         startNewThreadDelay = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_START_NEW_THREAD_DELAY_MS);
     }
-    public void run(){
+
+    public void run() {
         run(numOfThreads);
     }
 
@@ -58,11 +61,15 @@ public class CrawlerManager implements Reconfigurable  {
         manageKafkaHelper();
     }
 
+    private static final DuplicateHandler duplicateChecker = DuplicateHandler.getInstance();
+
     public void manageKafkaHelper() {
         List<String> list = new LinkedList<>();
         while (isRun) {
             Utils.delay(500);
-            list.addAll(helperConsumer.getDocuments());
+            list.addAll(helperConsumer.getDocuments().stream()
+                            .filter(url -> !duplicateChecker.weakCheckDuplicate(url))
+                            .collect(Collectors.toList()));
             if (list.size() > shuffleSize) {
                 Collections.shuffle(list);
                 mainProducer.pushNewURL(list.toArray(new String[0]));

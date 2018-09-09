@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Initializer {
     public static void initialize() throws IOException, URISyntaxException {

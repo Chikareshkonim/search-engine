@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class HBaseManager {
     TableName tableName;
@@ -46,6 +47,10 @@ public class HBaseManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void exiting() {
+
     }
 
     public void put(List<Put> webDocOfThisThread) {
@@ -91,17 +96,36 @@ public class HBaseManager {
         }
         return string;
     }
+    public boolean[] isDuplicate(List<String> urls) {
+        try {
+            return table.existsAll(urls.stream()
+                    .map(url->new Get(Bytes.toBytes(generateRowKeyFromUrl(url))))
+                    .peek(get -> get.addFamily(duplicateCheckFamily.getBytes()))
+                    .collect(Collectors.toList()));
+        } catch (IOException e) {
+            LOGGER.error("HBase service unavailable");
+        }
+        return null;
+    }
 
     public boolean isDuplicate(String url) {
         Get get = new Get(Bytes.toBytes(generateRowKeyFromUrl(url)));
         get.addFamily(duplicateCheckFamily.getBytes());
         try {
-            if (table.exists(get)) {
-                return true;
-            }
+            return table.exists(get);
         } catch (IOException e) {
             LOGGER.error("HBase service unavailable");
         }
         return false;
+    }
+
+    public void close() {
+        try {
+            table.close();
+            Utils.delay(1000);
+            connection.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

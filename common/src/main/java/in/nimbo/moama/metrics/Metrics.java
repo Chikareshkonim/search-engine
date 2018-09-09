@@ -9,7 +9,7 @@ public class Metrics {
     private static List<Metered> meters =new ArrayList<>(30);
 
     public static void stat(Consumer<String> consumer) {
-        int delta = (int) ((System.currentTimeMillis() - lastTime) / 1000);
+        double delta =  ((double)(System.currentTimeMillis() - lastTime) / 1000);
         meters.stream().map(e -> e.stat(delta)).forEach(consumer);
         lastTime = System.currentTimeMillis();
     }

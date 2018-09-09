@@ -58,6 +58,7 @@ public class CrawlThread extends Thread {
     private static final IntMeter URL_RECEIVED_METER = new IntMeter("url received");
     private static final IntMeter HBASE_PUT_METER = new IntMeter("Hbase put");
     private static final IntMeter NULL_URL_METER = new IntMeter("null url");
+    private static final IntMeter jsoupBugException = new IntMeter("jsoup Bugs Error");
 
     private static FloatMeter megaByteCounter = new FloatMeter("MB Crawled");
 
@@ -78,6 +79,7 @@ public class CrawlThread extends Thread {
     private LinkedList<String> urlsOfThisThread;
     private List<Put> webDocOfThisThread;
     private List<Map<String, String>> elasticDocOfThisThread;
+
 
     static {
         elasticSizeBulkLimit = ConfigManager.getInstance().getIntProperty(ElasticPropertyType.ELASTIC_FLUSH_SIZE_LIMIT);
@@ -121,29 +123,30 @@ public class CrawlThread extends Thread {
             try {
                 tempTime = System.currentTimeMillis();
                 checkLink(url);
-                checkTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+                checkTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
                 //////
                 tempTime = System.currentTimeMillis();
-                String string = Jsoup.connect(url).validateTLSCertificates(false).execute().body();
-                fetchTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+                String string = Jsoup.connect(url).validateTLSCertificates(false).ignoreHttpErrors(true).timeout(1500)
+                        .execute().body();
+                fetchTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
                 //////
 
                 tempTime = System.currentTimeMillis();
                 Document document = Jsoup.parse(string);
-                documentTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+                documentTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
                 //////
 
                 duplicateChecker.weakConfirm(url);
                 URL_RECEIVED_METER.increment();
                 tempTime = System.currentTimeMillis();
                 webDocument = parser.parse(document, url);
-                parseTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+                parseTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
                 //////
                 tempTime = System.currentTimeMillis();
-                megaByteCounter.add((float) document.outerHtml().getBytes().length / 0b100000000000000000000);
+                megaByteCounter.add((double) document.outerHtml().getBytes().length / 0b100000000000000000000);
                 helperProducer.pushNewURL(normalizeOutLink(webDocument));
                 crawledProducer.pushNewURL(url);
-                kafkaTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+                kafkaTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
                 //////
                 // TODO: 9/2/18 mustChange
                 /////
@@ -154,7 +157,7 @@ public class CrawlThread extends Thread {
                     webDocumentHBaseManager.put(webDocOfThisThread);
                     HBASE_PUT_METER.add(putSize);
                 }
-                hbaseTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+                hbaseTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
                 //////
                 tempTime = System.currentTimeMillis();
                 elasticDocOfThisThread.add(webDocument.elasticMap());
@@ -166,7 +169,7 @@ public class CrawlThread extends Thread {
                 //////
                 COMPLETE_METER.increment();// TODO: 8/31/18
             } catch (DomainFrequencyException | DuplicateLinkException | IllegalLanguageException ignored) {
-                checkTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+                checkTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
             } catch (UncheckedIOException e) {
                 duplicateChecker.weakConfirm(url);
                 IO_UNCHECK_EXCEPTION_METER.increment();
@@ -178,7 +181,12 @@ public class CrawlThread extends Thread {
                 LOGGER.warn(url + " is malformed!");
             } catch (IOException e) {
                 LOGGER.trace("Jsoup connection to " + url + " failed");
-                fetchTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+                fetchTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
+            } catch (StringIndexOutOfBoundsException | ArrayIndexOutOfBoundsException e) {
+                jsoupBugException.increment();
+                StringWriter sw = new StringWriter();
+                e.printStackTrace(new PrintWriter(sw));
+                fatalErrors.add(sw.toString());
             } catch (URLException e) {
                 duplicateChecker.weakConfirm(url);
                 LOGGER.trace("url exception", e);
@@ -246,8 +254,10 @@ public class CrawlThread extends Thread {
         elasticManager.put(elasticDocOfThisThread);
         helperProducer.pushNewURL(urlsOfThisThread.toArray(new String[0]));
     }
-    public static void exiting(){
+
+    public static void exiting() {
         elasticManager.close();
+        webDocumentHBaseManager.close();
     }
 
 }
