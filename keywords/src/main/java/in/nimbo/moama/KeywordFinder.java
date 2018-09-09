@@ -43,6 +43,7 @@ public class KeywordFinder implements Runnable {
             assert keywords != null;
             if (!keywords.values().isEmpty())
                 hbaseManager.put(createHBasePut(keywords));
+            System.out.println("added");
         } catch (Exception e) {
             LOGGER.error("can not get term vector", e);
         }

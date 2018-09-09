@@ -78,7 +78,7 @@ public class ElasticManager {
             return null;
         }).filter(Objects::nonNull).toArray(TransportAddress[]::new);
 
-        RestClientBuilder restClientBuilder = RestClient.builder(hosts);
+        RestClientBuilder restClientBuilder = RestClient.builder(hosts).setMaxRetryTimeoutMillis(300000);
         restClient = restClientBuilder.build();
         client = new RestHighLevelClient(restClientBuilder);
 
@@ -158,15 +158,17 @@ public class ElasticManager {
                 "   \"term_statistics\": true,\n" +
                 "   \"field_statistics\": false,\n" +
                 "\"filter\" : {\n" +
-                "        \"max_num_terms\" : 400,\n" +
+                "        \"max_num_terms\" :" +numberOfKeywords+",\n" +
                 "                \"min_term_freq\" : 3,\n" +
                 "                \"min_doc_freq\" : 5\n" +
                 "    }" +
                 "\t}\n" +
                 "   }";
         HttpEntity entity = new NStringEntity(jsonString, ContentType.APPLICATION_JSON);
+        System.out.println("please");
         Response response =
                 restClient.performRequest("POST", "/" + index + "/_doc/_mtermvectors", params, entity);
+        System.out.println("connected");
         JSONArray docs = new JSONObject(EntityUtils.toString(response.getEntity())).getJSONArray("docs");
         for (Object doc : docs) {
             Map<String, Double> keys = new HashMap<>();
