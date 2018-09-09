@@ -5,11 +5,16 @@ import in.nimbo.moama.crawler.CrawlerManager;
 import in.nimbo.moama.crawler.domainvalidation.HashDuplicateChecker;
 import in.nimbo.moama.listener.CLI;
 import in.nimbo.moama.metrics.Metrics;
+import org.apache.commons.beanutils.converters.IntegerArrayConverter;
 
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.lang.Thread.sleep;
 
@@ -72,6 +77,14 @@ public class ListenerFunction {
     public static void fatal(PrintStream out, Scanner scanner) {
         CrawlThread.fatalErrors.forEach(out::println);
     }
+    @CLI(help = "")
+    public static void states(PrintStream out, Scanner scanner) {
+        CrawlerManager.getInstance().getCrawlerThreadList().stream()
+                .map(CrawlThread::getThreadState)
+                .collect(Collectors.groupingBy(Function.identity()))
+                .forEach((k,v)-> out.println(k+"   "+v));
+    }
+
 
     @CLI(help = "exit program")
     public static void exit(PrintStream out, Scanner scanner) {

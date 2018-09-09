@@ -33,6 +33,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
+import static in.nimbo.moama.crawler.CrawlThread.State.*;
+
 
 public class CrawlThread extends Thread {
     private static final Logger LOGGER = Logger.getLogger(CrawlThread.class);
@@ -56,7 +58,6 @@ public class CrawlThread extends Thread {
     private static final IntMeter DOMAIN_ERROR_METER = new IntMeter("domain Error");
     private static final IntMeter IO_UNCHECK_EXCEPTION_METER = new IntMeter("Unchecked io Exception");
     private static final IntMeter URL_RECEIVED_METER = new IntMeter("url received");
-    private static final IntMeter HBASE_PUT_METER = new IntMeter("Hbase put");
     private static final IntMeter NULL_URL_METER = new IntMeter("null url");
     private static final IntMeter jsoupBugException = new IntMeter("jsoup Bugs Error");
 
@@ -70,6 +71,7 @@ public class CrawlThread extends Thread {
     private static FloatMeter documentTime = new FloatMeter("jsoup document create time");
     private static FloatMeter kafkaTime = new FloatMeter("kafka input time");
 
+    private State threadState = null;
 
     private static String hBaseTable;
     private static String scoreFamily;
@@ -77,10 +79,8 @@ public class CrawlThread extends Thread {
     private static int hbaseSizeLimit;
     private static int elasticSizeBulkLimit;
     private LinkedList<String> urlsOfThisThread;
-    private List<Put> webDocOfThisThread;
+    private LinkedList<Put> webDocOfThisThread;
     private List<Map<String, String>> elasticDocOfThisThread;
-
-
     static {
         elasticSizeBulkLimit = ConfigManager.getInstance().getIntProperty(ElasticPropertyType.ELASTIC_FLUSH_SIZE_LIMIT);
         hbaseSizeLimit = ConfigManager.getInstance().getIntProperty(HBasePropertyType.PUT_SIZE_LIMIT);
@@ -116,26 +116,29 @@ public class CrawlThread extends Thread {
     private void work() {
         if (urlsOfThisThread.size() < minOfEachQueue) {
             urlsOfThisThread.addAll(linkConsumer.getDocuments());
+            threadState = consumeKafka;
         } else {
             WebDocument webDocument;
             String url = urlsOfThisThread.pop();
             long tempTime = System.currentTimeMillis();
             try {
+                threadState = checkUrl;
                 tempTime = System.currentTimeMillis();
                 checkLink(url);
                 checkTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
                 //////
+                threadState = fetchNet;
                 tempTime = System.currentTimeMillis();
                 String string = Jsoup.connect(url).validateTLSCertificates(false).ignoreHttpErrors(true).timeout(1500)
                         .execute().body();
                 fetchTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
                 //////
-
+                threadState = jsoupDocument;
                 tempTime = System.currentTimeMillis();
                 Document document = Jsoup.parse(string);
                 documentTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
                 //////
-
+                threadState = parse;
                 duplicateChecker.weakConfirm(url);
                 URL_RECEIVED_METER.increment();
                 tempTime = System.currentTimeMillis();
@@ -148,17 +151,16 @@ public class CrawlThread extends Thread {
                 crawledProducer.pushNewURL(url);
                 kafkaTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
                 //////
-                // TODO: 9/2/18 mustChange
-                /////
+                threadState = hbase;
                 tempTime = System.currentTimeMillis();
                 webDocOfThisThread.add(createHbasePut(webDocument.getPageLink(), webDocument.getLinks()));
                 if (webDocOfThisThread.size() > hbaseSizeLimit) {
-                    int putSize = webDocOfThisThread.size();
-                    webDocumentHBaseManager.put(webDocOfThisThread);
-                    HBASE_PUT_METER.add(putSize);
+                    webDocumentHBaseManager.puts(webDocOfThisThread);
+                    webDocOfThisThread=new LinkedList<>();
                 }
                 hbaseTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
                 //////
+                threadState = elastic;
                 tempTime = System.currentTimeMillis();
                 elasticDocOfThisThread.add(webDocument.elasticMap());
                 if (elasticDocOfThisThread.size() > elasticSizeBulkLimit) {
@@ -260,4 +262,13 @@ public class CrawlThread extends Thread {
         webDocumentHBaseManager.close();
     }
 
+    public State getThreadState() {
+        return threadState;
+    }
+
+
+    public enum State {
+        checkUrl, consumeKafka, fetchNet, jsoupDocument, hbase, parse, elastic;
+
+    }
 }

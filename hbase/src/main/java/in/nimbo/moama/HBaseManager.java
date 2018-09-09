@@ -1,6 +1,9 @@
 package in.nimbo.moama;
 
 import com.google.protobuf.ServiceException;
+import in.nimbo.moama.configmanager.ConfigManager;
+import in.nimbo.moama.metrics.IntMeter;
+import in.nimbo.moama.util.HBasePropertyType;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
@@ -11,7 +14,9 @@ import org.apache.log4j.Logger;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.stream.Collectors;
 
 public class HBaseManager {
@@ -21,6 +26,11 @@ public class HBaseManager {
     Configuration configuration;
     Connection connection;
     private HTable table;
+    private static final IntMeter HBASE_PUT_METER = new IntMeter("Hbase put");
+    private static int hbaseBulkSize;
+    static {
+        hbaseBulkSize=ConfigManager.getInstance().getIntProperty(HBasePropertyType.HBASE_BULK_SIZE);
+    }
 
     public HBaseManager(String tableName, String duplicateCheckFamily) {
         configuration = HBaseConfiguration.create();
@@ -52,10 +62,27 @@ public class HBaseManager {
     public static void exiting() {
 
     }
+    LinkedList<Put> bulk=new LinkedList<>();
+    public synchronized void puts(LinkedList<Put> unUseAblePut) {
+            LinkListOptimizeAdder.addInOneOrder(bulk, unUseAblePut);
+            if (bulk.size()>hbaseBulkSize) {
+                try {
+                    table.put(bulk);
+                    HBASE_PUT_METER.add(bulk.size());
+                    bulk.clear();
+                    ;
+                } catch (IOException e) {
+                    LOGGER.error("couldn't put  into HBase!", e);
+                } catch (RuntimeException e) {
+                    LOGGER.error("HBase error" + e.getMessage(), e);
+                }
+            }
+    }
 
     public void put(List<Put> webDocOfThisThread) {
         try {
             table.put(webDocOfThisThread);
+            HBASE_PUT_METER.add(webDocOfThisThread.size());
             webDocOfThisThread.clear();
         } catch (IOException e) {
             LOGGER.error("couldn't put  into HBase!", e);
