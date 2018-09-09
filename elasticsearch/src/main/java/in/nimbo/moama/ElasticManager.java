@@ -61,6 +61,7 @@ public class ElasticManager {
     private String linkColumn;
 
     public ElasticManager() {
+        LOGGER.setAdditivity(false);
         reconfigure();
         Settings settings = Settings.builder().put("cluster.name", clusterName)
                 .put("client.transport.sniff", true).build();

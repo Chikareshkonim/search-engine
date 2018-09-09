@@ -11,8 +11,8 @@ import java.util.List;
 import static in.nimbo.moama.newsutil.NewsPropertyType.*;
 
 public class SiteTemplates {
-    private static SiteTemplates ourInstance = new SiteTemplates();
     private static final Logger LOGGER = Logger.getLogger(SiteTemplates.class);
+    private static SiteTemplates ourInstance = new SiteTemplates();
 
 
     public static SiteTemplates getInstance() {

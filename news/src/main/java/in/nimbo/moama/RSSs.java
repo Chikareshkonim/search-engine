@@ -18,7 +18,7 @@ public class RSSs {
     private static final long POLITE_WAIT_TIME = ConfigManager.getInstance().getLongProperty(NEWS_POLITENESS_WAIT);
     private HBaseManager hBaseManager = new HBaseManager(ConfigManager.getInstance().getProperty(NEWS_PAGES_TABLE),
             ConfigManager.getInstance().getProperty(HBASE_VISITED_FAMILY));
-    private static final Logger LOGGER = Logger.getLogger(RSSs.class);
+    private static final Logger LOGGER = Logger.getRootLogger();
 
 
     private static RSSs ourInstance = new RSSs();

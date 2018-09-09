@@ -14,7 +14,7 @@ public class RSSReader implements Runnable {
     private NewsURLQueue<NewsInfo> newsQueue;
     private FloatMeter floatMeter = new FloatMeter("RSSReaderTime");
     private static final int SLEEP_TIME = ConfigManager.getInstance().getIntProperty(NEWS_READER_WAIT);
-    private static final Logger LOGGER = Logger.getLogger(RSSReader.class);
+    private static final Logger LOGGER = Logger.getRootLogger();
 
     public RSSReader(NewsURLQueue<NewsInfo> newsQueue) {
         this.newsQueue = newsQueue;
@@ -32,6 +32,7 @@ public class RSSReader implements Runnable {
             RSSs.getInstance().getRssToDomainMap().entrySet().stream().parallel().forEach(entry -> {
                 if (RSSs.getInstance().isPolite(entry.getValue())) {
                     try {
+                        System.out.println("went to parse " + entry.getKey());
                         newsQueue.addUrls(RSSParser.parse(entry.getKey(), entry.getValue()));
                     } catch (IOException e) {
                         LOGGER.error("IOException at RSSReader", e);

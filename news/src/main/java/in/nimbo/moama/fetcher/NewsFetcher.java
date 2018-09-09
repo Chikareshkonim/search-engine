@@ -62,8 +62,8 @@ public class NewsFetcher implements Runnable {
                             News news = new News(newsInfo, text);
                             if (!RSSs.getInstance().isSeen(news.getNewsInfo().getUrl())) {
                                 addToDBs(Collections.singletonList(news));
+                                LOGGER.trace("Completed: " + news.getNewsInfo().getUrl());
                             }
-                            LOGGER.trace("Completed: " + news.getNewsInfo().getUrl());
                         } else {
                             list.addLast(newsInfo);
                         }

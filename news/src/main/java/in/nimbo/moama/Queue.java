@@ -9,7 +9,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 public class Queue<T> implements NewsURLQueue<T> {
     private ArrayBlockingQueue<T> queue;
-    private static final Logger LOGGER = Logger.getLogger(Queue.class);
+    private static final Logger LOGGER = Logger.getRootLogger();
 
 
     public Queue(int capacity) {
