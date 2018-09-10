@@ -60,6 +60,14 @@ public class Console {
         showNews(results, false);
     }
 
+    @Command(description = "News Search Optimized with news date")
+    public void newsSearchOptimizedWithDate(){
+        ArrayList<String> words = new ArrayList<>();
+        getInput(words, "");
+        Map<Tuple<String, Date>,Float> results = elasticManager.searchNews(words);
+        showNews(results, true);
+    }
+
     private void showResults(Map<String, Float> results, boolean optimize){
         if(!results.isEmpty()) {
             if(optimize) {
@@ -68,23 +76,32 @@ public class Console {
             else{
                 System.out.println("Results");
             }
+            float maxScore = 0;
+            int maxReference = 0;
+            ArrayList<Integer> references = new ArrayList<>();
             int i = 1;
             for (Map.Entry result : results.entrySet()) {
-                System.out.println(i + "\t" + result.getKey() + "\t" + "score: " + result.getValue());
-                i++;
+                if((float) result.getValue() > maxScore){
+                    maxScore = (float) result.getValue();
+                }
+                if(optimize) {
+                    references.add(webDocumentHBaseManager.getReference((String) result.getKey()));
+                    if (references.get(i - 1) > maxReference) {
+                        maxReference = references.get(i - 1);
+                    }
+                    System.out.println(i + "\t" + result.getKey() + "\t" + "\"score\": " + result.getValue());
+                    i++;
+                }
             }
             if(optimize) {
-                i = 1;
                 for (Map.Entry result : results.entrySet()) {
-                    System.out.println(i + ":");
-                    i++;
-                    result.setValue((0.8) * (Float) result.getValue() + (0.2) * webDocumentHBaseManager.getReference((String) result.getKey()));
+                    result.setValue((0.8) * ((Float) result.getValue() / maxScore) + ((0.2) * references.get(i - 1) / maxReference));
                 }
                 results = SortResults.sortByValues(results);
                 System.out.println("Optimized results with reference counts:");
                 i = 1;
                 for (Map.Entry result : results.entrySet()) {
-                    System.out.println(i + "\t" + result.getKey() + "\t" + "score: " + result.getValue());
+                    System.out.println(i + "\t" + result.getKey() + "\t\"score\": " + result.getValue());
                     i++;
                 }
             }
@@ -96,34 +113,47 @@ public class Console {
 
     private void showNews(Map<Tuple<String, Date>,Float> results, boolean optimize){
         if(!results.isEmpty()) {
-            if(optimize) {
+            if(!optimize) {
                 System.out.println("Primary Results:");
             }
             else{
                 System.out.println("Results");
             }
             int i = 1;
+            float maxScore = 0;
+            long maxDate = 0;
             Tuple<String, Date> news;
             for (Map.Entry result : results.entrySet()) {
                 news = (Tuple<String, Date>) result.getKey();
-                System.out.println(i + "\t" + news.x + "\tdate: " + news.y +  "\tscore: " + result.getValue());
+                if(optimize) {
+                    if (news.y.getTime() > maxDate) {
+                        maxDate = news.y.getTime();
+                    }
+                    if ((float) result.getValue() > maxScore) {
+                        maxScore = (float) result.getValue();
+                    }
+                }
+                System.out.println(i + "\t" + news.x + "\t\"date\": " + news.y +  "\t\"score\": " + result.getValue());
                 i++;
             }
-//            if(optimize) {
-//                i = 1;
-//                for (Map.Entry result : results.entrySet()) {
-//                    System.out.println(i + ":");
-//                    i++;
-//                    result.setValue((0.8) * (Float) result.getValue() + (0.2) * webDocumentHBaseManager.getReference((String) result.getKey()));
-//                }
-//                results = SortResults.sortByValues(results);
-//                System.out.println("Optimized results with reference counts:");
-//                i = 1;
-//                for (Map.Entry result : results.entrySet()) {
-//                    System.out.println(i + "\t" + result.getKey() + "\t" + "score: " + result.getValue());
-//                    i++;
-//                }
-//            }
+            Date currentDate = new Date();
+            if(optimize) {
+                i = 1;
+                for (Map.Entry result : results.entrySet()) {
+                    news = (Tuple<String, Date>) result.getKey();
+                    i++;
+                    result.setValue((0.7) * ((Float) result.getValue() / maxScore) +
+                            (0.3) * (1.0 / (currentDate.getTime() - news.y.getTime()) * (currentDate.getTime() - maxDate)));
+                }
+                results = SortResults.sortNews(results);
+                System.out.println("Optimized results:");
+                i = 1;
+                for (Map.Entry result : results.entrySet()) {
+                    news = (Tuple<String, Date>) result.getKey();
+                    System.out.println(i + "\t" + news.x + "\t\"date\": " + news.y +  "\t\"score\": " + result.getValue());
+                    i++;
+                }
+            }
         }
         else{
             System.out.println("Sorry! No news found");
