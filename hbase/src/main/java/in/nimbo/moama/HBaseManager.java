@@ -64,7 +64,7 @@ public class HBaseManager {
     }
     LinkedList<Put> bulk=new LinkedList<>();
     public synchronized void puts(LinkedList<Put> unUseAblePut) {
-            LinkListOptimizeAdder.addInOneOrder(bulk, unUseAblePut);
+            bulk.addAll(unUseAblePut);
             if (bulk.size()>hbaseBulkSize) {
                 try {
                     table.put(bulk);
