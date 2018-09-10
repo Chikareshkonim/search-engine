@@ -248,14 +248,14 @@ public class ElasticManager {
         return SortResults.sortByValues(results);
     }
 
-    public Map<Tuple<String, Date>, Float> searchNews(ArrayList<String> subjects) {
+    public Map<Tuple<String, Date>, Float> searchNews(ArrayList<String> subjects, boolean fixDate, String date) {
         Map<Tuple<String, Date>, Float> results = new HashMap<>();
         SearchRequest searchRequest = new SearchRequest("newspages");
         searchRequest.types("_doc");
         SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
         for (String subject : subjects) {
-            boolQueryBuilder.must(QueryBuilders.matchQuery("content", subject));
+            boolQueryBuilder.should(QueryBuilders.matchQuery("content", subject));
         }
         sourceBuilder.query(boolQueryBuilder);
         sourceBuilder.from(0);
@@ -268,6 +268,15 @@ public class ElasticManager {
         for (SearchHit hit : hits) {
             Map<String, Object> sourceAsMap = hit.getSourceAsMap();
             String dateString = (String) sourceAsMap.get("date");
+            if(fixDate){
+                try {
+                    if(!date.equals(new SimpleDateFormat("EEE, dd MMM yyyy").
+                            format(new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z").parse(dateString)))){
+                        continue;
+                    }
+                } catch (ParseException ignored) {
+                }
+            }
             SimpleDateFormat format = new SimpleDateFormat(dateFormat);
             try {
                 Tuple<String, Date> news = new Tuple(sourceAsMap.get(linkColumn), format.parse(dateString));

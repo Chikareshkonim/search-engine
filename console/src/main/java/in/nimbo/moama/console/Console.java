@@ -64,7 +64,7 @@ public class Console {
     public void newsSearch(){
         ArrayList<String> words = new ArrayList<>();
         getInput(words, "");
-        Map<Tuple<String, Date>,Float> results = elasticManager.searchNews(words);
+        Map<Tuple<String, Date>,Float> results = elasticManager.searchNews(words, false, null);
         showNews(results, false);
     }
 
@@ -72,13 +72,13 @@ public class Console {
     public void newsSearchOptimizedWithDate(){
         ArrayList<String> words = new ArrayList<>();
         getInput(words, "");
-        Map<Tuple<String, Date>,Float> results = elasticManager.searchNews(words);
+        Map<Tuple<String, Date>,Float> results = elasticManager.searchNews(words, false, null);
         showNews(results, true);
     }
 
     @Command(description = "Get Trend Words for A Date")
     public void getTrendWords(){
-        System.out.println("Please enter a valid date in the following format: \"dd/mm/yyyy\"\tExample: \"14/05/1998\"");
+        System.out.println("Please enter a valid date in the following format: \"dd/MM/yyyy\"\tExample: \"14/05/1998\"");
         String date = new Scanner(System.in).nextLine();
         Collection<Map<String, Double>> trendWords = new ArrayList<>();
         try {
@@ -103,6 +103,41 @@ public class Console {
         }
     }
 
+    @Command(description = "Get Trend News")
+    public void getTrendNews(){
+        System.out.println("Please enter a valid date in the following format: \"dd/MM/yyyy\"\tExample: \"14/05/1998\"");
+        String date = new Scanner(System.in).nextLine();
+        Collection<Map<String, Double>> trendWords = new ArrayList<>();
+        try {
+            trendWords = elasticManager.newsWordTrends(new SimpleDateFormat("EEE, dd MMM yyyy").
+                    format(new SimpleDateFormat("dd/MM/yyyy").parse(date)));
+        } catch (IOException e) {
+            System.out.println("Elastic currently unavailable!");
+            return;
+        } catch (ParseException e) {
+            System.out.println("Invalid date format:");
+            getTrendNews();
+        }
+        ArrayList<String> targetWords = new ArrayList<>();
+        if (trendWords.size() > 0) {
+            for (Map<String, Double> trendWord : trendWords) {
+                if(trendWord.keySet().size() > 0) {
+                    System.out.println(trendWord.keySet().toArray()[0]);
+                    targetWords.add((String) trendWord.keySet().toArray()[0]);
+                }
+            }
+        }
+        Map<Tuple<String, Date>, Float> results = null;
+        try {
+            results = elasticManager.searchNews(targetWords, true,
+                    new SimpleDateFormat("EEE, dd MMM yyyy").
+                            format(new SimpleDateFormat("dd/MM/yyyy").parse(date))
+                    );
+        } catch (ParseException ignored) {
+        }
+        showNews(results, false);
+    }
+
 
     private void showResults(Map<String, Float> results, boolean optimize){
         if(!results.isEmpty()) {
@@ -110,24 +145,24 @@ public class Console {
                 System.out.println("Primary Results:");
             }
             else{
-                System.out.println("Results");
+                System.out.println("Results:");
             }
             float maxScore = 0;
             int maxReference = 0;
             ArrayList<Integer> references = new ArrayList<>();
             int i = 1;
             for (Map.Entry result : results.entrySet()) {
-                if((float) result.getValue() > maxScore){
-                    maxScore = (float) result.getValue();
-                }
                 if(optimize) {
+                    if((float) result.getValue() > maxScore){
+                        maxScore = (float) result.getValue();
+                    }
                     references.add(webDocumentHBaseManager.getReference((String) result.getKey()));
                     if (references.get(i - 1) > maxReference) {
                         maxReference = references.get(i - 1);
                     }
+                }
                     System.out.println(i + "\t" + result.getKey() + "\t" + "\"score\": " + result.getValue());
                     i++;
-                }
             }
             if(optimize) {
                 for (Map.Entry result : results.entrySet()) {
@@ -149,11 +184,11 @@ public class Console {
 
     private void showNews(Map<Tuple<String, Date>,Float> results, boolean optimize){
         if(!results.isEmpty()) {
-            if(!optimize) {
+            if(optimize) {
                 System.out.println("Primary Results:");
             }
             else{
-                System.out.println("Results");
+                System.out.println("Results:");
             }
             int i = 1;
             float maxScore = 0;
