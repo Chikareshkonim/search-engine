@@ -16,7 +16,8 @@ public enum ElasticPropertyType implements PropertyType {
     BULK_SIZE_MB_LIMIT("elastic.bulk.size.limit.mb"),
     BULK_TIME_INTERVALS_MS("elastic.bulk.time.interval.ms"),
     BULK_CONCURRENT_REQUEST_NUMBER("elastic.bulk.concurrent.plusrequest"),
-    BULK_RETRIES_PUT("elastic.bulk.retries.put");
+    BULK_RETRIES_PUT("elastic.bulk.retries.put"),
+    NEWS_INDEX("elastic.news.index");
 
     private String type;
 

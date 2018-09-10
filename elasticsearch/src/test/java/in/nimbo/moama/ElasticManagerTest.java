@@ -102,7 +102,7 @@ public class ElasticManagerTest {
 
     @Test
     public void aggTest() throws IOException {
-        assertEquals("group",
+        assertEquals("gdshgssjsjfsjsfj",
                 elasticManager.newsWordTrends("Sun, 02 Sep 2018")
                         .get(0));
     }

@@ -6,11 +6,19 @@ import in.nimbo.moama.Tuple;
 import in.nimbo.moama.WebDocumentHBaseManager;
 import in.nimbo.moama.elasticsearch.SortResults;
 
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class Console {
-    private ElasticManager elasticManager = new ElasticManager();
-    private WebDocumentHBaseManager webDocumentHBaseManager = new WebDocumentHBaseManager("pages", "outLinks", "score");
+    private ElasticManager elasticManager;
+    private WebDocumentHBaseManager webDocumentHBaseManager;
+
+    public Console(){
+        elasticManager = new ElasticManager();
+        webDocumentHBaseManager = new WebDocumentHBaseManager("pages", "outLinks", "score");
+    }
 
     @Command(description = "Advanced Search- by necessary, forbidden and preferred statements")
     public void advancedSearch(){
@@ -67,6 +75,32 @@ public class Console {
         Map<Tuple<String, Date>,Float> results = elasticManager.searchNews(words);
         showNews(results, true);
     }
+
+    @Command(description = "Get Trend Words for A Date")
+    public void getTrendWords(){
+        System.out.println("Please enter a valid date in the following format: \"dd/mm/yyyy\"\tExample: \"14/05/1998\"");
+        String date = new Scanner(System.in).nextLine();
+        List<String> trendWords = new ArrayList<>();
+        try {
+            trendWords = elasticManager.newsWordTrends(new SimpleDateFormat("EEE, dd MMM yyyy").
+                    format(new SimpleDateFormat("dd/MM/yyyy").parse(date)));
+        } catch (IOException e) {
+            System.out.println("Elastic currently unavailable!");
+        } catch (ParseException e) {
+            System.out.println("Invalid date format:");
+            getTrendWords();
+        }
+        System.out.println("HERE");
+        if (trendWords.size() > 0) {
+            for(String trendWord: trendWords){
+                System.out.println(trendWord);
+            }
+        }
+        else{
+            System.out.println("Sorry! No trends found!");
+        }
+    }
+
 
     private void showResults(Map<String, Float> results, boolean optimize){
         if(!results.isEmpty()) {
@@ -164,11 +198,10 @@ public class Console {
     private void getInput(ArrayList<String> list, String type){
         System.out.println("Please add you desired" + type + " words or phrases for search.");
         System.out.println("Please Finish entering input by typing : -done-");
-        Scanner scanner = new Scanner(System.in);
-        String input = scanner.nextLine();
+        String input = new Scanner(System.in).nextLine();
         while(!input.equals("-done-")){
             list.add(input);
-            input = scanner.nextLine();
+            input = new Scanner(System.in).nextLine();
         }
     }
 }

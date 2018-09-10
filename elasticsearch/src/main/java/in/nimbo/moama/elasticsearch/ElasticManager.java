@@ -51,10 +51,10 @@ public class ElasticManager {
     private long bulkTimeInterval;
     private int bulkConcurrentRequest;
     private int bulkRetriesToPut;
-    private int searchEngineSizeLimit;
     private RestHighLevelClient client;
     private String index;
     private Logger LOGGER = LogManager.getLogger(ElasticManager.class);
+    private String newsIndex;
     private int clientPort;
     private int vectorPort;
     private String clusterName;
@@ -191,6 +191,7 @@ public class ElasticManager {
 
 
     public List<String> newsWordTrends(String date) throws IOException {
+        newsIndex = ConfigManager.getInstance().getProperty(ElasticPropertyType.NEWS_INDEX);
         Map<String, String> params = Collections.emptyMap();
         String jsonString = "{\"size\":0,\n" +
                 "    \t\"aggs\":{\n" +
@@ -218,7 +219,7 @@ public class ElasticManager {
                 "}";
         HttpEntity entity = new NStringEntity(jsonString, ContentType.APPLICATION_JSON);
         Response response =
-                restClient.performRequest("POST", "/" + index + "/_search?size=0", params, entity);
+                restClient.performRequest("POST", "/" + newsIndex + "/_search?size=0", params, entity);
         BufferedReader reader =
                 new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
         StringBuilder out = new StringBuilder();
@@ -226,9 +227,8 @@ public class ElasticManager {
         while ((line = reader.readLine()) != null) {
             out.append(line);
         }
-        System.out.println(out.toString());
         JSONObject jsonObject = new JSONObject(out.toString());
-        JSONArray buckets = jsonObject.getJSONObject("aggregations").getJSONObject(index).getJSONArray("buckets");
+        JSONArray buckets = jsonObject.getJSONObject("aggregations").getJSONObject("range").getJSONObject("buckets").getJSONObject("*-"+date).getJSONObject(index).getJSONArray("buckets");
         List<String> keywords = new LinkedList<>();
         for (Object bucket : buckets) {
             keywords.add(((JSONObject) bucket).getString("key"));
