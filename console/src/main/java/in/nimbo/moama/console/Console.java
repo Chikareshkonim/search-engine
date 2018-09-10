@@ -1,9 +1,9 @@
 package in.nimbo.moama.console;
 
 import asg.cliche.Command;
-import in.nimbo.moama.ElasticManager;
+import in.nimbo.moama.elasticsearch.ElasticManager;
 import in.nimbo.moama.WebDocumentHBaseManager;
-import in.nimbo.moama.SortResults;
+import in.nimbo.moama.elasticsearch.SortResults;
 
 import java.util.ArrayList;
 import java.util.Map;

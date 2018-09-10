@@ -1,6 +1,6 @@
 package in.nimbo.moama.crawler;
 
-import in.nimbo.moama.ElasticManager;
+import in.nimbo.moama.elasticsearch.ElasticManager;
 import in.nimbo.moama.UrlHandler;
 import in.nimbo.moama.WebDocumentHBaseManager;
 import in.nimbo.moama.configmanager.ConfigManager;

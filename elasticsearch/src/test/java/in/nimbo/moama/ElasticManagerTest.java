@@ -2,6 +2,7 @@ package in.nimbo.moama;
 
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.document.WebDocument;
+import in.nimbo.moama.elasticsearch.ElasticManager;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.index.IndexRequest;
@@ -9,7 +10,6 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;

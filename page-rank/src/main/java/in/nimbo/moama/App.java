@@ -6,10 +6,11 @@ import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 
 public class App {
     private static final Logger LOGGER = Logger.getLogger(ReferenceCalculator.class);
-    public static void main(String[] args) {
+    public static void main(String[] args) throws URISyntaxException {
         InputStream fileInputStream = App.class.getResourceAsStream("/config.properties");
         ConfigManager configManager=ConfigManager.getInstance();
         try {

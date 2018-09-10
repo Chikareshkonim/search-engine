@@ -1,13 +1,12 @@
 package in.nimbo.moama;
 
-import in.nimbo.moama.listener.Listener;
+import in.nimbo.moama.news.listener.Listener;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 
 import static java.lang.Thread.sleep;
-import static org.junit.Assert.*;
 
 public class ListenerFunctionTest {
 

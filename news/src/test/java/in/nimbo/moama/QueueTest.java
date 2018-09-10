@@ -1,5 +1,6 @@
 package in.nimbo.moama;
 
+import in.nimbo.moama.news.Queue;
 import org.junit.Before;
 import org.junit.Test;
 

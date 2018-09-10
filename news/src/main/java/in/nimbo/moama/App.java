@@ -1,19 +1,20 @@
 package in.nimbo.moama;
 
 import in.nimbo.moama.configmanager.ConfigManager;
-import in.nimbo.moama.fetcher.NewsFetcher;
-import in.nimbo.moama.fetcher.NewsInfo;
-import in.nimbo.moama.fetcher.NewsURLQueue;
-import in.nimbo.moama.fetcher.RSSReader;
-import in.nimbo.moama.listener.Function;
-import in.nimbo.moama.listener.Listener;
+import in.nimbo.moama.news.Queue;
+import in.nimbo.moama.news.fetcher.NewsFetcher;
+import in.nimbo.moama.news.fetcher.NewsInfo;
+import in.nimbo.moama.news.fetcher.NewsURLQueue;
+import in.nimbo.moama.news.fetcher.RSSReader;
+import in.nimbo.moama.news.listener.Function;
+import in.nimbo.moama.news.listener.Listener;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
 
 import static in.nimbo.moama.configmanager.ConfigManager.FileType.PROPERTIES;
-import static in.nimbo.moama.newsutil.NewsPropertyType.NEWS_LISTENER_PORT;
-import static in.nimbo.moama.newsutil.NewsPropertyType.NEWS_QUEUE_CAPACITY;
+import static in.nimbo.moama.news.newsutil.NewsPropertyType.NEWS_LISTENER_PORT;
+import static in.nimbo.moama.news.newsutil.NewsPropertyType.NEWS_QUEUE_CAPACITY;
 
 
 public class App {

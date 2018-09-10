@@ -3,18 +3,15 @@ package in.nimbo.moama;
 import in.nimbo.moama.crawler.CrawlThread;
 import in.nimbo.moama.crawler.CrawlerManager;
 import in.nimbo.moama.crawler.domainvalidation.HashDuplicateChecker;
-import in.nimbo.moama.listener.CLI;
+import in.nimbo.moama.news.listener.CLI;
 import in.nimbo.moama.metrics.Metrics;
-import org.apache.commons.beanutils.converters.IntegerArrayConverter;
 
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.LinkedList;
-import java.util.Map;
 import java.util.Scanner;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.lang.Thread.sleep;
 
