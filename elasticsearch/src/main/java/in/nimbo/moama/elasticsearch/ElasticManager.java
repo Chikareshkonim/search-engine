@@ -1,5 +1,6 @@
 package in.nimbo.moama.elasticsearch;
 
+import in.nimbo.moama.Tuple;
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.metrics.IntMeter;
 import in.nimbo.moama.util.ElasticPropertyType;
@@ -34,6 +35,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -46,6 +50,7 @@ public class ElasticManager {
     private long bulkTimeInterval;
     private int bulkConcurrentRequest;
     private int bulkRetriesToPut;
+    private int searchEngineSizeLimit;
     private RestHighLevelClient client;
     private String index;
     private Logger LOGGER = Logger.getLogger(ElasticManager.class);
@@ -268,6 +273,38 @@ public class ElasticManager {
         }
         return SortResults.sortByValues(results);
     }
+
+    public Map<Tuple<String, Date>, Float> searchNews(ArrayList<String> subjects) {
+        Map<Tuple<String, Date>, Float> results = new HashMap<>();
+        SearchRequest searchRequest = new SearchRequest("newspages");
+        searchRequest.types("_doc");
+        SearchSourceBuilder sourceBuilder = new SearchSourceBuilder();
+        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+        for (String subject : subjects) {
+            boolQueryBuilder.must(QueryBuilders.matchQuery("content", subject));
+        }
+        sourceBuilder.query(boolQueryBuilder);
+        sourceBuilder.from(0);
+        sourceBuilder.size(10);
+        sourceBuilder.timeout(new TimeValue(5, TimeUnit.SECONDS));
+        searchRequest.source(sourceBuilder);
+        SearchResponse searchResponse = runSearch(searchRequest);
+        SearchHit[] hits = searchResponse.getHits().getHits();
+        String dateFormat = "EEE, dd MMM yyyy HH:mm:ss Z";
+        for (SearchHit hit : hits) {
+            Map<String, Object> sourceAsMap = hit.getSourceAsMap();
+            String dateString = (String) sourceAsMap.get("date");
+            SimpleDateFormat format = new SimpleDateFormat(dateFormat);
+            try {
+                Tuple<String, Date> news = new Tuple(sourceAsMap.get(linkColumn), format.parse(dateString));
+                results.put(news, hit.getScore());
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
+        return SortResults.sortNews(results);
+    }
+
 
     public Map<String, Float> findSimilar(String text) {
         Map<String, Float> results = new HashMap<>();

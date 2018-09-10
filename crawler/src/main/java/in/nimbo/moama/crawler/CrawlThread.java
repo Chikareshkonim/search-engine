@@ -52,7 +52,7 @@ public class CrawlThread extends Thread {
     private static final DuplicateHandler duplicateChecker = DuplicateHandler.getInstance();
     private static final DomainFrequencyHandler domainTimeHandler = DomainFrequencyHandler.getInstance();
 
-    private static final IntMeter DUPLICATE_METER = new IntMeter("passed checking url");
+    private static final IntMeter DUPLICATE_METER = new IntMeter("duplicate url");
     private static final IntMeter NEW_URL_METER = new IntMeter("new url");
     private static final IntMeter COMPLETE_METER = new IntMeter("complete url");
     private static final IntMeter DOMAIN_ERROR_METER = new IntMeter("domain Error");
