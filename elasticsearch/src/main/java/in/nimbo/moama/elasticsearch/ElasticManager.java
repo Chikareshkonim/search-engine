@@ -31,12 +31,9 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -171,10 +168,8 @@ public class ElasticManager {
                 "\t}\n" +
                 "   }";
         HttpEntity entity = new NStringEntity(jsonString, ContentType.APPLICATION_JSON);
-        System.out.println("please");
         Response response =
                 restClient.performRequest("POST", "/" + index + "/_doc/_mtermvectors", params, entity);
-        System.out.println("connected");
         JSONArray docs = new JSONObject(EntityUtils.toString(response.getEntity())).getJSONArray("docs");
         for (Object doc : docs) {
             Map<String, Double> keys = new HashMap<>();
@@ -190,50 +185,29 @@ public class ElasticManager {
     }
 
 
-    public List<String> newsWordTrends(String date) throws IOException {
+    public Collection<Map<String, Double>> newsWordTrends(String date) throws IOException {
         newsIndex = ConfigManager.getInstance().getProperty(ElasticPropertyType.NEWS_INDEX);
         Map<String, String> params = Collections.emptyMap();
-        String jsonString = "{\"size\":0,\n" +
-                "    \t\"aggs\":{\n" +
-                "    \t\t\"range\":{\n" +
-                "    \t\"date_range\": {\n" +
-                "                \"field\": \"date\",\n" +
-                "                \"format\": \"EEE, dd MMM yyyy\",\n" +
-                "                \"ranges\": [\n" +
-                "                    { \"to\": \"" + date + "\" },\n" +
-                "                    { \"from\": \"" + date + "\" }\n" +
-                "                ],\n" +
-                "                \"keyed\": true\n" +
-                "            }\n" +
-                "    \t\n" +
-                "    \t\t\t,\n" +
-                "    \t\"aggs\":{\n" +
-                "        \"" + index + "\" : {\n" +
-                "            \"terms\" : { \"field\" : \"content\" \n" +
-                "            \t,\"size\":5\n" +
-                "            }\n" +
-                "        }\n" +
-                "    \t}\t\n" +
-                "    \t\t}\n" +
+        String jsonString = "{\n" +
+                "  \"query\": {\n" +
+                "    \"range\": {\n" +
+                "      \"date\": {\n" +
+                "        \"gte\": \""+date+"\",\n" +
+                "        \"lte\": \""+date+"\",\n" +
+                "        \"format\": \"EEE, dd MMM yyyy\"\n" +
+                "      }\n" +
                 "    }\n" +
+                "  }\n" +
                 "}";
         HttpEntity entity = new NStringEntity(jsonString, ContentType.APPLICATION_JSON);
         Response response =
-                restClient.performRequest("POST", "/" + newsIndex + "/_search?size=0", params, entity);
-        BufferedReader reader =
-                new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
-        StringBuilder out = new StringBuilder();
-        String line;
-        while ((line = reader.readLine()) != null) {
-            out.append(line);
+                restClient.performRequest("POST", "/" + index + "/_search", params, entity);
+        JSONArray hits = new JSONObject(EntityUtils.toString(response.getEntity())).getJSONObject("hits").getJSONArray("hits");
+        ArrayList<String> links = new ArrayList<>();
+        for (Object bucket : hits) {
+            links.add(((JSONObject) bucket).getJSONObject("_source").getString("pageLink"));
         }
-        JSONObject jsonObject = new JSONObject(out.toString());
-        JSONArray buckets = jsonObject.getJSONObject("aggregations").getJSONObject("range").getJSONObject("buckets").getJSONObject("*-"+date).getJSONObject(index).getJSONArray("buckets");
-        List<String> keywords = new LinkedList<>();
-        for (Object bucket : buckets) {
-            keywords.add(((JSONObject) bucket).getString("key"));
-        }
-        return keywords;
+        return getTermVector(links).values();
     }
 
 

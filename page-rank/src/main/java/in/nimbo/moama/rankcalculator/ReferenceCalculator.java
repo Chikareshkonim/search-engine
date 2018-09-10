@@ -72,7 +72,9 @@ public class ReferenceCalculator {
                         .map(Bytes::toString)
                         .map(e -> new Tuple2<>(e, 1))
                         .iterator();
-            return null;
+            List<Tuple2<String, Integer>> nul = new ArrayList<>();
+            nul.add(new Tuple2<>("null", 0));
+            return nul.iterator();
         });
     }
 
@@ -82,10 +84,8 @@ public class ReferenceCalculator {
             jobConfig.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, String.valueOf(webPageTable));
             jobConfig.setOutputFormatClass(TableOutputFormat.class);
             JavaPairRDD<ImmutableBytesWritable, Put> hbasePuts = toWrite.mapToPair(pair -> {
-                Integer score;
-                score = pair._2;
                 Put put = new Put(Bytes.toBytes(pair._1));
-                put.addColumn(refrenceFamilyName.getBytes(), refrenceColumn.getBytes(), Bytes.toBytes(score));
+                put.addColumn(refrenceFamilyName.getBytes(), refrenceColumn.getBytes(), Bytes.toBytes(pair._2));
                 return new Tuple2<>(new ImmutableBytesWritable(), put);
             });
             hbasePuts.saveAsNewAPIHadoopDataset(jobConfig.getConfiguration());
