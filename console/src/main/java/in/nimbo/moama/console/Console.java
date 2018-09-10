@@ -160,14 +160,14 @@ public class Console {
             for (Map.Entry result : results.entrySet()) {
                 news = (Tuple<String, Date>) result.getKey();
                 if(optimize) {
-                    if (news.y.getTime() > maxDate) {
-                        maxDate = news.y.getTime();
+                    if (news.getY().getTime() > maxDate) {
+                        maxDate = news.getY().getTime();
                     }
                     if ((float) result.getValue() > maxScore) {
                         maxScore = (float) result.getValue();
                     }
                 }
-                System.out.println(i + "\t" + news.x + "\t\"date\": " + news.y +  "\t\"score\": " + result.getValue());
+                System.out.println(i + "\t" + news.getX() + "\t\"date\": " + news.getY() +  "\t\"score\": " + result.getValue());
                 i++;
             }
             Date currentDate = new Date();
@@ -177,14 +177,14 @@ public class Console {
                     news = (Tuple<String, Date>) result.getKey();
                     i++;
                     result.setValue((0.7) * ((Float) result.getValue() / maxScore) +
-                            (0.3) * (1.0 / (currentDate.getTime() - news.y.getTime()) * (currentDate.getTime() - maxDate)));
+                            (0.3) * (1.0 / (currentDate.getTime() - news.getY().getTime()) * (currentDate.getTime() - maxDate)));
                 }
                 results = SortResults.sortNews(results);
                 System.out.println("Optimized results:");
                 i = 1;
                 for (Map.Entry result : results.entrySet()) {
                     news = (Tuple<String, Date>) result.getKey();
-                    System.out.println(i + "\t" + news.x + "\t\"date\": " + news.y +  "\t\"score\": " + result.getValue());
+                    System.out.println(i + "\t" + news.getX() + "\t\"date\": " + news.getY() +  "\t\"score\": " + result.getValue());
                     i++;
                 }
             }
