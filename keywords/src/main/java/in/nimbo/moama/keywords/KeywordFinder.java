@@ -40,7 +40,7 @@ public class KeywordFinder implements Runnable {
         try {
             ArrayList<String> urls = consumer.getDocuments();
             if (!urls.isEmpty())
-                keywords = elasticManager.getTermVector(urls);
+                keywords = elasticManager.getTermVector(urls, "pages");
             assert keywords != null;
             if (!keywords.values().isEmpty())
                 hbaseManager.put(createHBasePut(keywords));

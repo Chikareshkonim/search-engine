@@ -147,7 +147,7 @@ public class ElasticManager {
     }
 
     //TODO set url instead of ids
-    public Map<String, Map<String, Double>> getTermVector(ArrayList<String> ids ) throws IOException {
+    public Map<String, Map<String, Double>> getTermVector(ArrayList<String> ids, String index) throws IOException {
         Map<String, Map<String, Double>> result = new HashMap<>();
         Map<String, String> params = Collections.emptyMap();
         JSONArray idsArray = new JSONArray(ids.stream().map(DigestUtils::md5Hex).toArray());
@@ -178,7 +178,7 @@ public class ElasticManager {
                 terms.keySet().forEach(key -> keys.put(key, terms.getJSONObject(key).getDouble("score")));
                 result.put(((JSONObject) doc).getString("_id"), keys);
             }catch (JSONException e){
-                LOGGER.error("doc does not have term vector",e);
+                LOGGER.debug("doc does not have term vector",e);
             }
         }
         return result;
@@ -201,13 +201,13 @@ public class ElasticManager {
                 "}";
         HttpEntity entity = new NStringEntity(jsonString, ContentType.APPLICATION_JSON);
         Response response =
-                restClient.performRequest("POST", "/" + index + "/_search", params, entity);
+                restClient.performRequest("POST", "/" + newsIndex + "/_search", params, entity);
         JSONArray hits = new JSONObject(EntityUtils.toString(response.getEntity())).getJSONObject("hits").getJSONArray("hits");
         ArrayList<String> links = new ArrayList<>();
         for (Object bucket : hits) {
             links.add(((JSONObject) bucket).getJSONObject("_source").getString("pageLink"));
         }
-        return getTermVector(links).values();
+        return getTermVector(links,newsIndex).values();
     }
 
 

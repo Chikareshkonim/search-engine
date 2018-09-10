@@ -80,20 +80,22 @@ public class Console {
     public void getTrendWords(){
         System.out.println("Please enter a valid date in the following format: \"dd/mm/yyyy\"\tExample: \"14/05/1998\"");
         String date = new Scanner(System.in).nextLine();
-        List<String> trendWords = new ArrayList<>();
+        Collection<Map<String, Double>> trendWords = new ArrayList<>();
         try {
             trendWords = elasticManager.newsWordTrends(new SimpleDateFormat("EEE, dd MMM yyyy").
                     format(new SimpleDateFormat("dd/MM/yyyy").parse(date)));
         } catch (IOException e) {
             System.out.println("Elastic currently unavailable!");
+            return;
         } catch (ParseException e) {
             System.out.println("Invalid date format:");
             getTrendWords();
         }
-        System.out.println("HERE");
         if (trendWords.size() > 0) {
-            for(String trendWord: trendWords){
-                System.out.println(trendWord);
+            for(Map<String, Double> trendWord: trendWords){
+                if(trendWord.keySet().size() > 0) {
+                    System.out.println(trendWord.keySet().toArray()[0]);
+                }
             }
         }
         else{
