@@ -7,7 +7,8 @@ import in.nimbo.moama.kafka.MoamaConsumer;
 import in.nimbo.moama.util.KeywordPropertyType;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -15,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 public class KeywordFinder implements Runnable {
-    private final static Logger LOGGER = Logger.getLogger(KeywordFinder.class);
+    private final static Logger LOGGER = LogManager.getLogger(KeywordFinder.class);
     private ElasticManager elasticManager;
     private MoamaConsumer consumer;
     private HBaseManager hbaseManager;

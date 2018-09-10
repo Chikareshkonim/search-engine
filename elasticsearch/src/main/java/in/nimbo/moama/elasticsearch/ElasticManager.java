@@ -10,7 +10,8 @@ import org.apache.http.HttpHost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.nio.entity.NStringEntity;
 import org.apache.http.util.EntityUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.bulk.*;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
@@ -53,7 +54,7 @@ public class ElasticManager {
     private int searchEngineSizeLimit;
     private RestHighLevelClient client;
     private String index;
-    private Logger LOGGER = Logger.getLogger(ElasticManager.class);
+    private Logger LOGGER = LogManager.getLogger(ElasticManager.class);
     private int clientPort;
     private int vectorPort;
     private String clusterName;
@@ -66,7 +67,6 @@ public class ElasticManager {
     private String linkColumn;
 
     public ElasticManager() {
-        LOGGER.setAdditivity(false);
         reconfigure();
         Settings settings = Settings.builder().put("cluster.name", clusterName)
                 .put("client.transport.sniff", true).build();

@@ -6,7 +6,8 @@ import in.nimbo.moama.crawler.domainvalidation.DuplicateHandler;
 import in.nimbo.moama.kafka.MoamaConsumer;
 import in.nimbo.moama.kafka.MoamaProducer;
 import in.nimbo.moama.util.CrawlerPropertyType;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -17,7 +18,7 @@ import java.util.stream.IntStream;
 import static java.lang.Thread.sleep;
 
 public class CrawlerManager implements Reconfigurable {
-    private static final Logger LOGGER = Logger.getLogger(CrawlerManager.class);
+    private static final Logger LOGGER = LogManager.getLogger(CrawlerManager.class);
     private final MoamaProducer mainProducer;
     private final MoamaConsumer helperConsumer;
     private static int crawlerThreadPriority;

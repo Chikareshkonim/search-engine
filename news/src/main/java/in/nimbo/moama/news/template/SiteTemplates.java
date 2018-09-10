@@ -2,7 +2,8 @@ package in.nimbo.moama.news.template;
 
 import in.nimbo.moama.NewsWebsiteHBaseManager;
 import in.nimbo.moama.configmanager.ConfigManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import java.util.LinkedHashMap;
@@ -11,7 +12,7 @@ import java.util.List;
 import static in.nimbo.moama.news.newsutil.NewsPropertyType.*;
 
 public class SiteTemplates {
-    private static final Logger LOGGER = Logger.getLogger(SiteTemplates.class);
+    private static final Logger LOGGER = LogManager.getLogger(SiteTemplates.class);
     private static SiteTemplates ourInstance = new SiteTemplates();
 
 

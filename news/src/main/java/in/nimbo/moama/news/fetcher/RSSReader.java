@@ -3,7 +3,8 @@ package in.nimbo.moama.news.fetcher;
 import in.nimbo.moama.news.RSSs;
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.metrics.FloatMeter;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 
@@ -14,7 +15,7 @@ public class RSSReader implements Runnable {
     private NewsURLQueue<NewsInfo> newsQueue;
     private FloatMeter floatMeter = new FloatMeter("RSSReaderTime");
     private static final int SLEEP_TIME = ConfigManager.getInstance().getIntProperty(NEWS_READER_WAIT);
-    private static final Logger LOGGER = Logger.getRootLogger();
+    private static final Logger LOGGER = LogManager.getRootLogger();
 
     public RSSReader(NewsURLQueue<NewsInfo> newsQueue) {
         this.newsQueue = newsQueue;

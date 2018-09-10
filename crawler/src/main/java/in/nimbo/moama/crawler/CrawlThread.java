@@ -21,7 +21,8 @@ import in.nimbo.moama.util.ElasticPropertyType;
 import in.nimbo.moama.util.HBasePropertyType;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.UncheckedIOException;
 import org.jsoup.nodes.Document;
@@ -37,7 +38,7 @@ import static in.nimbo.moama.crawler.CrawlThread.State.*;
 
 
 public class CrawlThread extends Thread {
-    private static final Logger LOGGER = Logger.getLogger(CrawlThread.class);
+    private static final Logger LOGGER = LogManager.getLogger(CrawlThread.class);
     private static final IntMeter FATAL_ERROR = new IntMeter("FATAL error");
     public static LinkedList<String> fatalErrors = new LinkedList<>();
     private boolean isRun = true;

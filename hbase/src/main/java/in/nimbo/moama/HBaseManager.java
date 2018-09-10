@@ -9,7 +9,8 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -22,7 +23,7 @@ import java.util.stream.Collectors;
 public class HBaseManager {
     TableName tableName;
     String duplicateCheckFamily;
-    protected static final Logger LOGGER = Logger.getLogger(HBaseManager.class);
+    protected static final Logger LOGGER = LogManager.getLogger(HBaseManager.class);
     Configuration configuration;
     Connection connection;
     private HTable table;

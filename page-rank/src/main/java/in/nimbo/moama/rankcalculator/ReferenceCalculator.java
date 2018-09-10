@@ -13,7 +13,8 @@ import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.hadoop.hbase.mapreduce.TableOutputFormat;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -29,9 +30,9 @@ import java.util.stream.Collectors;
 
 //TODO: set config file
 public class ReferenceCalculator {
-    private static final Logger logger = Logger.getLogger(ReferenceCalculator.class);
-    private TableName webPageTable;
-    private String contentFamily;
+    private static final Logger logger = LogManager.getLogger(ReferenceCalculator.class);
+    private static TableName webPageTable;
+    private static String contentFamily;
     private static String refrenceColumn;
     private static String refrenceFamilyName;
     private Configuration hbaseConf;
@@ -81,12 +82,11 @@ public class ReferenceCalculator {
             jobConfig.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, String.valueOf(webPageTable));
             jobConfig.setOutputFormatClass(TableOutputFormat.class);
             JavaPairRDD<ImmutableBytesWritable, Put> hbasePuts = toWrite.mapToPair(pair -> {
-                if(!(pair._1.isEmpty() && pair._2!=null)) {
-                    Put put = new Put(Bytes.toBytes(pair._1));
-                    put.addColumn(refrenceFamilyName.getBytes(), refrenceColumn.getBytes(), Bytes.toBytes(pair._2));
-                    return new Tuple2<>(new ImmutableBytesWritable(), put);
-                }
-                return null;
+                Integer score;
+                score = pair._2;
+                Put put = new Put(Bytes.toBytes(pair._1));
+                put.addColumn(refrenceFamilyName.getBytes(), refrenceColumn.getBytes(), Bytes.toBytes(score));
+                return new Tuple2<>(new ImmutableBytesWritable(), put);
             });
             hbasePuts.saveAsNewAPIHadoopDataset(jobConfig.getConfiguration());
         } catch (Exception e) {

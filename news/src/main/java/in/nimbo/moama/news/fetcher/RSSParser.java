@@ -3,7 +3,8 @@ package in.nimbo.moama.news.fetcher;
 import in.nimbo.moama.news.RSSs;
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.news.template.SiteTemplates;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -18,7 +19,7 @@ import static in.nimbo.moama.news.newsutil.NewsPropertyType.NEWS_DATE_FORMAT;
 
 public class RSSParser {
     private static String UNIQUE_DATE_FORMAT = ConfigManager.getInstance().getProperty(NEWS_DATE_FORMAT);
-    private static final Logger LOGGER = Logger.getLogger(RSSParser.class);
+    private static final Logger LOGGER = LogManager.getLogger(RSSParser.class);
 
 
     public static List<NewsInfo> parse(String rss, String domain) throws IOException {
