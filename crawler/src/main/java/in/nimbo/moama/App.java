@@ -3,7 +3,7 @@ package in.nimbo.moama;
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.crawler.CrawlerManager;
 import in.nimbo.moama.news.listener.Listener;
-import in.nimbo.moama.elasticsearch.util.CrawlerPropertyType;
+import in.nimbo.moama.util.CrawlerPropertyType;
 
 import java.io.IOException;
 import java.net.URISyntaxException;

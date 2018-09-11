@@ -4,7 +4,7 @@ import in.nimbo.moama.Tuple;
 import in.nimbo.moama.Utils;
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.metrics.IntMeter;
-import in.nimbo.moama.elasticsearch.util.ElasticPropertyType;
+import in.nimbo.moama.util.ElasticPropertyType;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;

@@ -3,7 +3,7 @@ package in.nimbo.moama;
 import com.google.protobuf.ServiceException;
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.metrics.IntMeter;
-import in.nimbo.moama.elasticsearch.util.HBasePropertyType;
+import in.nimbo.moama.util.HBasePropertyType;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
@@ -28,8 +28,9 @@ public class HBaseManager {
     private HTable table;
     private static final IntMeter HBASE_PUT_METER = new IntMeter("Hbase put");
     private static int hbaseBulkSize;
+
     static {
-        hbaseBulkSize=ConfigManager.getInstance().getIntProperty(HBasePropertyType.HBASE_BULK_SIZE);
+        hbaseBulkSize = ConfigManager.getInstance().getIntProperty(HBasePropertyType.HBASE_BULK_SIZE);
     }
 
     public HBaseManager(String tableName, String duplicateCheckFamily) {
@@ -62,21 +63,23 @@ public class HBaseManager {
     public static void exiting() {
 
     }
-    LinkedList<Put> bulk=new LinkedList<>();
+
+    LinkedList<Put> bulk = new LinkedList<>();
+
     public synchronized void puts(LinkedList<Put> unUseAblePut) {
-            bulk.addAll(unUseAblePut);
-            if (bulk.size()>hbaseBulkSize) {
-                try {
-                    table.put(bulk);
-                    HBASE_PUT_METER.add(bulk.size());
-                    bulk.clear();
-                    ;
-                } catch (IOException e) {
-                    LOGGER.error("couldn't put  into HBase!", e);
-                } catch (RuntimeException e) {
-                    LOGGER.error("HBase error" + e.getMessage(), e);
-                }
+        bulk.addAll(unUseAblePut);
+        if (bulk.size() > hbaseBulkSize) {
+            try {
+                table.put(bulk);
+                HBASE_PUT_METER.add(bulk.size());
+                bulk.clear();
+                ;
+            } catch (IOException e) {
+                LOGGER.error("couldn't put  into HBase!", e);
+            } catch (RuntimeException e) {
+                LOGGER.error("HBase error" + e.getMessage(), e);
             }
+        }
     }
 
     public void put(List<Put> webDocOfThisThread) {
@@ -123,10 +126,11 @@ public class HBaseManager {
         }
         return string;
     }
+
     public boolean[] isDuplicate(List<String> urls) {
         try {
             return table.existsAll(urls.stream()
-                    .map(url->new Get(Bytes.toBytes(generateRowKeyFromUrl(url))))
+                    .map(url -> new Get(Bytes.toBytes(generateRowKeyFromUrl(url))))
                     .peek(get -> get.addFamily(duplicateCheckFamily.getBytes()))
                     .collect(Collectors.toList()));
         } catch (IOException e) {

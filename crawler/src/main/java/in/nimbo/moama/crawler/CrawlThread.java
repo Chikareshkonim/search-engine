@@ -9,9 +9,9 @@ import in.nimbo.moama.exception.IllegalLanguageException;
 import in.nimbo.moama.kafka.MoamaProducer;
 import in.nimbo.moama.metrics.FloatMeter;
 import in.nimbo.moama.metrics.IntMeter;
-import in.nimbo.moama.elasticsearch.util.CrawlerPropertyType;
-import in.nimbo.moama.elasticsearch.util.ElasticPropertyType;
-import in.nimbo.moama.elasticsearch.util.HBasePropertyType;
+import in.nimbo.moama.util.CrawlerPropertyType;
+import in.nimbo.moama.util.ElasticPropertyType;
+import in.nimbo.moama.util.HBasePropertyType;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
@@ -23,7 +23,6 @@ import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static in.nimbo.moama.crawler.CrawlThread.CrawlState.*;
@@ -109,7 +108,6 @@ public class CrawlThread extends Thread {
                     webDocument = createWebDocument(url, document);
                     helperProducer.pushNewURL(normalizeOutLink(webDocument));
                     crawledProducer.pushNewURL(url);
-                    System.out.println("putData");
                     dataBasePut(webDocument);
                     COMPLETE_METER.increment();// TODO: 8/31/18
                 } catch (IllegalLanguageException ignored) {

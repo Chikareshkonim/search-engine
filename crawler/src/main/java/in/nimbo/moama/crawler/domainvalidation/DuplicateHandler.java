@@ -3,7 +3,7 @@ import in.nimbo.moama.HBaseManager;
 import in.nimbo.moama.LRUCache;
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.metrics.IntMeter;
-import in.nimbo.moama.elasticsearch.util.CrawlerPropertyType;
+import in.nimbo.moama.util.CrawlerPropertyType;
 
 import java.util.LinkedList;
 import java.util.List;

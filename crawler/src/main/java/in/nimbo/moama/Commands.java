@@ -17,6 +17,21 @@ import java.util.stream.Collectors;
 import static java.lang.Thread.sleep;
 
 public class Commands {
+    @CLI(help = "shows you  how much thread is in each States")
+    public static void states(PrintStream out, Scanner scanner) {
+        System.out.println("states called");
+        try {
+            out.println(PageFetcher.getInstance().consumeState);
+            PageFetcher.getInstance().fetchers.stream()
+                    .map(Thread::toString)
+                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                    .forEach((k, v) -> out.println(k + "   " + v));
+
+        } catch (RuntimeException e) {
+            e.printStackTrace(out);
+        }
+    }
+
     @CLI(help = "show you statistic of this process")
     public static void stat(PrintStream out, Scanner scanner) {
         Metrics.stat(out::println);
@@ -38,7 +53,7 @@ public class Commands {
     public static void gc(PrintStream out, Scanner scanner) {
         try {
             System.gc();
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace(out);
         }
 
@@ -52,25 +67,6 @@ public class Commands {
             e.printStackTrace(out);
         }
 
-    }
-
-    @CLI(help = "shows you  how much thread is in each States")
-    public static void states(PrintStream out, Scanner
-            scanner) {
-        try {
-            CrawlerManager.getInstance().getCrawlerThreadList().stream()
-                    .map(CrawlThread::getThreadCrawlState)
-                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
-                    .forEach((k, v) -> out.println(k + "   " + v));
-            out.println(PageFetcher.getInstance().consumeState);
-            PageFetcher.getInstance().fetchers.stream()
-                    .map(Thread::toString)
-                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
-                    .forEach((k, v) -> out.println(k + "   " + v));
-
-        } catch (Exception e) {
-            e.printStackTrace(out);
-        }
     }
 
 

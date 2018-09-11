@@ -1,7 +1,7 @@
 package in.nimbo.moama.crawler.domainvalidation;
 
 import in.nimbo.moama.configmanager.ConfigManager;
-import in.nimbo.moama.elasticsearch.util.CrawlerPropertyType;
+import in.nimbo.moama.util.CrawlerPropertyType;
 
 import java.util.List;
 import java.util.stream.Collectors;

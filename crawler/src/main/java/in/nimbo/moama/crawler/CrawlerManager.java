@@ -5,7 +5,7 @@ import in.nimbo.moama.configmanager.*;
 import in.nimbo.moama.crawler.domainvalidation.DuplicateHandler;
 import in.nimbo.moama.kafka.MoamaConsumer;
 import in.nimbo.moama.kafka.MoamaProducer;
-import in.nimbo.moama.elasticsearch.util.CrawlerPropertyType;
+import in.nimbo.moama.util.CrawlerPropertyType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
