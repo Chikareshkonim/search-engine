@@ -2,6 +2,7 @@ package in.nimbo.moama;
 
 import in.nimbo.moama.crawler.CrawlThread;
 import in.nimbo.moama.crawler.CrawlerManager;
+import in.nimbo.moama.crawler.PageFetcher;
 import in.nimbo.moama.crawler.domainvalidation.HashDuplicateChecker;
 import in.nimbo.moama.news.listener.CLI;
 import in.nimbo.moama.metrics.Metrics;
@@ -16,22 +17,6 @@ import java.util.stream.Collectors;
 import static java.lang.Thread.sleep;
 
 public class Commands {
-    @CLI(help = "load duplicate hash map")
-    public static void loadDuplicate(PrintStream out, Scanner scanner) {
-        out.println("load duplicate called");
-        try {
-            HashDuplicateChecker.getInstance().loadHashTable();
-        } catch (IOException e) {
-            e.printStackTrace(out);
-        }
-    }
-
-    @CLI(help = "save duplicate hash map")
-    public static void saveDuplicate(PrintStream out, Scanner scanner) {
-        out.println("save duplicate called");
-        HashDuplicateChecker.getInstance().saveHashTable();
-    }
-
     @CLI(help = "show you statistic of this process")
     public static void stat(PrintStream out, Scanner scanner) {
         Metrics.stat(out::println);
@@ -48,34 +33,61 @@ public class Commands {
                 .peek(CrawlThread::end)
                 .forEach(threadList::remove);
     }
+
     @CLI(help = "call gc")
     public static void gc(PrintStream out, Scanner scanner) {
-        System.gc();
+        try {
+            System.gc();
+        }catch (Exception e){
+            e.printStackTrace(out);
+        }
+
     }
+
     @CLI(help = "fatal errors")
     public static void fatal(PrintStream out, Scanner scanner) {
-        CrawlThread.fatalErrors.forEach(out::println);
+        try {
+            CrawlThread.fatalErrors.forEach(out::println);
+        } catch (Exception e) {
+            e.printStackTrace(out);
+        }
+
     }
 
     @CLI(help = "shows you  how much thread is in each States")
     public static void states(PrintStream out, Scanner
             scanner) {
-        CrawlerManager.getInstance().getCrawlerThreadList().stream()
-                .map(CrawlThread::getThreadCrawlState)
-                .collect(Collectors.groupingBy(Function.identity(),Collectors.counting()))
-                .forEach((k,v)-> out.println(k+"   "+v));
+        try {
+            CrawlerManager.getInstance().getCrawlerThreadList().stream()
+                    .map(CrawlThread::getThreadCrawlState)
+                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                    .forEach((k, v) -> out.println(k + "   " + v));
+            out.println(PageFetcher.getInstance().consumeState);
+            PageFetcher.getInstance().fetchers.stream()
+                    .map(Thread::toString)
+                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                    .forEach((k, v) -> out.println(k + "   " + v));
+
+        } catch (Exception e) {
+            e.printStackTrace(out);
+        }
     }
 
 
     @CLI(help = "exit program")
     public static void exit(PrintStream out, Scanner scanner) {
-        thread(out, scanner);
-        CrawlerManager.getInstance().setRun(false);
-        CrawlerManager.getInstance().getCrawlerThreadList().forEach(CrawlThread::off);
-        Utils.delay(20000);
-        CrawlThread.exiting();
-        Utils.delay(20000);
-        System.exit(0);
+        try {
+            thread(out, scanner);
+            CrawlerManager.getInstance().setRun(false);
+            CrawlerManager.getInstance().getCrawlerThreadList().forEach(CrawlThread::off);
+            Utils.delay(20000);
+            CrawlThread.exiting();
+            Utils.delay(20000);
+            System.exit(0);
+        } catch (Exception e) {
+            e.printStackTrace(out);
+        }
+
     }
 
 }

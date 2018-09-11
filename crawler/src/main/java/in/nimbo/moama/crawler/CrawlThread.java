@@ -24,6 +24,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import static in.nimbo.moama.crawler.CrawlThread.CrawlState.*;
 
@@ -47,14 +48,13 @@ public class CrawlThread extends Thread {
     private static final MoamaProducer crawledProducer;
     private static final ElasticManager elasticManager;
     private static final WebDocumentHBaseManager webDocumentHBaseManager;
-    private static int minOfEachQueue;
     private static int numOfInternalLinksToKafka;
     private static String hBaseTable;
     private static String scoreFamily;
     private static String outLinksFamily;
     private static int hbaseSizeLimit;
     private static int elasticSizeBulkLimit;
-    private LinkedList<Tuple<String, String>> docsOfThisThread;
+    private ArrayList<Tuple<String, String>> batchDocsOfThisThread;
     private LinkedList<Put> webDocOfThisThread;
     private List<Map<String, String>> elasticDocOfThisThread;
     private CrawlState threadCrawlState = null;
@@ -62,7 +62,6 @@ public class CrawlThread extends Thread {
     static {
         elasticSizeBulkLimit = ConfigManager.getInstance().getIntProperty(ElasticPropertyType.ELASTIC_FLUSH_SIZE_LIMIT);
         hbaseSizeLimit = ConfigManager.getInstance().getIntProperty(HBasePropertyType.PUT_SIZE_LIMIT);
-        minOfEachQueue = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_MIN_OF_EACH_THREAD_QUEUE);
         numOfInternalLinksToKafka = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_INTERNAL_LINK_ADD_TO_KAFKA);
         outLinksFamily = ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_FAMILY_OUTLINKS);
         scoreFamily = ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_FAMILY_SCORE);
@@ -79,7 +78,7 @@ public class CrawlThread extends Thread {
 
     @Override
     public void run() {
-        docsOfThisThread = new LinkedList<>();
+        batchDocsOfThisThread =new ArrayList<>();
         webDocOfThisThread = new LinkedList<>();
         elasticDocOfThisThread = new LinkedList<>();
         while (isRun) {
@@ -90,37 +89,40 @@ public class CrawlThread extends Thread {
     }
 
     private long tempTime;
-    static ArrayBlockingQueue<String> checkedUrlsQueue = new ArrayBlockingQueue<>(400);
-    static ArrayBlockingQueue<Tuple<String, String>> netFeteched = new ArrayBlockingQueue<>(10000);
+    static LinkedBlockingQueue<ArrayList<Tuple<String, String>>> netFeteched = new LinkedBlockingQueue<>();
 
     private void work() {
-        if (docsOfThisThread.size() < minOfEachQueue) {
-            netFeteched.drainTo(docsOfThisThread, 100);
-            Utils.delay(100);
-        } else {
-            WebDocument webDocument;
-            Tuple<String, String> doc = docsOfThisThread.pop();
-            String url = doc.getX();
-            String body = doc.getY();
+        if (batchDocsOfThisThread.size() == 0) {
             try {
-                Document document = getDocument(body);
-                MB_CRAWLED.add((double) document.outerHtml().getBytes().length / 0b100000000000000000000);
-                webDocument = createWebDocument(url, document);
-                helperProducer.pushNewURL(normalizeOutLink(webDocument));
-                crawledProducer.pushNewURL(url);
-                System.out.println("putData");
-                dataBasePut(webDocument);
-                COMPLETE_METER.increment();// TODO: 8/31/18
-            } catch (IllegalLanguageException ignored) {
-            } catch (MalformedURLException e) {
-                LOGGER.warn(url + " is malformed!");
-            } catch (RuntimeException e) {
-                FATAL_ERROR.increment();
-                StringWriter sw = new StringWriter();
-                e.printStackTrace(new PrintWriter(sw));
-                fatalErrors.add(sw.toString());
-                LOGGER.error("important" + e.getMessage(), e);
-                throw e;
+                batchDocsOfThisThread = netFeteched.take();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        } else {
+            for (Tuple<String, String> doc : batchDocsOfThisThread) {
+                WebDocument webDocument;
+                String url = doc.getX();
+                String body = doc.getY();
+                try {
+                    Document document = getDocument(body);
+                    MB_CRAWLED.add((double) document.outerHtml().getBytes().length / 0b100000000000000000000);
+                    webDocument = createWebDocument(url, document);
+                    helperProducer.pushNewURL(normalizeOutLink(webDocument));
+                    crawledProducer.pushNewURL(url);
+                    System.out.println("putData");
+                    dataBasePut(webDocument);
+                    COMPLETE_METER.increment();// TODO: 8/31/18
+                } catch (IllegalLanguageException ignored) {
+                } catch (MalformedURLException e) {
+                    LOGGER.warn(url + " is malformed!");
+                } catch (RuntimeException e) {
+                    FATAL_ERROR.increment();
+                    StringWriter sw = new StringWriter();
+                    e.printStackTrace(new PrintWriter(sw));
+                    fatalErrors.add(sw.toString());
+                    LOGGER.error("important" + e.getMessage(), e);
+                    throw e;
+                }
             }
         }
     }
@@ -196,7 +198,7 @@ public class CrawlThread extends Thread {
     public void end() {
         webDocumentHBaseManager.put(webDocOfThisThread);
         elasticManager.put(elasticDocOfThisThread);
-        helperProducer.pushNewURL(docsOfThisThread.stream()
+        helperProducer.pushNewURL(batchDocsOfThisThread.stream()
                 .map(Tuple::getX).toArray(String[]::new));
     }
 
