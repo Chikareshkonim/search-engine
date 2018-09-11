@@ -13,7 +13,7 @@ public class ListenerFunctionTest {
     @Test
     public void exit() throws InterruptedException, IOException, URISyntaxException {
         Initializer.initialize();
-        new Listener().listen(ListenerFunction.class,3333);
+        new Listener().listen(Commands.class,3333);
         sleep(30000);
 
     }

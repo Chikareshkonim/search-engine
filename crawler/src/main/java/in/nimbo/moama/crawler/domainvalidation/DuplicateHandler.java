@@ -1,10 +1,13 @@
 package in.nimbo.moama.crawler.domainvalidation;
-
 import in.nimbo.moama.HBaseManager;
 import in.nimbo.moama.LRUCache;
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.metrics.IntMeter;
-import in.nimbo.moama.util.CrawlerPropertyType;
+import in.nimbo.moama.elasticsearch.util.CrawlerPropertyType;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class DuplicateHandler {
     private final LRUCache<String, Integer> lruCache;
@@ -40,5 +43,20 @@ public class DuplicateHandler {
 
     public void weakConfirm(String url) {
         lruCache.put(url, 1);
+    }
+
+    public List<String> bulkNotDuplicate(List<String> urls) {
+        urls=urls.stream().filter(e->!weakCheckDuplicate(e)).collect(Collectors.toList());
+        LinkedList<String> notDuplicate= new LinkedList<>();
+        boolean[] result =hBaseManager.isDuplicate(urls);
+        int tmp=0;
+        for (int i = 0; i < result.length; i++) {
+            if(result[i]) {
+                lruCache.put(urls.get(i),0);
+            }else {
+                notDuplicate.add(urls.get(i));
+            }
+        }
+        return notDuplicate;
     }
 }

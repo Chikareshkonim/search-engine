@@ -1,7 +1,10 @@
 package in.nimbo.moama.crawler.domainvalidation;
 
 import in.nimbo.moama.configmanager.ConfigManager;
-import in.nimbo.moama.util.CrawlerPropertyType;
+import in.nimbo.moama.elasticsearch.util.CrawlerPropertyType;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class DomainFrequencyHandler {
     private static final DomainFrequencyHandler ourInstance=new DomainFrequencyHandler();
@@ -28,5 +31,8 @@ public class DomainFrequencyHandler {
             return true;
         }
         return false;
+    }
+    public List<String> allowedLinks(List<String> documents) {
+        return documents.stream().filter(this::isAllow).collect(Collectors.toList());
     }
 }

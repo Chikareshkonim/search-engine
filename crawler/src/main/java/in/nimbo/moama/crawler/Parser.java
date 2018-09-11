@@ -9,7 +9,7 @@ import in.nimbo.moama.metrics.FloatMeter;
 import in.nimbo.moama.metrics.IntMeter;
 import org.jsoup.nodes.Document;
 
-import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,7 +37,7 @@ public class Parser {
         Parser.langDetector = langDetector;
     }
 
-    WebDocument parse(Document document, String url) throws IllegalLanguageException, IOException {
+    WebDocument parse(Document document, String url) throws IllegalLanguageException, MalformedURLException {
         URL_RECEIVER_METER.increment();
         long tempTime = System.currentTimeMillis();
         String text = document.text();

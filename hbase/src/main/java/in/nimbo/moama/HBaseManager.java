@@ -3,7 +3,7 @@ package in.nimbo.moama;
 import com.google.protobuf.ServiceException;
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.metrics.IntMeter;
-import in.nimbo.moama.util.HBasePropertyType;
+import in.nimbo.moama.elasticsearch.util.HBasePropertyType;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
@@ -17,7 +17,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.stream.Collectors;
 
 public class HBaseManager {
@@ -133,7 +132,7 @@ public class HBaseManager {
         } catch (IOException e) {
             LOGGER.error("HBase service unavailable");
         }
-        return null;
+        return new boolean[0];
     }
 
     public boolean isDuplicate(String url) {
