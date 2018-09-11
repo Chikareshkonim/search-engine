@@ -122,7 +122,6 @@ public class Console {
         if (trendWords.size() > 0) {
             for (Map<String, Double> trendWord : trendWords) {
                 if(trendWord.keySet().size() > 0) {
-                    System.out.println(trendWord.keySet().toArray()[0]);
                     targetWords.add((String) trendWord.keySet().toArray()[0]);
                 }
             }

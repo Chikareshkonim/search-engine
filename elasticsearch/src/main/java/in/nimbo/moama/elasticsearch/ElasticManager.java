@@ -13,6 +13,7 @@ import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.bulk.*;
+import org.elasticsearch.action.search.MultiSearchRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.*;
@@ -24,6 +25,8 @@ import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.RangeQueryBuilder;
+import org.elasticsearch.index.query.WildcardQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.transport.client.PreBuiltTransportClient;
@@ -257,10 +260,13 @@ public class ElasticManager {
         for (String subject : subjects) {
             boolQueryBuilder.should(QueryBuilders.matchQuery("content", subject));
         }
-        sourceBuilder.query(boolQueryBuilder);
+        if(fixDate) {
+            boolQueryBuilder.filter(QueryBuilders.rangeQuery("date").gte(date).lte(date).format("EEE, dd MMM yyyy"));
+        }
         sourceBuilder.from(0);
-        sourceBuilder.size(10);
+        sourceBuilder.size(20);
         sourceBuilder.timeout(new TimeValue(5, TimeUnit.SECONDS));
+        sourceBuilder.query(boolQueryBuilder);
         searchRequest.source(sourceBuilder);
         SearchResponse searchResponse = runSearch(searchRequest);
         SearchHit[] hits = searchResponse.getHits().getHits();
@@ -268,15 +274,6 @@ public class ElasticManager {
         for (SearchHit hit : hits) {
             Map<String, Object> sourceAsMap = hit.getSourceAsMap();
             String dateString = (String) sourceAsMap.get("date");
-            if(fixDate){
-                try {
-                    if(!date.equals(new SimpleDateFormat("EEE, dd MMM yyyy").
-                            format(new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z").parse(dateString)))){
-                        continue;
-                    }
-                } catch (ParseException ignored) {
-                }
-            }
             SimpleDateFormat format = new SimpleDateFormat(dateFormat);
             try {
                 Tuple<String, Date> news = new Tuple(sourceAsMap.get(linkColumn), format.parse(dateString));
