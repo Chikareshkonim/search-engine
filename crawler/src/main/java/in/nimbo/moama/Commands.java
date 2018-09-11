@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 import static java.lang.Thread.sleep;
 
-public class ListenerFunction {
+public class Commands {
     @CLI(help = "load duplicate hash map")
     public static void loadDuplicate(PrintStream out, Scanner scanner) {
         out.println("load duplicate called");
@@ -48,24 +48,6 @@ public class ListenerFunction {
                 .peek(CrawlThread::end)
                 .forEach(threadList::remove);
     }
-
-    @CLI(help = "increase threads")
-    public static void increaseThread(PrintStream out, Scanner scanner) {
-        out.println("how many thread you want to increase?");
-        CrawlerManager.getInstance().run(Integer.parseInt(scanner.nextLine()));
-    }
-
-    @CLI(help = "decrease threads")
-    public static void decreaseThread(PrintStream out, Scanner scanner) {
-        out.println("how many thread you want to decrease?");
-        thread(out, scanner);
-        LinkedList<CrawlThread> threadList = CrawlerManager.getInstance().getCrawlerThreadList();
-        threadList.stream()
-                .limit(Integer.parseInt(scanner.nextLine()))
-                .peek(CrawlThread::off)
-                .forEach(threadList::remove);
-    }
-
     @CLI(help = "call gc")
     public static void gc(PrintStream out, Scanner scanner) {
         System.gc();
@@ -74,11 +56,13 @@ public class ListenerFunction {
     public static void fatal(PrintStream out, Scanner scanner) {
         CrawlThread.fatalErrors.forEach(out::println);
     }
-    @CLI(help = "")
-    public static void states(PrintStream out, Scanner scanner) {
+
+    @CLI(help = "shows you  how much thread is in each States")
+    public static void states(PrintStream out, Scanner
+            scanner) {
         CrawlerManager.getInstance().getCrawlerThreadList().stream()
-                .map(CrawlThread::getThreadState)
-                .collect(Collectors.groupingBy(Function.identity()))
+                .map(CrawlThread::getThreadCrawlState)
+                .collect(Collectors.groupingBy(Function.identity(),Collectors.counting()))
                 .forEach((k,v)-> out.println(k+"   "+v));
     }
 

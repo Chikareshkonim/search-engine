@@ -1,4 +1,4 @@
-package in.nimbo.moama.util;
+package in.nimbo.moama.elasticsearch.util;
 
 import in.nimbo.moama.configmanager.PropertyType;
 

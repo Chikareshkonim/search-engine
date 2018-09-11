@@ -22,4 +22,11 @@ public class LinkListOptimizeAdderTest {
             Assert.assertEquals((int) list1.get(i), i);
         }
     }
+
+    @Test
+    public void addInOneOrder() {
+        LinkedList<String> list1=new LinkedList<>();
+        LinkedList<String> list2=new LinkedList<>();
+        LinkListOptimizeAdder.addInOneOrder(list1,list2);
+    }
 }

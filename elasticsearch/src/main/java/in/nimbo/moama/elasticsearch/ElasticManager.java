@@ -1,9 +1,10 @@
 package in.nimbo.moama.elasticsearch;
 
 import in.nimbo.moama.Tuple;
+import in.nimbo.moama.Utils;
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.metrics.IntMeter;
-import in.nimbo.moama.util.ElasticPropertyType;
+import in.nimbo.moama.elasticsearch.util.ElasticPropertyType;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
@@ -325,6 +326,7 @@ public class ElasticManager {
     public void close() {
         try {
             bulkProcessor.flush();
+            Utils.delay(10000);
             bulkProcessor.awaitClose(15,TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             LOGGER.fatal("cant close elastic",e);

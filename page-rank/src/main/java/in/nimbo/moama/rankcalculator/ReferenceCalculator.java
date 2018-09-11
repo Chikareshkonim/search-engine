@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function;
 import scala.Tuple2;
 
 import java.io.File;
@@ -64,6 +65,12 @@ public class ReferenceCalculator {
         JavaPairRDD<ImmutableBytesWritable, Result> data = sparkContext.newAPIHadoopRDD(hbaseConf, TableInputFormat.class,
                 ImmutableBytesWritable.class, Result.class);
 
+        data.flatMap(v1 -> v1._2.listCells().iterator())
+        .map(cell -> Bytes.toString(CellUtil.cloneQualifier(cell)))
+        .mapToPair(s -> {
+
+            return null;
+        });
         return data.flatMapToPair(pair -> {
             List<Cell> cells = pair._2.listCells();
             if (!cells.isEmpty())

@@ -5,7 +5,7 @@ import in.nimbo.moama.configmanager.*;
 import in.nimbo.moama.crawler.domainvalidation.DuplicateHandler;
 import in.nimbo.moama.kafka.MoamaConsumer;
 import in.nimbo.moama.kafka.MoamaProducer;
-import in.nimbo.moama.util.CrawlerPropertyType;
+import in.nimbo.moama.elasticsearch.util.CrawlerPropertyType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,7 +13,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import static java.lang.Thread.sleep;
 
@@ -45,13 +44,10 @@ public class CrawlerManager implements Reconfigurable {
         numOfThreads = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_NUMBER_OF_THREADS);
         startNewThreadDelay = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_START_NEW_THREAD_DELAY_MS);
     }
-
     public void run() {
-        run(numOfThreads);
-    }
 
-    public void run(int numOfThreads) {
         LinkedList<CrawlThread> crawlThreads = crawlerThreadList;
+
         for (int e = 0; e < numOfThreads; e++) {
             CrawlThread thread = new CrawlThread();
             thread.setPriority(crawlerThreadPriority);
@@ -59,6 +55,7 @@ public class CrawlerManager implements Reconfigurable {
             thread.start();
             crawlThreads.add(thread);
         }
+        PageFetcher pageFetcher=new PageFetcher();
         manageKafkaHelper();
     }
 

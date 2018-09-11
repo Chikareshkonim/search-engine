@@ -4,7 +4,7 @@ import in.nimbo.moama.HBaseManager;
 import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.elasticsearch.ElasticManager;
 import in.nimbo.moama.kafka.MoamaConsumer;
-import in.nimbo.moama.util.KeywordPropertyType;
+import in.nimbo.moama.elasticsearch.util.KeywordPropertyType;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.logging.log4j.LogManager;

@@ -1,90 +1,69 @@
 package in.nimbo.moama.crawler;
 
-import in.nimbo.moama.elasticsearch.ElasticManager;
-import in.nimbo.moama.UrlHandler;
-import in.nimbo.moama.WebDocumentHBaseManager;
+import in.nimbo.moama.*;
 import in.nimbo.moama.configmanager.ConfigManager;
-import in.nimbo.moama.crawler.domainvalidation.DomainFrequencyHandler;
-import in.nimbo.moama.crawler.domainvalidation.DuplicateHandler;
 import in.nimbo.moama.document.Link;
 import in.nimbo.moama.document.WebDocument;
-import in.nimbo.moama.exception.DomainFrequencyException;
-import in.nimbo.moama.exception.DuplicateLinkException;
+import in.nimbo.moama.elasticsearch.ElasticManager;
 import in.nimbo.moama.exception.IllegalLanguageException;
-import in.nimbo.moama.exception.URLException;
-import in.nimbo.moama.kafka.MoamaConsumer;
 import in.nimbo.moama.kafka.MoamaProducer;
 import in.nimbo.moama.metrics.FloatMeter;
 import in.nimbo.moama.metrics.IntMeter;
-import in.nimbo.moama.util.CrawlerPropertyType;
-import in.nimbo.moama.util.ElasticPropertyType;
-import in.nimbo.moama.util.HBasePropertyType;
+import in.nimbo.moama.elasticsearch.util.CrawlerPropertyType;
+import in.nimbo.moama.elasticsearch.util.ElasticPropertyType;
+import in.nimbo.moama.elasticsearch.util.HBasePropertyType;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
-import org.jsoup.UncheckedIOException;
 import org.jsoup.nodes.Document;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
 
-import static in.nimbo.moama.crawler.CrawlThread.State.*;
+import static in.nimbo.moama.crawler.CrawlThread.CrawlState.*;
 
 
 public class CrawlThread extends Thread {
-    private static final Logger LOGGER = LogManager.getLogger(CrawlThread.class);
-    private static final IntMeter FATAL_ERROR = new IntMeter("FATAL error");
     public static LinkedList<String> fatalErrors = new LinkedList<>();
+
+    private static final IntMeter FATAL_ERROR = new IntMeter("FATAL error");
+    private static final IntMeter COMPLETE_METER = new IntMeter("complete url");
+    private static final IntMeter URL_RECEIVED_METER = new IntMeter("url received");
+    private static final FloatMeter MB_CRAWLED = new FloatMeter("MB Crawled");
+    private static final FloatMeter PARSE_TIME = new FloatMeter("parse url Time ");
+    private static final FloatMeter HBASE_PUT_TIME = new FloatMeter("hbase put Time ");
+    private static final FloatMeter ELASTIC_PUT_TIME = new FloatMeter("elastic put Time");
+    private static final FloatMeter DOCUMENT_CREATE_TIME = new FloatMeter("jsoup document create time");
+    private static final Logger LOGGER = Logger.getLogger(CrawlThread.class);
+
     private boolean isRun = true;
     private static final Parser parser;
     private static final MoamaProducer helperProducer;
-    private static final MoamaConsumer linkConsumer;
     private static final MoamaProducer crawledProducer;
     private static final ElasticManager elasticManager;
     private static final WebDocumentHBaseManager webDocumentHBaseManager;
     private static int minOfEachQueue;
     private static int numOfInternalLinksToKafka;
-    private static final DuplicateHandler duplicateChecker = DuplicateHandler.getInstance();
-    private static final DomainFrequencyHandler domainTimeHandler = DomainFrequencyHandler.getInstance();
-
-    private static final IntMeter DUPLICATE_METER = new IntMeter("duplicate url");
-    private static final IntMeter NEW_URL_METER = new IntMeter("new url");
-    private static final IntMeter COMPLETE_METER = new IntMeter("complete url");
-    private static final IntMeter DOMAIN_ERROR_METER = new IntMeter("domain Error");
-    private static final IntMeter IO_UNCHECK_EXCEPTION_METER = new IntMeter("Unchecked io Exception");
-    private static final IntMeter URL_RECEIVED_METER = new IntMeter("url received");
-    private static final IntMeter NULL_URL_METER = new IntMeter("null url");
-    private static final IntMeter jsoupBugException = new IntMeter("jsoup Bugs Error");
-
-    private static FloatMeter megaByteCounter = new FloatMeter("MB Crawled");
-
-    private static FloatMeter checkTime = new FloatMeter("check url Time ");
-    private static FloatMeter parseTime = new FloatMeter("parse url Time ");
-    private static FloatMeter hbaseTime = new FloatMeter("hbase put Time ");
-    private static FloatMeter elasticTime = new FloatMeter("elastic put Time");
-    private static FloatMeter fetchTime = new FloatMeter("fetch Page Time");
-    private static FloatMeter documentTime = new FloatMeter("jsoup document create time");
-    private static FloatMeter kafkaTime = new FloatMeter("kafka input time");
-
-    private State threadState = null;
-
     private static String hBaseTable;
     private static String scoreFamily;
     private static String outLinksFamily;
     private static int hbaseSizeLimit;
     private static int elasticSizeBulkLimit;
-    private LinkedList<String> urlsOfThisThread;
+    private LinkedList<Tuple<String, String>> docsOfThisThread;
     private LinkedList<Put> webDocOfThisThread;
     private List<Map<String, String>> elasticDocOfThisThread;
+    private CrawlState threadCrawlState = null;
+
     static {
         elasticSizeBulkLimit = ConfigManager.getInstance().getIntProperty(ElasticPropertyType.ELASTIC_FLUSH_SIZE_LIMIT);
         hbaseSizeLimit = ConfigManager.getInstance().getIntProperty(HBasePropertyType.PUT_SIZE_LIMIT);
+        minOfEachQueue = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_MIN_OF_EACH_THREAD_QUEUE);
+        numOfInternalLinksToKafka = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_INTERNAL_LINK_ADD_TO_KAFKA);
         outLinksFamily = ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_FAMILY_OUTLINKS);
         scoreFamily = ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_FAMILY_SCORE);
         hBaseTable = ConfigManager.getInstance().getProperty(CrawlerPropertyType.HBASE_TABLE);
@@ -92,10 +71,6 @@ public class CrawlThread extends Thread {
                 .getProperty(CrawlerPropertyType.CRAWLER_CRAWLED_TOPIC_NAME), "kafka.crawled.");
         helperProducer = new MoamaProducer(ConfigManager.getInstance()
                 .getProperty(CrawlerPropertyType.CRAWLER_HELPER_TOPIC_NAME), "kafka.helper.");
-        linkConsumer = new MoamaConsumer(ConfigManager.getInstance()
-                .getProperty(CrawlerPropertyType.CRAWLER_LINK_TOPIC_NAME), "kafka.server.");
-        minOfEachQueue = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_MIN_OF_EACH_THREAD_QUEUE);
-        numOfInternalLinksToKafka = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_INTERNAL_LINK_ADD_TO_KAFKA);
         webDocumentHBaseManager = new WebDocumentHBaseManager(hBaseTable, outLinksFamily, scoreFamily);
         elasticManager = new ElasticManager();
         webDocumentHBaseManager.createTable();
@@ -104,7 +79,7 @@ public class CrawlThread extends Thread {
 
     @Override
     public void run() {
-        urlsOfThisThread = new LinkedList<>();
+        docsOfThisThread = new LinkedList<>();
         webDocOfThisThread = new LinkedList<>();
         elasticDocOfThisThread = new LinkedList<>();
         while (isRun) {
@@ -114,85 +89,31 @@ public class CrawlThread extends Thread {
         end();
     }
 
+    private long tempTime;
+    static ArrayBlockingQueue<String> checkedUrlsQueue = new ArrayBlockingQueue<>(400);
+    static ArrayBlockingQueue<Tuple<String, String>> netFeteched = new ArrayBlockingQueue<>(10000);
+
     private void work() {
-        if (urlsOfThisThread.size() < minOfEachQueue) {
-            urlsOfThisThread.addAll(linkConsumer.getDocuments());
-            threadState = consumeKafka;
+        if (docsOfThisThread.size() < minOfEachQueue) {
+            netFeteched.drainTo(docsOfThisThread, 100);
+            Utils.delay(100);
         } else {
             WebDocument webDocument;
-            String url = urlsOfThisThread.pop();
-            long tempTime = System.currentTimeMillis();
+            Tuple<String, String> doc = docsOfThisThread.pop();
+            String url = doc.getX();
+            String body = doc.getY();
             try {
-                threadState = checkUrl;
-                tempTime = System.currentTimeMillis();
-                checkLink(url);
-                checkTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
-                //////
-                threadState = fetchNet;
-                tempTime = System.currentTimeMillis();
-                String string = Jsoup.connect(url).validateTLSCertificates(false).ignoreHttpErrors(true).timeout(1500)
-                        .execute().body();
-                fetchTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
-                //////
-                threadState = jsoupDocument;
-                tempTime = System.currentTimeMillis();
-                Document document = Jsoup.parse(string);
-                documentTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
-                //////
-                threadState = parse;
-                duplicateChecker.weakConfirm(url);
-                URL_RECEIVED_METER.increment();
-                tempTime = System.currentTimeMillis();
-                webDocument = parser.parse(document, url);
-                parseTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
-                //////
-                tempTime = System.currentTimeMillis();
-                megaByteCounter.add((double) document.outerHtml().getBytes().length / 0b100000000000000000000);
+                Document document = getDocument(body);
+                MB_CRAWLED.add((double) document.outerHtml().getBytes().length / 0b100000000000000000000);
+                webDocument = createWebDocument(url, document);
                 helperProducer.pushNewURL(normalizeOutLink(webDocument));
                 crawledProducer.pushNewURL(url);
-                kafkaTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
-                //////
-                threadState = hbase;
-                tempTime = System.currentTimeMillis();
-                webDocOfThisThread.add(createHbasePut(webDocument.getPageLink(), webDocument.getLinks()));
-                if (webDocOfThisThread.size() > hbaseSizeLimit) {
-                    webDocumentHBaseManager.puts(webDocOfThisThread);
-                    webDocOfThisThread=new LinkedList<>();
-                }
-                hbaseTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
-                //////
-                threadState = elastic;
-                tempTime = System.currentTimeMillis();
-                elasticDocOfThisThread.add(webDocument.elasticMap());
-                if (elasticDocOfThisThread.size() > elasticSizeBulkLimit) {
-                    elasticManager.put(elasticDocOfThisThread);
-                    elasticDocOfThisThread.clear();
-                }
-                elasticTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
-                //////
+                System.out.println("putData");
+                dataBasePut(webDocument);
                 COMPLETE_METER.increment();// TODO: 8/31/18
-            } catch (DomainFrequencyException | DuplicateLinkException | IllegalLanguageException ignored) {
-                checkTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
-            } catch (UncheckedIOException e) {
-                duplicateChecker.weakConfirm(url);
-                IO_UNCHECK_EXCEPTION_METER.increment();
-                LOGGER.info(e.getMessage(), e);
-            } catch (IllegalArgumentException e) {
-                LOGGER.trace("IllegalArgumentException");
+            } catch (IllegalLanguageException ignored) {
             } catch (MalformedURLException e) {
-                duplicateChecker.weakConfirm(url);
                 LOGGER.warn(url + " is malformed!");
-            } catch (IOException e) {
-                LOGGER.trace("Jsoup connection to " + url + " failed");
-                fetchTime.add((double) (System.currentTimeMillis() - tempTime) / 1000);
-            } catch (StringIndexOutOfBoundsException | ArrayIndexOutOfBoundsException e) {
-                jsoupBugException.increment();
-                StringWriter sw = new StringWriter();
-                e.printStackTrace(new PrintWriter(sw));
-                fatalErrors.add(sw.toString());
-            } catch (URLException e) {
-                duplicateChecker.weakConfirm(url);
-                LOGGER.trace("url exception", e);
             } catch (RuntimeException e) {
                 FATAL_ERROR.increment();
                 StringWriter sw = new StringWriter();
@@ -202,6 +123,44 @@ public class CrawlThread extends Thread {
                 throw e;
             }
         }
+    }
+
+    private void dataBasePut(WebDocument webDocument) {
+        threadCrawlState = hbase;
+        tempTime = System.currentTimeMillis();
+        webDocOfThisThread.add(createHbasePut(webDocument.getPageLink(), webDocument.getLinks()));
+        if (webDocOfThisThread.size() > hbaseSizeLimit) {
+            webDocumentHBaseManager.puts(webDocOfThisThread);
+            webDocOfThisThread = new LinkedList<>();
+        }
+        HBASE_PUT_TIME.add((double) (System.currentTimeMillis() - tempTime) / 1000);
+        //////
+        threadCrawlState = elastic;
+        tempTime = System.currentTimeMillis();
+        elasticDocOfThisThread.add(webDocument.elasticMap());
+        if (elasticDocOfThisThread.size() > elasticSizeBulkLimit) {
+            elasticManager.put(elasticDocOfThisThread);
+            elasticDocOfThisThread.clear();
+        }
+        ELASTIC_PUT_TIME.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+    }
+
+    private WebDocument createWebDocument(String url, Document document) throws IllegalLanguageException, MalformedURLException {
+        WebDocument webDocument;
+        threadCrawlState = parse;
+        URL_RECEIVED_METER.increment();
+        tempTime = System.currentTimeMillis();
+        webDocument = parser.parse(document, url);
+        PARSE_TIME.add((double) (System.currentTimeMillis() - tempTime) / 1000);
+        return webDocument;
+    }
+
+    private Document getDocument(String body) {
+        threadCrawlState = document;
+        tempTime = System.currentTimeMillis();
+        Document document = Jsoup.parse(body);
+        DOCUMENT_CREATE_TIME.add((double) (System.currentTimeMillis() - tempTime) / 1000);
+        return document;
     }
 
     private Put createHbasePut(String pageLink, List<Link> outLink) {
@@ -215,20 +174,6 @@ public class CrawlThread extends Thread {
         return put;
     }
 
-    private void checkLink(String url) throws URLException, DomainFrequencyException, DuplicateLinkException, MalformedURLException {
-        if (url == null) {
-            NULL_URL_METER.increment();
-            throw new URLException();
-        } else if (!domainTimeHandler.isAllow(new URL(url).getHost())) {
-            DOMAIN_ERROR_METER.increment();
-            throw new DomainFrequencyException();
-        }
-        if (duplicateChecker.isDuplicate(url)) {
-            DUPLICATE_METER.increment();
-            throw new DuplicateLinkException();
-        }
-        NEW_URL_METER.increment();
-    }
 
     private String[] normalizeOutLink(WebDocument webDocument) throws MalformedURLException {
         List<Link> externalLink = new ArrayList<>();
@@ -244,10 +189,6 @@ public class CrawlThread extends Thread {
         return externalLink.stream().map(Link::getUrl).toArray(String[]::new);
     }
 
-    public boolean isRun() {
-        return isRun;
-    }
-
     public void off() {
         isRun = false;
     }
@@ -255,7 +196,8 @@ public class CrawlThread extends Thread {
     public void end() {
         webDocumentHBaseManager.put(webDocOfThisThread);
         elasticManager.put(elasticDocOfThisThread);
-        helperProducer.pushNewURL(urlsOfThisThread.toArray(new String[0]));
+        helperProducer.pushNewURL(docsOfThisThread.stream()
+                .map(Tuple::getX).toArray(String[]::new));
     }
 
     public static void exiting() {
@@ -263,13 +205,13 @@ public class CrawlThread extends Thread {
         webDocumentHBaseManager.close();
     }
 
-    public State getThreadState() {
-        return threadState;
+    public CrawlState getThreadCrawlState() {
+        return threadCrawlState;
     }
 
 
-    public enum State {
-        checkUrl, consumeKafka, fetchNet, jsoupDocument, hbase, parse, elastic;
+    public enum CrawlState {
+        document, hbase, parse, elastic
 
     }
 }
