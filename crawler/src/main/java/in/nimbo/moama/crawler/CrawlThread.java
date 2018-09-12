@@ -13,6 +13,7 @@ import in.nimbo.moama.util.CrawlerPropertyType;
 import in.nimbo.moama.util.ElasticPropertyType;
 import in.nimbo.moama.util.HBasePropertyType;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.exceptions.IllegalArgumentIOException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -111,6 +112,9 @@ public class CrawlThread extends Thread {
                     dataBasePut(webDocument);
                     COMPLETE_METER.increment();// TODO: 8/31/18
                 } catch (IllegalLanguageException ignored) {
+                } catch (IllegalArgumentException | ArrayIndexOutOfBoundsException e) {
+                //this two exception ignored for our bug (and some in jsoup)
+                LOGGER.warn(e.getMessage(),e);
                 } catch (MalformedURLException e) {
                     LOGGER.warn(url + " is malformed!");
                 } catch (RuntimeException e) {

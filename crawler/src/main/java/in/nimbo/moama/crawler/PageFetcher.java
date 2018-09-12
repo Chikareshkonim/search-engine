@@ -14,7 +14,6 @@ import org.jsoup.Jsoup;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class PageFetcher {
@@ -75,7 +74,7 @@ public class PageFetcher {
 
         Utils.delay(5000);
         System.out.println("start fetching");
-        for (int e = 0; e <300 ; e++) {
+        for (int e = 0; e <400 ; e++) {
             Thread thread;
             thread = new Thread(new Runnable() {
                 ArrayList<Tuple<String, String>> threadFetch = new ArrayList<>();
@@ -114,18 +113,21 @@ public class PageFetcher {
                     }
                 }
             });
+            thread.setPriority(3);
             fetchers.add(thread);
             thread.start();
         }
     }
 
     private static boolean checkLink(String url) {
+        String host;
         if (url == null) {
             NULL_URL_METER.increment();
             return false;
         } else {
             try {
-                if (!domainTimeHandler.isAllow(new URL(url).getHost())) {
+                host = new URL(url).getHost();
+                if (!domainTimeHandler.isAllow(host)) {
                     DOMAIN_ERROR_METER.increment();
                     return false;
                 }
@@ -139,6 +141,7 @@ public class PageFetcher {
         }
         NEW_URL_METER.increment();
         duplicateChecker.weakConfirm(url);
+        domainTimeHandler.confirm(host);
         return true;
     }
 

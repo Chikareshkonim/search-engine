@@ -24,7 +24,7 @@ public class DomainFrequencyHandler {
         domainHashTableTime = new long[hashPrime];
     }
 
-    public boolean isAllow(String url) {
+    public boolean isAllowAndConfirm(String url) {
         int hash = (url.hashCode() % hashPrime + hashPrime) % hashPrime;
         if (System.currentTimeMillis() - domainHashTableTime[hash] > politeTime) {
             domainHashTableTime[hash] = System.currentTimeMillis();
@@ -32,6 +32,15 @@ public class DomainFrequencyHandler {
         }
         return false;
     }
+    public boolean isAllow(String url) {
+        int hash = (url.hashCode() % hashPrime + hashPrime) % hashPrime;
+        return System.currentTimeMillis() - domainHashTableTime[hash] > politeTime;
+    }
+    public void confirm(String url) {
+        int hash = (url.hashCode() % hashPrime + hashPrime) % hashPrime;
+        domainHashTableTime[hash] = System.currentTimeMillis();
+    }
+
     public List<String> allowedLinks(List<String> documents) {
         return documents.stream().filter(this::isAllow).collect(Collectors.toList());
     }
