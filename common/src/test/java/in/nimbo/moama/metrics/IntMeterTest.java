@@ -1,14 +1,14 @@
 package in.nimbo.moama.metrics;
 
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class IntMeterTest {
-    IntMeter intMeter;
+    static IntMeter intMeter;
 
-    @Before
-    public void setUp() {
+    @BeforeClass
+    public static void setUp() {
         intMeter = new IntMeter("salam");
         intMeter.add(1000);
         intMeter.stat(100);

@@ -46,6 +46,7 @@ public class ConfigManager {
     public int getIntProperty(PropertyType type) {
         return Integer.parseInt(properties.getProperty(type.toString()));
     }
+
     public long getLongProperty(PropertyType type) {
         return Long.parseLong(properties.getProperty(type.toString()));
     }

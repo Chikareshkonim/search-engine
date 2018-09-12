@@ -23,10 +23,4 @@ public class LinkListOptimizeAdderTest {
         }
     }
 
-    @Test
-    public void addInOneOrder() {
-        LinkedList<String> list1=new LinkedList<>();
-        LinkedList<String> list2=new LinkedList<>();
-        LinkListOptimizeAdder.addInOneOrder(list1,list2);
-    }
 }

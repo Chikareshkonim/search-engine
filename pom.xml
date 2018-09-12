@@ -16,7 +16,7 @@
         <module>page-rank</module>
         <module>console</module>
         <module>common</module>
-        <module>keywords</module>
+        <module>analysis</module>
     </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
