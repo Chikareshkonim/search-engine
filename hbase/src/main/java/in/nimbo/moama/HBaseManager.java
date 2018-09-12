@@ -40,7 +40,7 @@ public class HBaseManager {
         this.duplicateCheckFamily = duplicateCheckFamily;
         try {
             connection = ConnectionFactory.createConnection(configuration);
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
         boolean status = false;
         while (!status) {
@@ -53,7 +53,7 @@ public class HBaseManager {
         }
         try {
             table = (HTable) connection.getTable(this.tableName);
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
     }
 
@@ -66,15 +66,7 @@ public class HBaseManager {
     public synchronized void puts(LinkedList<Put> unUseAblePut) {
         bulk.addAll(unUseAblePut);
         if (bulk.size() > hbaseBulkSize) {
-            try {
-                table.put(bulk);
-                HBASE_PUT_METER.add(bulk.size());
-                bulk.clear();
-            } catch (IOException e) {
-                LOGGER.error("couldn't put  into HBase!", e);
-            } catch (RuntimeException e) {
-                LOGGER.error("HBase error" + e.getMessage(), e);
-            }
+           put(bulk);
         }
     }
 
@@ -113,7 +105,7 @@ public class HBaseManager {
         String string = "";
         try {
             string = domainToHBase + "-" + urlSections[urlSections.length - 1];
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
         return string;
     }
@@ -146,7 +138,7 @@ public class HBaseManager {
             table.close();
             Utils.delay(1000);
             connection.close();
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
     }
 }

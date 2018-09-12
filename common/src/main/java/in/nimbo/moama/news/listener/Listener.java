@@ -105,7 +105,7 @@ public class Listener {
                 } catch (IOException | InterruptedException ignored) {
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
     }
 
@@ -117,7 +117,7 @@ public class Listener {
                 PrintStream out = new PrintStream(socket.getOutputStream());
                 findAndCallMethod(out, scanner);
                 socket.close();
-            } catch (IOException e) {
+            } catch (IOException ignored) {
             }
         }).start();
         sleep(NEXT_TIME_LISTEN_MILLISECONDS);

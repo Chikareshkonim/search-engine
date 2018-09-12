@@ -96,7 +96,7 @@ public class PageFetcher {
                             try {
                                 fetchingState = FetchingState.put;
                                 netFetched.put(threadFetch);
-                            } catch (InterruptedException e1) {
+                            } catch (InterruptedException ignored) {
                             }
                             threadFetch = new ArrayList<>();
                         }

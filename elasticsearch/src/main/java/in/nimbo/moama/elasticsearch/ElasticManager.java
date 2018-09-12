@@ -76,7 +76,7 @@ public class ElasticManager {
         TransportAddress[] transportAddresses = servers.stream().map(server -> {
             try {
                 return new TransportAddress(InetAddress.getByName(server), vectorPort);
-            } catch (UnknownHostException e) {
+            } catch (UnknownHostException ignored) {
             }
             return null;
         }).filter(Objects::nonNull).toArray(TransportAddress[]::new);
@@ -274,7 +274,7 @@ public class ElasticManager {
             try {
                 Tuple<String, Date> news = new Tuple(sourceAsMap.get(linkColumn), format.parse(dateString));
                 results.put(news, hit.getScore());
-            } catch (ParseException e) {
+            } catch (ParseException ignored) {
             }
         }
         return SortResults.sortNews(results);

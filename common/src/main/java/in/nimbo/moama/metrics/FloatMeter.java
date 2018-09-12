@@ -11,8 +11,8 @@ public final class FloatMeter implements Metered {
     private String name;
     private Timer timer;
     private Timer.Context context;
-    static MetricRegistry metrics = IntMeter.metrics;
-    static JmxReporter reporter = JmxReporter.forRegistry(metrics).build();
+    private static MetricRegistry metrics = IntMeter.metrics;
+    private static JmxReporter reporter = JmxReporter.forRegistry(metrics).build();
 
     static {
         reporter.start();

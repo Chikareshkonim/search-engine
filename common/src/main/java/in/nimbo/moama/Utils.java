@@ -10,7 +10,7 @@ public class Utils {
     public static Document getPage(String link){
         try {
             return Jsoup.connect(link).validateTLSCertificates(true).get();
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
         return new Document("  ");
 

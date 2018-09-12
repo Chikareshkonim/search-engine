@@ -17,7 +17,7 @@ public class LangDetector {
     public void profileLoad(String recourseAddress){
         try {
             DetectorFactory.loadProfile(recourseAddress);
-        } catch (LangDetectException e) {
+        } catch (LangDetectException ignored) {
         }
     }
 

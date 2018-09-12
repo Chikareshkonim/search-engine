@@ -74,7 +74,7 @@ public class NewsWebsiteHBaseManager extends HBaseManager{
                 jsons.add(json);
             }
 
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
         return jsons;
     }
@@ -94,7 +94,7 @@ public class NewsWebsiteHBaseManager extends HBaseManager{
                     jsons.add(json);
                 });
             }
-        } catch (IOException e) {
+        } catch (IOException ignored) {
         }
         return jsons;
     }
