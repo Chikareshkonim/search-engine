@@ -92,7 +92,6 @@ public class CrawlThread extends Thread {
         try {
             batchDocsOfThisThread = netFetched.take();
         } catch (InterruptedException e) {
-            e.printStackTrace();
         }
         for (Tuple<String, String> doc : batchDocsOfThisThread) {
             WebDocument webDocument;

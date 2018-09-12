@@ -41,8 +41,6 @@ public class HBaseManager {
         try {
             connection = ConnectionFactory.createConnection(configuration);
         } catch (IOException e) {
-            //TODO
-            e.printStackTrace();
         }
         boolean status = false;
         while (!status) {
@@ -56,7 +54,6 @@ public class HBaseManager {
         try {
             table = (HTable) connection.getTable(this.tableName);
         } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -150,7 +147,6 @@ public class HBaseManager {
             Utils.delay(1000);
             connection.close();
         } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 }

@@ -106,7 +106,6 @@ public class Listener {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -119,7 +118,6 @@ public class Listener {
                 findAndCallMethod(out, scanner);
                 socket.close();
             } catch (IOException e) {
-                e.printStackTrace();
             }
         }).start();
         sleep(NEXT_TIME_LISTEN_MILLISECONDS);

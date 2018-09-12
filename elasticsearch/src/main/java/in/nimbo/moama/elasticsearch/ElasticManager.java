@@ -77,7 +77,6 @@ public class ElasticManager {
             try {
                 return new TransportAddress(InetAddress.getByName(server), vectorPort);
             } catch (UnknownHostException e) {
-                e.printStackTrace();
             }
             return null;
         }).filter(Objects::nonNull).toArray(TransportAddress[]::new);
@@ -119,7 +118,6 @@ public class ElasticManager {
             @Override
             public void afterBulk(long executionId, BulkRequest request, Throwable failure) {
                 bulkAfterFailure.add(request.numberOfActions());
-                failure.printStackTrace();
                 LOGGER.error("An exception occurred while indexing", failure);
 
             }
@@ -277,7 +275,6 @@ public class ElasticManager {
                 Tuple<String, Date> news = new Tuple(sourceAsMap.get(linkColumn), format.parse(dateString));
                 results.put(news, hit.getScore());
             } catch (ParseException e) {
-                e.printStackTrace();
             }
         }
         return SortResults.sortNews(results);

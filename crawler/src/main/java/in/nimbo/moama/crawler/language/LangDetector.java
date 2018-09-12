@@ -18,7 +18,6 @@ public class LangDetector {
         try {
             DetectorFactory.loadProfile(recourseAddress);
         } catch (LangDetectException e) {
-            e.printStackTrace();
         }
     }
 

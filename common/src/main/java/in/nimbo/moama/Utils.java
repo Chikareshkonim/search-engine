@@ -11,7 +11,6 @@ public class Utils {
         try {
             return Jsoup.connect(link).validateTLSCertificates(true).get();
         } catch (IOException e) {
-            e.printStackTrace();
         }
         return new Document("  ");
 

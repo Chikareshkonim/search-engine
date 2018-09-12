@@ -52,7 +52,6 @@ public class NewsWebsiteHBaseManager extends HBaseManager{
                 return true;
             }
         } catch (IOException e) {
-            e.printStackTrace();
             return false;
         }
         return true;
@@ -76,7 +75,6 @@ public class NewsWebsiteHBaseManager extends HBaseManager{
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
         }
         return jsons;
     }
@@ -97,7 +95,6 @@ public class NewsWebsiteHBaseManager extends HBaseManager{
                 });
             }
         } catch (IOException e) {
-            e.printStackTrace();
         }
         return jsons;
     }
