@@ -72,10 +72,6 @@ public class ConfigManager {
         return tempProperties;
     }
 
-    public static void printProperties(Properties properties) {
-        properties.forEach((k, v) -> System.out.println(k + "    " + v));
-    }
-
     public enum FileType {
         XML, PROPERTIES
     }

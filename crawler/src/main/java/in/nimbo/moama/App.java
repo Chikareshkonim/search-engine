@@ -11,9 +11,7 @@ import java.net.URISyntaxException;
 public class App {
     public static void main(String[] args) throws IOException, URISyntaxException {
         Initializer.initialize();
-        System.out.println("1s");
         new Listener().listen(Commands.class,ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.LISTENER_PORT));
-        System.out.println("2s");
         CrawlerManager.getInstance().run();
     }
 }

@@ -20,7 +20,12 @@ public enum CrawlerPropertyType implements PropertyType {
     DUPLICATE_HANDLER_MAX_CAPACITY("duplicate.handler.max.capacity"),
     DUPLICATE_HANDLER_INITIAL_CAPACITY("duplicate.handler.initial.capacity"),
     CRAWLER_CRAWLED_TOPIC_NAME("crawler.crawled.topic.name"),
-    LISTENER_PORT("crawler.listener.port");
+    LISTENER_PORT("crawler.listener.port"),
+    CRAWLER_FETCHER_THREAD("crawler.fetcher.threads"),
+    CRAWLER_CONSUMER_THREADS("crawler.consumer.threads"),
+    CRAWLER_CONSUMER_PRIORITY("crawler.consumer.priority"),
+    CRAWLER_FETCHER_PRIORITY("crawler.fetcher.priority"),
+    CRAWLER_FETCHER_BATCH_SIZE("crawler.fetcher.batch.size");
 
     private String type;
 

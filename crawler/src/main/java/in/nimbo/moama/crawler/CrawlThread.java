@@ -13,7 +13,6 @@ import in.nimbo.moama.util.CrawlerPropertyType;
 import in.nimbo.moama.util.ElasticPropertyType;
 import in.nimbo.moama.util.HBasePropertyType;
 import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.exceptions.IllegalArgumentIOException;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
 import org.jsoup.Jsoup;
@@ -34,7 +33,6 @@ public class CrawlThread extends Thread {
 
     private static final IntMeter FATAL_ERROR = new IntMeter("FATAL error");
     private static final IntMeter COMPLETE_METER = new IntMeter("complete url");
-    private static final IntMeter URL_RECEIVED_METER = new IntMeter("url received");
     private static final FloatMeter MB_CRAWLED = new FloatMeter("MB Crawled");
     private static final FloatMeter PARSE_TIME = new FloatMeter("parse url Time ");
     private static final FloatMeter HBASE_PUT_TIME = new FloatMeter("hbase put Time ");
@@ -78,56 +76,53 @@ public class CrawlThread extends Thread {
 
     @Override
     public void run() {
-        batchDocsOfThisThread =new ArrayList<>();
+        batchDocsOfThisThread = new ArrayList<>();
         webDocOfThisThread = new LinkedList<>();
         elasticDocOfThisThread = new LinkedList<>();
         while (isRun) {
             work();
         }
-        System.out.println("end" + this);
         end();
     }
 
     private long tempTime;
-    static LinkedBlockingQueue<ArrayList<Tuple<String, String>>> netFeteched = new LinkedBlockingQueue<>();
+    static LinkedBlockingQueue<ArrayList<Tuple<String, String>>> netFetched = new LinkedBlockingQueue<>();
 
     private void work() {
-        if (batchDocsOfThisThread.size() == 0) {
+        try {
+            batchDocsOfThisThread = netFetched.take();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        for (Tuple<String, String> doc : batchDocsOfThisThread) {
+            WebDocument webDocument;
+            String url = doc.getX();
+            String body = doc.getY();
             try {
-                batchDocsOfThisThread = netFeteched.take();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        } else {
-            for (Tuple<String, String> doc : batchDocsOfThisThread) {
-                WebDocument webDocument;
-                String url = doc.getX();
-                String body = doc.getY();
-                try {
-                    Document document = getDocument(body);
-                    MB_CRAWLED.add((double) document.outerHtml().getBytes().length / 0b100000000000000000000);
-                    webDocument = createWebDocument(url, document);
-                    helperProducer.pushNewURL(normalizeOutLink(webDocument));
-                    crawledProducer.pushNewURL(url);
-                    dataBasePut(webDocument);
-                    COMPLETE_METER.increment();// TODO: 8/31/18
-                } catch (IllegalLanguageException ignored) {
-                } catch (IllegalArgumentException | ArrayIndexOutOfBoundsException e) {
+                Document document = getDocument(body);
+                MB_CRAWLED.add((double) document.outerHtml().getBytes().length / 0b100000000000000000000);
+                webDocument = createWebDocument(url, document);
+                helperProducer.pushNewURL(normalizeOutLink(webDocument));
+                crawledProducer.pushNewURL(url);
+                dataBasePut(webDocument);
+                COMPLETE_METER.increment();// TODO: 8/31/18
+            } catch (IllegalLanguageException ignored) {
+            } catch (IllegalArgumentException | ArrayIndexOutOfBoundsException e) {
                 //this two exception ignored for our bug (and some in jsoup)
-                LOGGER.warn(e.getMessage(),e);
-                } catch (MalformedURLException e) {
-                    LOGGER.warn(url + " is malformed!");
-                } catch (RuntimeException e) {
-                    FATAL_ERROR.increment();
-                    StringWriter sw = new StringWriter();
-                    e.printStackTrace(new PrintWriter(sw));
-                    fatalErrors.add(sw.toString());
-                    LOGGER.error("important" + e.getMessage(), e);
-                    throw e;
-                }
+                LOGGER.warn(e.getMessage(), e);
+            } catch (MalformedURLException e) {
+                LOGGER.warn(url + " is malformed!");
+            } catch (RuntimeException e) {
+                FATAL_ERROR.increment();
+                StringWriter sw = new StringWriter();
+                e.printStackTrace(new PrintWriter(sw));
+                fatalErrors.add(sw.toString());
+                LOGGER.error("important" + e.getMessage(), e);
+                throw e;
             }
         }
     }
+
 
     private void dataBasePut(WebDocument webDocument) {
         threadCrawlState = hbase;
@@ -152,7 +147,6 @@ public class CrawlThread extends Thread {
     private WebDocument createWebDocument(String url, Document document) throws IllegalLanguageException, MalformedURLException {
         WebDocument webDocument;
         threadCrawlState = parse;
-        URL_RECEIVED_METER.increment();
         tempTime = System.currentTimeMillis();
         webDocument = parser.parse(document, url);
         PARSE_TIME.add((double) (System.currentTimeMillis() - tempTime) / 1000);

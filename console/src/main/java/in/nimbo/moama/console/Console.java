@@ -11,6 +11,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static java.lang.System.out;
+
 public class Console {
     private ElasticManager elasticManager;
     private WebDocumentHBaseManager webDocumentHBaseManager;
@@ -78,44 +80,44 @@ public class Console {
 
     @Command(description = "Get Trend Words for A Date")
     public void getTrendWords(){
-        System.out.println("Please enter a valid date in the following format: \"dd/MM/yyyy\"\tExample: \"14/05/1998\"");
+        out.println("Please enter a valid date in the following format: \"dd/MM/yyyy\"\tExample: \"14/05/1998\"");
         String date = new Scanner(System.in).nextLine();
         Collection<Map<String, Double>> trendWords = new ArrayList<>();
         try {
             trendWords = elasticManager.newsWordTrends(new SimpleDateFormat("EEE, dd MMM yyyy").
                     format(new SimpleDateFormat("dd/MM/yyyy").parse(date)));
         } catch (IOException e) {
-            System.out.println("Elastic currently unavailable!");
+            out.println("Elastic currently unavailable!");
             return;
         } catch (ParseException e) {
-            System.out.println("Invalid date format:");
+            out.println("Invalid date format:");
             getTrendWords();
         }
         if (trendWords.size() > 0) {
             for(Map<String, Double> trendWord: trendWords){
                 if(trendWord.keySet().size() > 0) {
-                    System.out.println(trendWord.keySet().toArray()[0]);
+                    out.println(trendWord.keySet().toArray()[0]);
                 }
             }
         }
         else{
-            System.out.println("Sorry! No trends found!");
+            out.println("Sorry! No trends found!");
         }
     }
 
     @Command(description = "Get Trend News")
     public void getTrendNews(){
-        System.out.println("Please enter a valid date in the following format: \"dd/MM/yyyy\"\tExample: \"14/05/1998\"");
+        out.println("Please enter a valid date in the following format: \"dd/MM/yyyy\"\tExample: \"14/05/1998\"");
         String date = new Scanner(System.in).nextLine();
         Collection<Map<String, Double>> trendWords = new ArrayList<>();
         try {
             trendWords = elasticManager.newsWordTrends(new SimpleDateFormat("EEE, dd MMM yyyy").
                     format(new SimpleDateFormat("dd/MM/yyyy").parse(date)));
         } catch (IOException e) {
-            System.out.println("Elastic currently unavailable!");
+            out.println("Elastic currently unavailable!");
             return;
         } catch (ParseException e) {
-            System.out.println("Invalid date format:");
+            out.println("Invalid date format:");
             getTrendNews();
         }
         ArrayList<String> targetWords = new ArrayList<>();
@@ -141,10 +143,10 @@ public class Console {
     private void showResults(Map<String, Float> results, boolean optimize){
         if(!results.isEmpty()) {
             if(optimize) {
-                System.out.println("Primary Results:");
+                out.println("Primary Results:");
             }
             else{
-                System.out.println("Results:");
+                out.println("Results:");
             }
             float maxScore = 0;
             int maxReference = 0;
@@ -160,7 +162,7 @@ public class Console {
                         maxReference = references.get(i - 1);
                     }
                 }
-                    System.out.println(i + "\t" + result.getKey() + "\t" + "\"score\": " + result.getValue());
+                    out.println(i + "\t" + result.getKey() + "\t" + "\"score\": " + result.getValue());
                     i++;
             }
             if(optimize) {
@@ -168,26 +170,26 @@ public class Console {
                     result.setValue((0.8) * ((Float) result.getValue() / maxScore) + ((0.2) * references.get(i - 1) / maxReference));
                 }
                 results = SortResults.sortByValues(results);
-                System.out.println("Optimized results with reference counts:");
+                out.println("Optimized results with reference counts:");
                 i = 1;
                 for (Map.Entry result : results.entrySet()) {
-                    System.out.println(i + "\t" + result.getKey() + "\t\"score\": " + result.getValue());
+                    out.println(i + "\t" + result.getKey() + "\t\"score\": " + result.getValue());
                     i++;
                 }
             }
         }
         else{
-            System.out.println("Sorry! No match found");
+            out.println("Sorry! No match found");
         }
     }
 
     private void showNews(Map<Tuple<String, Date>,Float> results, boolean optimize){
         if(!results.isEmpty()) {
             if(optimize) {
-                System.out.println("Primary Results:");
+                out.println("Primary Results:");
             }
             else{
-                System.out.println("Results:");
+                out.println("Results:");
             }
             int i = 1;
             float maxScore = 0;
@@ -203,7 +205,7 @@ public class Console {
                         maxScore = (float) result.getValue();
                     }
                 }
-                System.out.println(i + "\t" + news.getX() + "\t\"date\": " + news.getY() +  "\t\"score\": " + result.getValue());
+                out.println(i + "\t" + news.getX() + "\t\"date\": " + news.getY() +  "\t\"score\": " + result.getValue());
                 i++;
             }
             Date currentDate = new Date();
@@ -216,24 +218,24 @@ public class Console {
                             (0.3) * (1.0 / (currentDate.getTime() - news.getY().getTime()) * (currentDate.getTime() - maxDate)));
                 }
                 results = SortResults.sortNews(results);
-                System.out.println("Optimized results:");
+                out.println("Optimized results:");
                 i = 1;
                 for (Map.Entry result : results.entrySet()) {
                     news = (Tuple<String, Date>) result.getKey();
-                    System.out.println(i + "\t" + news.getX() + "\t\"date\": " + news.getY() +  "\t\"score\": " + result.getValue());
+                    out.println(i + "\t" + news.getX() + "\t\"date\": " + news.getY() +  "\t\"score\": " + result.getValue());
                     i++;
                 }
             }
         }
         else{
-            System.out.println("Sorry! No news found");
+            out.println("Sorry! No news found");
         }
     }
 
 
     private void getInput(ArrayList<String> list, String type){
-        System.out.println("Please add you desired" + type + " words or phrases for search.");
-        System.out.println("Please Finish entering input by typing : -done-");
+        out.println("Please add you desired" + type + " words or phrases for search.");
+        out.println("Please Finish entering input by typing : -done-");
         String input = new Scanner(System.in).nextLine();
         while(!input.equals("-done-")){
             list.add(input);

@@ -123,7 +123,6 @@ public class ElasticManagerTest {
         document.put("content","gdshgssjsjfsjsfj");
         document.put("title","yes");
         document.put("date","2015-12-14");
-
         indexRequest.source(document);
 
     }

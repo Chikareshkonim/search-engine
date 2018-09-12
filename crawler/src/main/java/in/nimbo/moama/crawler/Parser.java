@@ -18,11 +18,9 @@ import java.util.Arrays;
 public class Parser {
     private static LangDetector langDetector;
     private static Parser ourInstance=new Parser();
-
     private static final IntMeter CRAWLED_PAGE_METER =new IntMeter("crawled page");
     private static final IntMeter LANGUAGE_PASSED_METER =new IntMeter("language passed");
     private static final IntMeter URL_RECEIVER_METER =new IntMeter("url received");
-
     private static final FloatMeter langDetectTime   = new FloatMeter("lang detect Time") ;
     private static final FloatMeter webdocCreateTime = new FloatMeter("webdoc create Time");
 
@@ -39,14 +37,9 @@ public class Parser {
 
     WebDocument parse(Document document, String url) throws IllegalLanguageException, MalformedURLException {
         URL_RECEIVER_METER.increment();
-        long tempTime = System.currentTimeMillis();
-        String text = document.text();
+        String text = extarctText(document);
         WebDocument webDocument = new WebDocument();
-        webdocCreateTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
-        tempTime = System.currentTimeMillis();
         checkLanguage(text);
-        LANGUAGE_PASSED_METER.increment();
-        langDetectTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
         Link[] links = UrlHandler.getLinks(document.getElementsByTag("a"), new URL(url).getHost());
         webDocument.setTextDoc(text);
         webDocument.setTitle(document.title());
@@ -56,8 +49,19 @@ public class Parser {
         return webDocument;
     }
 
+    private String extarctText(Document document) {
+        long tempTime = System.currentTimeMillis();
+        String text = document.text();
+        webdocCreateTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+        return text;
+    }
+
     private void checkLanguage(String text) throws IllegalLanguageException {
+        long tempTime = System.currentTimeMillis();
         langDetector.languageCheck(text);
+        LANGUAGE_PASSED_METER.increment();
+        langDetectTime.add((float) (System.currentTimeMillis() - tempTime) / 1000);
+
     }
 }
 

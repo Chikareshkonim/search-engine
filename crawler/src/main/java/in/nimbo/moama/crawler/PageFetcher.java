@@ -18,27 +18,34 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class PageFetcher {
     private static final IntMeter DUPLICATE_METER = new IntMeter("duplicate");
-    private static final IntMeter NEW_URL_METER = new IntMeter("passed checking url");
+    private static final IntMeter NEW_URL_METER = new IntMeter("new url");
     private static final IntMeter DOMAIN_ERROR_METER = new IntMeter("domain Error");
     private static final IntMeter NULL_URL_METER = new IntMeter("null url");
-    private static final IntMeter FETCHED_URL = new IntMeter("fetched url");
+    private static final IntMeter FETCHED_URL = new IntMeter("url received");
     private static final IntMeter EXCEPTION_IN_FETCH = new IntMeter("exception in fetch");
-    private static FloatMeter checkTime = new FloatMeter("check url Time ");
-    private static FloatMeter fetchTime = new FloatMeter("fetch Page Time");
     private static final DuplicateHandler duplicateChecker = DuplicateHandler.getInstance();
     private static final DomainFrequencyHandler domainTimeHandler = DomainFrequencyHandler.getInstance();
     private static MoamaConsumer linkConsumer;
     private static LinkedBlockingQueue<String> checkedUrlsQueue = new LinkedBlockingQueue<>(400);
+    private static int fetcherBatchSize;
     private Boolean isFetching = true;
     private Boolean isConsuming = true;
-    private LinkedBlockingQueue<ArrayList<Tuple<String, String>>> netFeteched;
+    private LinkedBlockingQueue<ArrayList<Tuple<String, String>>> netFetched;
     private static PageFetcher ourInstance = new PageFetcher();
+    private static int fetcherThreadsNumber;
+    private static int consumerThreadsNumber;
+    private static int consumerThreadsPriority;
 
     public static PageFetcher getInstance() {
         return ourInstance;
     }
 
     static {
+        fetcherThreadsNumber = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_FETCHER_THREAD);
+        consumerThreadsPriority = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_FETCHER_PRIORITY);
+        consumerThreadsNumber = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_CONSUMER_THREADS);
+        consumerThreadsPriority = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_CONSUMER_PRIORITY);
+        fetcherBatchSize =ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_FETCHER_BATCH_SIZE);
         linkConsumer = new MoamaConsumer(ConfigManager.getInstance()
                 .getProperty(CrawlerPropertyType.CRAWLER_LINK_TOPIC_NAME), "kafka.server.");
     }
@@ -50,8 +57,8 @@ public class PageFetcher {
     }
 
     public void run() {
-        this.netFeteched = CrawlThread.netFeteched;
-        for (int i = 0; i < 15; i++) {
+        this.netFetched = CrawlThread.netFetched;
+        for (int i = 0; i < consumerThreadsNumber; i++) {
             Thread consumeThread = new Thread(() -> {
             while (isConsuming) {
                 consumeState = ConsumeState.kafka;
@@ -67,14 +74,11 @@ public class PageFetcher {
                 });
             }
             });
-            consumeThread.setPriority(8);
+            consumeThread.setPriority(consumerThreadsPriority);
             consumeThread.start();
         }
-
-
         Utils.delay(5000);
-        System.out.println("start fetching");
-        for (int e = 0; e <400 ; e++) {
+        for (int e = 0; e < fetcherThreadsNumber; e++) {
             Thread thread;
             thread = new Thread(new Runnable() {
                 ArrayList<Tuple<String, String>> threadFetch = new ArrayList<>();
@@ -89,10 +93,10 @@ public class PageFetcher {
                 @Override
                 public void run() {
                     while (isFetching) {
-                        if (threadFetch.size() > 10) {
+                        if (threadFetch.size() > fetcherBatchSize) {
                             try {
                                 fetchingState = FetchingState.put;
-                                netFeteched.put(threadFetch);
+                                netFetched.put(threadFetch);
                             } catch (InterruptedException e1) {
                                 e1.printStackTrace();
                             }
@@ -113,7 +117,7 @@ public class PageFetcher {
                     }
                 }
             });
-            thread.setPriority(3);
+            thread.setPriority(consumerThreadsPriority);
             fetchers.add(thread);
             thread.start();
         }

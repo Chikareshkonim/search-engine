@@ -31,13 +31,13 @@ public class WebDocumentHBaseManager extends HBaseManager {
                 List<Cell> cells = result.listCells();
                 score = Bytes.toInt(CellUtil.cloneValue(cells.get(0)));
             } else {
-                System.out.println("url not found in HBase! Page Reference set to 1 on default!");
+                LOGGER.info("url not found in HBase! Page Reference set to 1 on default!");
                 score = 1;
             }
-            System.out.println("Page Reference for " + url + " is: " + score);
+            LOGGER.info("Page Reference for " + url + " is: " + score);
 
         } catch (IOException e) {
-            System.out.println("couldn't get document for " + url + " from HBase!");
+            LOGGER.info("couldn't get document for " + url + " from HBase!");
         }
         return score;
     }

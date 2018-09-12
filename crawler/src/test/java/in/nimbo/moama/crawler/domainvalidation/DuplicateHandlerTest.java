@@ -25,11 +25,8 @@ public class DuplicateHandlerTest {
     }
 
     @Test
-    public void getInstance() {
-    }
-
-    @Test
     public void weakCheckDuplicate() {
+
     }
 
     @Test
@@ -38,6 +35,7 @@ public class DuplicateHandlerTest {
         LinkedList<String> linkedList=new LinkedList<>();
         linkedList.add("salam");
         linkedList.add("khodahafez");
-        DuplicateHandler.getInstance().bulkNotDuplicate(linkedList).forEach(System.out::println);
+
+        Assert.assertEquals(DuplicateHandler.getInstance().bulkNotDuplicate(linkedList).size(),2);
     }
 }

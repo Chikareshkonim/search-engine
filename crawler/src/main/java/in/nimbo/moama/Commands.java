@@ -19,7 +19,6 @@ import static java.lang.Thread.sleep;
 public class Commands {
     @CLI(help = "shows you  how much thread is in each States")
     public static void states(PrintStream out, Scanner scanner) {
-        System.out.println("states called");
         try {
             out.println(PageFetcher.getInstance().consumeState);
             PageFetcher.getInstance().fetchers.stream()
