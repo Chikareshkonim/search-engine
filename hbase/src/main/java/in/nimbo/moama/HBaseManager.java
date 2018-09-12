@@ -73,7 +73,6 @@ public class HBaseManager {
                 table.put(bulk);
                 HBASE_PUT_METER.add(bulk.size());
                 bulk.clear();
-                ;
             } catch (IOException e) {
                 LOGGER.error("couldn't put  into HBase!", e);
             } catch (RuntimeException e) {

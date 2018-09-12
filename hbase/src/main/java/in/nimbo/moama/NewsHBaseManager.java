@@ -1,14 +1,6 @@
 package in.nimbo.moama;
 
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Table;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.log4j.Logger;
-import org.json.JSONObject;
-
-import java.io.IOException;
 
 public class NewsHBaseManager extends HBaseManager {
     private static Logger errorLogger = Logger.getLogger("error");

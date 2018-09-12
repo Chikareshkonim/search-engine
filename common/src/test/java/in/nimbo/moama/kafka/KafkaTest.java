@@ -1,7 +1,6 @@
 package in.nimbo.moama.kafka;
 
 import in.nimbo.moama.configmanager.ConfigManager;
-import in.nimbo.moama.configmanager.PropertyType;
 import org.junit.Assert;
 import org.junit.Test;
 

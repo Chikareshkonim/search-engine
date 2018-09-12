@@ -1,8 +1,5 @@
 package in.nimbo.moama.document;
 
-import org.apache.kafka.common.protocol.types.Field;
-import org.json.*;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;

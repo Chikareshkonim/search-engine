@@ -11,8 +11,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-import static org.junit.Assert.*;
-
 public class ParserTest {
     @Before
     public void setUp() throws Exception {

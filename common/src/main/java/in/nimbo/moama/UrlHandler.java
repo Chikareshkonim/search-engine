@@ -3,7 +3,6 @@ package in.nimbo.moama;
 import in.nimbo.moama.document.Link;
 import org.jsoup.select.Elements;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class UrlHandler {

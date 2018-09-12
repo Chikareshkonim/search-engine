@@ -3,18 +3,14 @@ package in.nimbo.moama;
 import in.nimbo.moama.crawler.CrawlThread;
 import in.nimbo.moama.crawler.CrawlerManager;
 import in.nimbo.moama.crawler.PageFetcher;
-import in.nimbo.moama.crawler.domainvalidation.HashDuplicateChecker;
 import in.nimbo.moama.news.listener.CLI;
 import in.nimbo.moama.metrics.Metrics;
 
-import java.io.IOException;
 import java.io.PrintStream;
 import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static java.lang.Thread.sleep;
 
 public class Commands {
     @CLI(help = "shows you  how much thread is in each States")

@@ -2,9 +2,7 @@ package in.nimbo.moama;
 
 import java.lang.reflect.Field;
 import java.util.AbstractList;
-import java.util.Comparator;
 import java.util.LinkedList;
-import java.util.List;
 
 public class LinkListOptimizeAdder {
 

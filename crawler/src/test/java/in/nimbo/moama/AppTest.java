@@ -1,7 +1,6 @@
 package in.nimbo.moama;
 
 import static java.lang.Thread.sleep;
-import static org.junit.Assert.assertTrue;
 
 import org.junit.Assert;
 import org.junit.Test;

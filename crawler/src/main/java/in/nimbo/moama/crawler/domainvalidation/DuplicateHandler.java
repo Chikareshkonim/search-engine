@@ -32,7 +32,10 @@ public class DuplicateHandler {
             return true;
         } else if (hBaseManager.isDuplicate(url)) {
             DUPLICATE_HBASE_HIT_METER.increment();
-            lruCache.put(url, 0);
+            try {
+                lruCache.put(url, 0);}
+                catch (ClassCastException ignored){
+                }
             return true;
         }
         return false;
@@ -42,7 +45,7 @@ public class DuplicateHandler {
     }
 
     public void weakConfirm(String url) {
-        lruCache.put(url, 1);
+        lruCache.put(url, 0);
     }
 
     public List<String> bulkNotDuplicate(List<String> urls) {

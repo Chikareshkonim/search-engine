@@ -5,8 +5,6 @@ import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
 import in.nimbo.moama.exception.IllegalLanguageException;
 
-import java.net.URISyntaxException;
-
 
 public class LangDetector {
     private static LangDetector ourInstance=new LangDetector();

@@ -4,7 +4,6 @@ import in.nimbo.moama.configmanager.ConfigManager;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Collections;

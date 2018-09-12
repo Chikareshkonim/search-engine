@@ -1,6 +1,5 @@
 package in.nimbo.moama.metrics;
 
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.jmx.JmxReporter;

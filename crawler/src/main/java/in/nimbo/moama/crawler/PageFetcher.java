@@ -6,7 +6,6 @@ import in.nimbo.moama.configmanager.ConfigManager;
 import in.nimbo.moama.crawler.domainvalidation.DomainFrequencyHandler;
 import in.nimbo.moama.crawler.domainvalidation.DuplicateHandler;
 import in.nimbo.moama.kafka.MoamaConsumer;
-import in.nimbo.moama.metrics.FloatMeter;
 import in.nimbo.moama.metrics.IntMeter;
 import in.nimbo.moama.util.CrawlerPropertyType;
 import org.jsoup.Jsoup;
@@ -45,7 +44,7 @@ public class PageFetcher {
         consumerThreadsPriority = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_FETCHER_PRIORITY);
         consumerThreadsNumber = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_CONSUMER_THREADS);
         consumerThreadsPriority = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_CONSUMER_PRIORITY);
-        fetcherBatchSize =ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_FETCHER_BATCH_SIZE);
+        fetcherBatchSize = ConfigManager.getInstance().getIntProperty(CrawlerPropertyType.CRAWLER_FETCHER_BATCH_SIZE);
         linkConsumer = new MoamaConsumer(ConfigManager.getInstance()
                 .getProperty(CrawlerPropertyType.CRAWLER_LINK_TOPIC_NAME), "kafka.server.");
     }
@@ -60,19 +59,19 @@ public class PageFetcher {
         this.netFetched = CrawlThread.netFetched;
         for (int i = 0; i < consumerThreadsNumber; i++) {
             Thread consumeThread = new Thread(() -> {
-            while (isConsuming) {
-                consumeState = ConsumeState.kafka;
-                ArrayList<String> documents = linkConsumer.getDocuments();
-                consumeState = ConsumeState.addBlocking;
-                documents.forEach(url -> {
-                try {
-                    if (checkLink(url)) {
-                        checkedUrlsQueue.put(url);
-                    }
-                } catch (InterruptedException |ArrayIndexOutOfBoundsException|IllegalArgumentException ignored) {
+                while (isConsuming) {
+                    consumeState = ConsumeState.kafka;
+                    ArrayList<String> documents = linkConsumer.getDocuments();
+                    consumeState = ConsumeState.addBlocking;
+                    documents.forEach(url -> {
+                        try {
+                            if (checkLink(url)) {
+                                checkedUrlsQueue.put(url);
+                            }
+                        } catch (InterruptedException | ArrayIndexOutOfBoundsException |ClassCastException | IllegalArgumentException ignored) {
+                        }
+                    });
                 }
-                });
-            }
             });
             consumeThread.setPriority(consumerThreadsPriority);
             consumeThread.start();

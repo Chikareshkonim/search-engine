@@ -17,10 +17,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.*;
 
-import static java.lang.Thread.sleep;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 public class ElasticManagerTest {
     private RestHighLevelClient client;
     private IndexRequest indexRequest;

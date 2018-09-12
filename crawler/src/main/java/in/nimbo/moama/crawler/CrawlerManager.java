@@ -14,8 +14,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static java.lang.Thread.sleep;
-
 public class CrawlerManager implements Reconfigurable {
     private static final Logger LOGGER = LogManager.getLogger(CrawlerManager.class);
     private final MoamaProducer mainProducer;
